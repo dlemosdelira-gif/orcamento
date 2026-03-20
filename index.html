@@ -1153,14 +1153,8 @@ function renderAll(){
   if(active==='s-rel')   renderRel();
 }
 
-// ══ INIT ══
-document.getElementById('hdr-hoje').textContent=
-  hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
-setTipo('despesa');
-initFirebase();
-
 // ══════════════════════════════════════════
-// FIREBASE CONFIG — substitua pelos seus dados
+// FIREBASE CONFIG
 // ══════════════════════════════════════════
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyBYq3CiQmvD0YXbJNGL-ac4nPc8NoSkh-w",
@@ -1179,12 +1173,7 @@ function fbSaveMetas(){if(!_db)return;const o={};metas.forEach(m=>{o[m.id]=m});_
 function fbSaveOrc(){if(!_db)return;_db.ref('orcamentos').set(orcamentos)}
 function setStatus(msg,color){const e=document.getElementById('sync-status');if(e){e.textContent=msg;e.style.color=color}}
 function initFirebase(){
-  // Renderiza imediatamente com dados históricos enquanto Firebase carrega
   renderAll();
-  if(FIREBASE_CONFIG.apiKey==='COLE_AQUI_apiKey'){
-    setStatus('⚠️ Configure o Firebase — veja o guia','#fbbf24');
-    return;
-  }
   try{
     firebase.initializeApp(FIREBASE_CONFIG);
     _db=firebase.database();
@@ -1192,23 +1181,17 @@ function initFirebase(){
     _db.ref('lancamentos').on('value',snap=>{
       const v=snap.val();
       if(v){
-        // Merge: Firebase data + any _DADOS_INICIAIS entries not yet in Firebase
-        const fbMap = v;
-        const merged = {...fbMap};
-        // Ensure all historical entries exist
+        const merged={...v};
         _DADOS_INICIAIS.forEach(l=>{ if(!merged[l.id]) merged[l.id]=l; });
-        // If we added missing entries, persist them back
-        const fbCount = Object.keys(v).length;
-        const mergedCount = Object.keys(merged).length;
-        if(mergedCount > fbCount) _db.ref('lancamentos').set(merged);
+        if(Object.keys(merged).length > Object.keys(v).length) _db.ref('lancamentos').set(merged);
         lancamentos=Object.values(merged).sort((a,b)=>b.id-a.id);
       } else {
-        // DB vazio — carrega todos os dados históricos
         const o={};_DADOS_INICIAIS.forEach(l=>{o[l.id]=l});
         _db.ref('lancamentos').set(o);
         lancamentos=[..._DADOS_INICIAIS].sort((a,b)=>b.id-a.id);
       }
-      renderAll();setStatus('✅ Sincronizado · '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),'#34d399');
+      renderAll();
+      setStatus('✅ Sincronizado · '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),'#34d399');
     },err=>{setStatus('❌ '+err.message,'#f87171');lancamentos=[..._DADOS_INICIAIS].sort((a,b)=>b.id-a.id);renderAll();});
     _db.ref('metas').on('value',snap=>{
       metas=snap.val()?Object.values(snap.val()):[];
@@ -1218,9 +1201,14 @@ function initFirebase(){
       orcamentos=snap.val()||{};
       if(document.querySelector('.screen.active')?.id==='s-orc')renderOrc();
     });
-  }catch(e){setStatus('❌ '+e.message,'#f87171');lancamentos=[..._DADOS_INICIAIS];renderAll();}
+  }catch(e){setStatus('❌ '+e.message,'#f87171');lancamentos=[..._DADOS_INICIAIS].sort((a,b)=>b.id-a.id);renderAll();}
 }
 
+// ══ INIT ══
+document.getElementById('hdr-hoje').textContent=
+  hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+setTipo('despesa');
+initFirebase();
 </script>
 </body>
 </html>
