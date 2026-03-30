@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Orçamento">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0c0c10">
+<title>Orçamento & Metas</title>
+<style>
+:root{
+  --bg:#f5f5f5; --surface:#ffffff; --surface2:#f0f0f0; --surface3:#e8e8e8;
+  --border:#dddddd; --text:#1a1a1a; --muted:#888888;
+  --accent:#7c6af7;--accent2:#a855f7;
+  --green:#34d399;--red:#f87171;--yellow:#fbbf24;--blue:#60a5fa;
+  --radius:18px;--nav-h:82px;
+  color-scheme:dark;
+}
+html,body{color-scheme:dark;background-color:#0c0c10;color:#eeeef5;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Calibri','Trebuchet MS','Gill Sans',sans-serif;background:var(--bg)!important;color:var(--text)!important;min-height:100dvh;overflow-x:hidden;padding-bottom:calc(var(--nav-h) + 4px)}
+.screen{display:none;padding:22px 18px 12px;animation:fadeIn .2s ease;background:var(--bg)!important;color:var(--text)!important;min-height:calc(100dvh - var(--nav-h))}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.hdr-title{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:25px;font-weight:800;letter-spacing:-.5px;color:var(--text)!important}
+.hdr-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0}
+.mode-toggle{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:3px;margin-bottom:16px;gap:3px}
+.mode-btn{flex:1;padding:8px 6px;border-radius:9px;font-family:'Calibri','Trebuchet MS',sans-serif;font-weight:700;font-size:12px;text-align:center;cursor:pointer;color:var(--muted);transition:all .15s;line-height:1.3}
+.mode-btn.on{background:var(--surface);color:var(--text);box-shadow:0 1px 6px #0006}
+.per-nav{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px}
+.per-btn{width:34px;height:34px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:18px;line-height:1}
+.per-txt{font-family:'Calibri','Trebuchet MS',sans-serif;font-weight:700;font-size:14px;min-width:172px;text-align:center;line-height:1.3}
+.per-sub{font-size:10px;color:var(--muted);font-weight:400;display:block;margin-top:2px}
+.bal-card{background:linear-gradient(135deg,#1a1745 0%,#26206a 60%,#1a1745 100%);border:1px solid #4338ca33;border-radius:22px;padding:22px 20px;margin-bottom:14px;position:relative;overflow:hidden}
+.bal-lbl{font-size:11px;color:#a5b4fc;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px}
+.bal-val{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:36px;font-weight:800;letter-spacing:-1px;color:#fff!important;-webkit-text-fill-color:#fff!important}
+.bal-val.neg{color:var(--red)!important;-webkit-text-fill-color:var(--red)!important}
+.bal-row{display:flex;gap:10px;margin-top:14px}
+.bal-mini{flex:1;background:#ffffff0d;border-radius:12px;padding:10px 12px}
+.bal-mini-lbl{font-size:10px;color:#a5b4fc;margin-bottom:2px}
+.bal-mini-val{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:15px;font-weight:700}
+.g{color:var(--green)!important;-webkit-text-fill-color:var(--green)!important}
+.r{color:var(--red)!important;-webkit-text-fill-color:var(--red)!important}
+.b{color:var(--blue)!important;-webkit-text-fill-color:var(--blue)!important}
+.y{color:var(--yellow)!important;-webkit-text-fill-color:var(--yellow)!important}
+.card-cc{background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);border:1px solid #60a5fa22;border-radius:22px;padding:20px;margin-bottom:14px;position:relative;overflow:hidden}
+.cc-row1{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.cc-title{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:13px;font-weight:700;color:#93c5fd;letter-spacing:.8px;text-transform:uppercase}
+.cc-chip{background:#ffffff15;border:1px solid #60a5fa33;border-radius:99px;padding:3px 10px;font-size:11px;color:#93c5fd}
+.cc-fatura-lbl{font-size:11px;color:#93c5fd;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.cc-fatura-val{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:30px;font-weight:800;letter-spacing:-1px;color:#fff}
+.cc-row2{display:flex;gap:10px;margin-top:14px}
+.cc-mini{flex:1;background:#ffffff0d;border-radius:11px;padding:9px 11px}
+.cc-mini-lbl{font-size:10px;color:#93c5fd;margin-bottom:2px}
+.cc-mini-val{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:14px;font-weight:700;color:#fff}
+.cc-prog-wrap{margin-top:14px}
+.cc-prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:#93c5fd;margin-bottom:5px}
+.cc-prog-bg{height:6px;background:#ffffff15;border-radius:99px;overflow:hidden}
+.cc-prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#60a5fa,#818cf8);transition:width .6s}
+.quick{display:flex;gap:8px;margin-bottom:18px}
+.qbtn{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:13px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;transition:all .12s}
+.qbtn:active{transform:scale(.95)}
+.qbtn .qi{font-size:21px}
+.qbtn span{font-size:10px;color:var(--muted);font-weight:500;text-align:center}
+.slbl{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.card{background:var(--surface)!important;border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px;color:var(--text)!important}
+.tx{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.tx:last-child{border:none;padding-bottom:0}
+.tx-ico{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.tx-info{flex:1;min-width:0}
+.tx-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)!important}
+.tx-sub{font-size:11px;color:var(--muted)!important;margin-top:2px}
+.tx-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.tx-val{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:14px;font-weight:700;color:var(--text)!important}
+.tx-val.r{color:var(--red)!important;-webkit-text-fill-color:var(--red)!important}
+.tx-val.g{color:var(--green)!important;-webkit-text-fill-color:var(--green)!important}
+.tx-del{font-size:15px;cursor:pointer;color:var(--muted);padding:3px}
+.filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.chip{display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:5px 12px;font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .12s}
+.chip.on{background:#7c6af718;border-color:var(--accent);color:var(--accent)}
+.chip.cc-chip-on{background:#60a5fa18;border-color:var(--blue);color:var(--blue)}
+.meta-card{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:10px}
+.meta-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.meta-nm{font-family:'Calibri','Trebuchet MS',sans-serif;font-weight:700;font-size:15px}
+.meta-pct{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:13px;font-weight:700;color:var(--accent)}
+.prog-bg{height:8px;background:var(--border);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px;transition:width .6s;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.prog-fill.done{background:linear-gradient(90deg,#059669,var(--green))}
+.meta-vals{display:flex;justify-content:space-between;margin-top:7px;font-size:11px;color:var(--muted)}
+.orc-card{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:10px}
+.orc-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.orc-emoji{font-size:22px;flex-shrink:0}
+.orc-info{flex:1}
+.orc-name{font-family:'Calibri','Trebuchet MS',sans-serif;font-weight:700;font-size:14px}
+.orc-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.orc-right{text-align:right;flex-shrink:0}
+.orc-pct-val{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:14px;font-weight:800}
+.orc-vals{display:flex;justify-content:space-between;font-size:11px;margin-top:6px}
+.alert-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;margin-top:7px}
+.alert-over{background:#f8717120;color:var(--red);border:1px solid #f8717140}
+.alert-warn{background:#fbbf2420;color:var(--yellow);border:1px solid #fbbf2440}
+.alert-ok{background:#34d39920;color:var(--green);border:1px solid #34d39940}
+.chart-legend{display:flex;gap:14px;margin-bottom:14px;font-size:11px;color:var(--muted);padding-left:104px}
+.legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.chart-bars{display:flex;flex-direction:column;gap:13px;margin-bottom:6px}
+.bar-row{display:flex;align-items:center;gap:8px}
+.bar-label{font-size:10px;color:var(--muted);width:96px;flex-shrink:0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;height:24px;background:var(--border);border-radius:7px;position:relative;overflow:hidden}
+.bar-fill-orc{position:absolute;top:0;left:0;height:100%;border-radius:7px;background:var(--surface3);border:1px solid var(--border)}
+.bar-fill-gasto{position:absolute;top:0;left:0;height:100%;border-radius:7px;transition:width .7s}
+.bar-inner-lbl{position:absolute;right:7px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:600;color:rgba(255,255,255,.75);white-space:nowrap}
+.bar-pct-lbl{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:11px;font-weight:700;width:34px;flex-shrink:0;text-align:right}
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:12px;margin-bottom:8px;border:1px solid}
+.alert-item.over{background:#f8717110;border-color:#f8717133}
+.alert-item.warn{background:#fbbf2410;border-color:#fbbf2433}
+.alert-ico{font-size:19px;flex-shrink:0;margin-top:1px}
+.alert-txt{font-size:13px;flex:1;line-height:1.4}
+.fg{margin-bottom:14px}
+.flbl{font-size:11px;color:var(--muted)!important;font-weight:500;letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;display:block}
+.finp{width:100%;background:var(--surface2)!important;border:1px solid var(--border);border-radius:12px;padding:13px 15px;font-size:16px;color:var(--text)!important;-webkit-text-fill-color:var(--text)!important;font-family:'Calibri','Trebuchet MS',sans-serif;outline:none;transition:border-color .2s}
+.finp:focus{border-color:var(--accent)}
+.finp::placeholder{color:var(--muted);-webkit-text-fill-color:var(--muted)!important}
+select.finp{-webkit-appearance:none;appearance:none}
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px}
+.cat-it{background:var(--surface2)!important;border:1.5px solid var(--border);border-radius:11px;padding:9px 5px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:all .12s}
+.cat-it.on{border-color:var(--accent)!important;background:#7c6af730!important}
+.cat-it .ce{font-size:19px}
+.cat-it .cl{font-size:9px;color:var(--muted);text-align:center;line-height:1.2}
+.tipo-tog{display:flex;gap:8px;margin-bottom:18px}
+.tipo-btn{flex:1;padding:12px;border-radius:12px;background:var(--surface2)!important;border:1.5px solid var(--border);color:var(--muted)!important;-webkit-text-fill-color:var(--muted)!important;font-family:'Calibri','Trebuchet MS',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .12s;text-align:center;-webkit-appearance:none}
+.tipo-btn.desp.on{background:#f8717125!important;border-color:var(--red)!important;color:var(--red)!important;-webkit-text-fill-color:var(--red)!important}
+.tipo-btn.rec.on{background:#34d39925!important;border-color:var(--green)!important;color:var(--green)!important;-webkit-text-fill-color:var(--green)!important}
+.btn-p{width:100%;padding:15px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2))!important;color:#fff!important;-webkit-text-fill-color:#fff!important;font-family:'Calibri','Trebuchet MS',sans-serif;font-weight:700;font-size:15px;border:none;cursor:pointer;transition:all .12s;margin-top:4px;-webkit-appearance:none}
+.btn-sec{background:var(--surface2)!important;border:1px solid var(--border);color:var(--text)!important;-webkit-text-fill-color:var(--text)!important;font-family:'Calibri','Trebuchet MS',sans-serif;font-weight:700;font-size:14px;padding:13px;border-radius:12px;cursor:pointer;width:100%;margin-top:8px;-webkit-appearance:none}
+.btn-exp{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border-radius:12px;background:var(--surface2)!important;border:1px solid var(--border);color:var(--text)!important;-webkit-text-fill-color:var(--text)!important;font-family:'Calibri','Trebuchet MS',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .12s;margin-bottom:10px;-webkit-appearance:none}
+.overlay{display:none;position:fixed;inset:0;background:#00000090!important;z-index:200;align-items:flex-end;backdrop-filter:blur(4px)}
+.overlay.open{display:flex}
+.sheet{background:var(--surface)!important;border-radius:22px 22px 0 0;padding:20px 18px 44px;width:100%;max-height:92dvh;overflow-y:auto;animation:up .28s cubic-bezier(.4,0,.2,1)}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+.handle{width:34px;height:4px;border-radius:99px;background:var(--border);margin:0 auto 18px}
+.sheet-title{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:19px;font-weight:800;margin-bottom:18px}
+.orc-inp{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:14px;color:var(--text);font-family:'Calibri','Trebuchet MS',sans-serif;width:110px;outline:none;text-align:right}
+.bot-nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:var(--surface)!important;border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nav-it{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:all .12s;color:var(--muted)!important}
+.nav-it.on{color:var(--accent)!important}
+.nav-ico{font-size:21px}
+.nav-lbl{font-size:9px;font-weight:600;letter-spacing:.3px;color:inherit!important}
+.toast{position:fixed;top:58px;left:50%;transform:translateX(-50%);padding:10px 18px;border-radius:99px;font-size:13px;font-weight:600;z-index:400;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none}
+.toast.ok{background:var(--green);color:#000}
+.toast.err{background:var(--red);color:#fff}
+.toast.warn{background:var(--yellow);color:#000}
+.toast.show{opacity:1}
+.empty{text-align:center;padding:36px 20px;color:var(--muted)}
+.empty .ei{font-size:44px;margin-bottom:10px}
+.empty .et{font-size:13px;line-height:1.5}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.stat-c{background:var(--surface2);border:1px solid var(--border);border-radius:15px;padding:15px}
+.stat-ico{font-size:20px;margin-bottom:6px}
+.stat-val{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:19px;font-weight:800;margin-bottom:1px}
+.stat-lbl{font-size:10px;color:var(--muted)}
+.divider{height:1px;background:var(--border);margin:14px 0}
+.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:99px;background:var(--surface3);color:var(--muted);border:1px solid var(--border)}
+.tag.cc{background:#60a5fa18;color:var(--blue);border-color:#60a5fa33}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.metas-chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px}
+.mc-title{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:16px;font-weight:800;margin-bottom:10px}
+.mc-legend{display:flex;flex-wrap:wrap;gap:6px;font-size:11px;color:var(--muted);margin-bottom:14px;align-items:center}
+.mc-dot{width:11px;height:11px;border-radius:3px;display:inline-block;flex-shrink:0}
+.mc-bars{display:flex;flex-direction:column;gap:14px}
+.mc-row{display:flex;align-items:center;gap:8px}
+.mc-label{font-size:11px;color:var(--muted);width:88px;flex-shrink:0;text-align:right;line-height:1.25}
+.mc-track{flex:1;height:26px;position:relative;background:var(--border);border-radius:6px;overflow:hidden}
+.mc-seg{position:absolute;top:0;left:0;height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:5px;transition:width .6s}
+.mc-seg.meta-bg{background:var(--surface3);border:1px solid var(--border);z-index:1}
+.mc-seg.realizado{background:#34d399;z-index:3}
+.mc-seg.falta{background:#fb923c;z-index:2;justify-content:flex-start;padding-left:5px}
+.mc-val{font-size:11px;font-weight:800;color:#fff;white-space:nowrap}
+.mc-pct{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:12px;font-weight:800;width:38px;flex-shrink:0;text-align:right}
+</style>
+</head>
+<body>
+<div style="position:fixed;top:0;left:0;right:0;z-index:500;background:#16161d;border-bottom:1px solid #2a2a38;padding:6px 16px;display:flex;justify-content:space-between;align-items:center;font-size:11px">
+  <span style="color:#7c6af7;font-weight:700">&#128156; Família Delira</span>
+  <span id="sync-status" style="color:#60a5fa">&#128260; Iniciando...</span>
+</div>
+<div style="height:30px"></div>
+
+<div class="screen active" id="s-home">
+  <div class="hdr">
+    <div><div class="hdr-title">Olá! &#128075;</div><div class="hdr-sub" id="hdr-hoje">...</div></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div id="hide-btn" onclick="toggleHide()" style="width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px">👁</div>
+      <div class="avatar">D</div>
+    </div>
+  </div>
+  <div class="mode-toggle" id="home-mode-toggle">
+    <div class="mode-btn on" onclick="setModo('cal',this)">&#128197; Mes</div>
+    <div class="mode-btn"   onclick="setModo('cc',this)">&#128179; Cartao</div>
+    <div class="mode-btn"   onclick="setModoExt('ytd',this)">&#128197; YTD</div>
+    <div class="mode-btn"   onclick="setModoExt('mat',this)">&#128467; MAT</div>
+  </div>
+  <div class="per-nav">
+    <div class="per-btn" onclick="perAnt()">&#8249;</div>
+    <div class="per-txt" id="per-home-lbl">...</div>
+    <div class="per-btn" onclick="perPrx()">&#8250;</div>
+  </div>
+  <div id="home-cal-area">
+    <div class="bal-card">
+      <div class="bal-lbl">Saldo do periodo</div>
+      <div class="bal-val" id="h-saldo">R$ 0,00</div>
+      <div class="bal-row">
+        <div class="bal-mini"><div class="bal-mini-lbl">Receitas</div><div class="bal-mini-val g" id="h-rec">R$ 0</div></div>
+        <div class="bal-mini"><div class="bal-mini-lbl">Despesas</div><div class="bal-mini-val r" id="h-desp">R$ 0</div></div>
+      </div>
+    </div>
+  </div>
+  <div id="home-cc-area" style="display:none">
+    <div class="card-cc">
+      <div class="cc-row1">
+        <div class="cc-title">&#128179; Fatura do ciclo</div>
+        <div class="cc-chip" id="cc-status-chip">...</div>
+      </div>
+      <div class="cc-fatura-lbl">Total da fatura</div>
+      <div class="cc-fatura-val" id="cc-fatura-val">R$ 0,00</div>
+      <div class="cc-row2">
+        <div class="cc-mini"><div class="cc-mini-lbl">Dias p/ fechar</div><div class="cc-mini-val" id="cc-dias-fechar">...</div></div>
+        <div class="cc-mini"><div class="cc-mini-lbl">Dias p/ vencer</div><div class="cc-mini-val" id="cc-dias-vencer">...</div></div>
+        <div class="cc-mini"><div class="cc-mini-lbl">Projecao final</div><div class="cc-mini-val" id="cc-projecao">...</div></div>
+      </div>
+      <div class="cc-prog-wrap">
+        <div class="cc-prog-lbl"><span>Progresso do ciclo</span><span id="cc-prog-pct">0%</span></div>
+        <div class="cc-prog-bg"><div class="cc-prog-fill" id="cc-prog-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="quick">
+    <div class="qbtn" onclick="openLancModal('despesa')"><span class="qi">💸</span><span>Despesa</span></div>
+    <div class="qbtn" onclick="openLancModal('receita')"><span class="qi">&#128176;</span><span>Receita</span></div>
+    <div class="qbtn" onclick="openMetaModal()"><span class="qi">&#127919;</span><span>Meta</span></div>
+    <div class="qbtn" onclick="exportCSV()"><span class="qi">&#128228;</span><span>Exportar</span></div>
+  </div>
+  <div class="slbl">Ultimos lancamentos</div>
+  <div class="card" id="h-recentes"></div>
+</div>
+
+<div class="screen" id="s-lanc">
+  <div class="hdr"><div><div class="hdr-title">Lancamentos</div><div class="hdr-sub" id="mes-lanc-sub">...</div></div></div>
+  <div class="mode-toggle" id="lanc-mode-toggle">
+    <div class="mode-btn on" onclick="setModo('cal',this)">&#128197; Mes</div>
+    <div class="mode-btn"   onclick="setModo('cc',this)">&#128179; Cartao</div>
+    <div class="mode-btn"   onclick="setModoExt('ytd',this)">&#128197; YTD</div>
+    <div class="mode-btn"   onclick="setModoExt('mat',this)">&#128467; MAT</div>
+  </div>
+  <div class="filter-row" id="filter-tipo">
+    <div class="chip on" onclick="setFiltro('todos',this)">Todos</div>
+    <div class="chip" onclick="setFiltro('despesa',this)">&#128328; Despesas</div>
+    <div class="chip" onclick="setFiltro('receita',this)">&#128176; Receitas</div>
+    <div class="chip" onclick="setFiltro('cartao',this)">&#128179; Cartao</div>
+  </div>
+  <div class="filter-row" id="filter-cat" style="margin-top:-8px">
+    <div class="chip on" onclick="setCatFiltro('',this)">Todas as categorias</div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+    <div id="sort-btn" onclick="toggleOrdem()" style="display:inline-flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:5px 12px;font-size:12px;color:var(--muted);cursor:pointer">
+      <span id="sort-ico">🕐</span><span id="sort-lbl">Mais recente</span>
+    </div>
+  </div>
+  <div id="lanc-list"></div>
+</div>
+
+<div class="screen" id="s-orc">
+  <div class="hdr">
+    <div><div class="hdr-title">Orcamento</div><div class="hdr-sub" id="mes-orc-sub">...</div></div>
+    <div style="font-size:13px;color:var(--accent);cursor:pointer;font-weight:600;padding-top:6px" onclick="openEditOrc()">&#9999;&#65039; Editar</div>
+  </div>
+  <div class="mode-toggle" id="orc-mode-toggle">
+    <div class="mode-btn on" onclick="setModo('cal',this)">&#128197; Mes</div>
+    <div class="mode-btn"   onclick="setModo('cc',this)">&#128179; Cartao</div>
+    <div class="mode-btn"   onclick="setModoExt('ytd',this)">&#128197; YTD</div>
+    <div class="mode-btn"   onclick="setModoExt('mat',this)">&#128467; MAT</div>
+  </div>
+  <div id="orc-alerts"></div>
+  <div class="slbl" style="margin-bottom:14px">Gasto vs Orcamento</div>
+  <div id="chart-area"></div>
+  <div class="divider"></div>
+  <div class="slbl">Detalhe por categoria</div>
+  <div id="orc-cats"></div>
+</div>
+
+<div class="screen" id="s-metas">
+  <div class="hdr"><div><div class="hdr-title">Metas</div><div class="hdr-sub">Acompanhamento pessoal</div></div></div>
+  <div class="mode-toggle" id="metas-view-toggle" style="margin-bottom:16px">
+    <div class="mode-btn on" onclick="setMetasView('mes',this)">&#128197; Este mes</div>
+    <div class="mode-btn"    onclick="setMetasView('ano',this)">&#128467;&#65039; Este ano</div>
+  </div>
+  <div id="metas-chart"></div>
+  <div class="divider"></div>
+  <div class="slbl" style="margin-bottom:8px">Metas financeiras</div>
+  <div id="metas-fin-list"></div>
+</div>
+
+<div class="screen" id="s-rel">
+  <div class="hdr"><div><div class="hdr-title">Relatorio</div><div class="hdr-sub" id="mes-rel-sub">...</div></div></div>
+  <div class="mode-toggle" id="rel-mode-toggle">
+    <div class="mode-btn on" onclick="setModo('cal',this)">&#128197; Mes</div>
+    <div class="mode-btn"   onclick="setModo('cc',this)">&#128179; Cartao</div>
+    <div class="mode-btn"   onclick="setModoExt('ytd',this)">&#128197; YTD</div>
+    <div class="mode-btn"   onclick="setModoExt('mat',this)">&#128467; MAT</div>
+  </div>
+  <div class="stats-grid" id="rel-stats"></div>
+  <div class="slbl" style="margin-bottom:12px">Despesas por categoria</div>
+  <div class="card" id="rel-cats"></div>
+  <div class="divider"></div>
+  <div class="slbl" style="margin-bottom:12px">Regra 50-30-20</div>
+  <div id="rel-502030"></div>
+  <div class="divider"></div>
+  <div class="slbl" style="margin-bottom:12px">Acumulados</div>
+  <div id="rel-acumulados"></div>
+  <div class="divider"></div>
+  <div class="slbl" style="margin-bottom:10px">Exportar dados</div>
+  <button class="btn-exp" onclick="exportCSV()">&#128228; Exportar CSV do periodo</button>
+  <button class="btn-exp" onclick="exportCSVTudo()">&#128230; Exportar tudo</button>
+</div>
+
+<nav class="bot-nav">
+  <div class="nav-it on" onclick="navTo('home',this)"><span class="nav-ico">&#127968;</span><span class="nav-lbl">Inicio</span></div>
+  <div class="nav-it"    onclick="navTo('lanc',this)"><span class="nav-ico">&#128203;</span><span class="nav-lbl">Lancamentos</span></div>
+  <div class="nav-it"    onclick="navTo('orc',this)"><span class="nav-ico">&#128202;</span><span class="nav-lbl">Orcamento</span></div>
+  <div class="nav-it"    onclick="navTo('metas',this)"><span class="nav-ico">&#127919;</span><span class="nav-lbl">Metas</span></div>
+  <div class="nav-it"    onclick="navTo('rel',this)"><span class="nav-ico">&#128200;</span><span class="nav-lbl">Relatorio</span></div>
+</nav>
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="modal-lanc">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="sheet-title">Novo Lancamento</div>
+    <div class="tipo-tog">
+      <div class="tipo-btn desp on" id="tb-desp" onclick="setTipo('despesa')">&#128328; Despesa</div>
+      <div class="tipo-btn rec"     id="tb-rec"  onclick="setTipo('receita')">&#128176; Receita</div>
+    </div>
+    <div class="fg"><label class="flbl">Valor (R$)</label><input class="finp" type="text" inputmode="decimal" placeholder="0,00" id="f-val" autocomplete="off"></div>
+    <div class="fg"><label class="flbl">Descricao</label><input class="finp" type="text" placeholder="Ex: Conta de luz, Salario..." id="f-desc"></div>
+    <div class="fg" id="f-cat-wrap"><label class="flbl">Categoria</label><div class="cat-grid" id="cat-grid"></div></div>
+    <div class="fg">
+      <label class="flbl">Forma de Pagamento</label>
+      <select class="finp" id="f-pgto" onchange="toggleParcelas(this.value)">
+        <option value="PIX/boleto">PIX / Boleto</option>
+        <option value="Cartão">&#128179; Cartao de credito</option>
+        <option value="Debito">Debito</option>
+        <option value="Dinheiro">Dinheiro</option>
+        <option value="Outro">Outro</option>
+      </select>
+    </div>
+    <div class="fg" id="f-parcelas-wrap" style="display:none">
+      <label class="flbl">Parcelado em quantas vezes?</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input class="finp" type="text" inputmode="numeric" id="f-parcelas" placeholder="1" style="width:90px;text-align:center;font-size:22px;font-weight:800" value="1">
+        <span style="font-size:13px;color:var(--muted);line-height:1.5">vezes<br>Uma parcela por mes</span>
+      </div>
+    </div>
+    <div class="fg"><label class="flbl">Data</label><input class="finp" type="date" id="f-data"></div>
+    <button class="btn-p" onclick="saveLanc()">Salvar lancamento</button>
+  </div>
+</div>
+
+<div class="overlay" id="modal-meta">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="sheet-title">Nova Meta Financeira</div>
+    <div class="fg"><label class="flbl">Nome</label><input class="finp" type="text" placeholder="Ex: Viagem, Reserva..." id="m-nome"></div>
+    <div class="fg"><label class="flbl">Valor alvo (R$)</label><input class="finp" type="text" inputmode="decimal" placeholder="0,00" id="m-alvo" autocomplete="off"></div>
+    <div class="fg"><label class="flbl">Ja tenho guardado (R$)</label><input class="finp" type="text" inputmode="decimal" placeholder="0,00" id="m-atual" autocomplete="off"></div>
+    <div class="fg"><label class="flbl">Icone</label><div class="cat-grid" id="meta-emoji-grid"></div></div>
+    <button class="btn-p" onclick="saveMeta()">Salvar meta</button>
+  </div>
+</div>
+
+<div class="overlay" id="modal-orc">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="sheet-title">Definir Orcamentos</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5">Valor mensal por categoria.</p>
+    <div id="orc-edit-list"></div>
+    <button class="btn-p" onclick="saveOrc()">Salvar orcamentos</button>
+    <button class="btn-sec" onclick="closeModal('modal-orc')">Cancelar</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const _DADOS_INICIAIS = [{"id":1000000000000,"tipo":"despesa","valor":135.58,"desc":"combustível","data":"2026-01-08","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000001,"tipo":"despesa","valor":150.0,"desc":"ANIMALIA 2/2","data":"2026-01-08","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000002,"tipo":"despesa","valor":100.0,"desc":"renner 1/1","data":"2026-01-08","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000003,"tipo":"despesa","valor":211.94,"desc":"FILTRO DE AGUA 2/3","data":"2026-01-08","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000004,"tipo":"despesa","valor":94.76,"desc":"mestre churrasqueiro 2/10","data":"2026-01-08","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000005,"tipo":"despesa","valor":289.0,"desc":"revisão kicks","data":"2026-01-08","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000006,"tipo":"despesa","valor":262.36,"desc":"fundamentum matricula 5/6","data":"2026-01-08","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000007,"tipo":"despesa","valor":900.0,"desc":"thema vidro 6/6 ufaaa","data":"2026-01-08","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000008,"tipo":"despesa","valor":297.0,"desc":"chef gourmet 10/12","data":"2026-01-08","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000009,"tipo":"despesa","valor":14.86,"desc":"meu planner","data":"2026-01-08","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000010,"tipo":"despesa","valor":52.5,"desc":"anuidade diferenciada cartão","data":"2026-01-08","pgto":"PIX/boleto","cat":"Outro"},{"id":1000000000011,"tipo":"despesa","valor":207.47,"desc":"crocs 2/2","data":"2026-01-08","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000012,"tipo":"despesa","valor":277.22,"desc":"papelaria rowell 2/2","data":"2026-01-08","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000013,"tipo":"despesa","valor":111.4,"desc":"oticas carol 6/10","data":"2026-01-08","pgto":"PIX/boleto","cat":"Saúde"},{"id":1000000000014,"tipo":"despesa","valor":50.09,"desc":"mercado pago ebazarcomp","data":"2026-01-08","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000015,"tipo":"despesa","valor":124.19,"desc":"kiwify*consultori 10/12","data":"2026-01-08","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000016,"tipo":"despesa","valor":46.9,"desc":"Globo 12/12","data":"2026-01-08","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000017,"tipo":"despesa","valor":50.0,"desc":"PIX Marcio Greik","data":"2026-01-08","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000018,"tipo":"despesa","valor":380.0,"desc":"Hotel Brendha","data":"2026-01-08","pgto":"PIX/boleto","cat":"Godofredo"},{"id":1000000000019,"tipo":"despesa","valor":422.0,"desc":"michigan","data":"2026-01-08","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000020,"tipo":"despesa","valor":35.0,"desc":"PIX isabela tordin","data":"2026-01-08","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000021,"tipo":"despesa","valor":5.0,"desc":"PIX railan nascimento","data":"2026-01-08","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000022,"tipo":"despesa","valor":34.14,"desc":"Padaria","data":"2026-01-09","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000023,"tipo":"despesa","valor":739.47,"desc":"Condomínio","data":"2026-01-09","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000024,"tipo":"despesa","valor":2767.45,"desc":"escola do ben","data":"2026-01-09","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000025,"tipo":"despesa","valor":70.0,"desc":"Diferença de vale presente","data":"2026-01-09","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000026,"tipo":"despesa","valor":54.8,"desc":"livros","data":"2026-01-09","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000027,"tipo":"despesa","valor":9.0,"desc":"Sorvete","data":"2026-01-09","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000028,"tipo":"despesa","valor":335.84,"desc":"mercado e recepção compadres","data":"2026-01-09","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000029,"tipo":"despesa","valor":34.14,"desc":"nova flora","data":"2026-01-09","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000030,"tipo":"despesa","valor":13.0,"desc":"adega dubeer","data":"2026-01-10","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000031,"tipo":"despesa","valor":13.74,"desc":"padaria","data":"2026-01-10","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000032,"tipo":"despesa","valor":56.0,"desc":"Caixa organizadora Natal","data":"2026-01-10","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000033,"tipo":"despesa","valor":135.0,"desc":"compras Roldão","data":"2026-01-10","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000034,"tipo":"despesa","valor":130.73,"desc":"churras e breja","data":"2026-01-10","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000035,"tipo":"despesa","valor":120.0,"desc":"Corte cabelo","data":"2026-01-10","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000036,"tipo":"despesa","valor":38.0,"desc":"poke","data":"2026-01-10","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000037,"tipo":"despesa","valor":20.9,"desc":"netflix","data":"2026-01-10","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000038,"tipo":"despesa","valor":51.62,"desc":"Café da manhã","data":"2026-01-11","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000039,"tipo":"despesa","valor":42.99,"desc":"Havaianas","data":"2026-01-11","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000040,"tipo":"despesa","valor":99.14,"desc":"mercado domingo","data":"2026-01-11","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000041,"tipo":"despesa","valor":47.0,"desc":"Farmácia","data":"2026-01-11","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000042,"tipo":"despesa","valor":89.9,"desc":"liberty","data":"2026-01-11","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000043,"tipo":"despesa","valor":16.0,"desc":"Sorvete","data":"2026-01-11","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000044,"tipo":"despesa","valor":364.37,"desc":"Produto de limpeza","data":"2026-01-12","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000045,"tipo":"despesa","valor":180.08,"desc":"1/2 condomínio água doce","data":"2026-01-12","pgto":"PIX/boleto","cat":"Investimentos"},{"id":1000000000046,"tipo":"despesa","valor":238.9,"desc":"material para reforma res água doce 1/3","data":"2026-01-12","pgto":"PIX/boleto","cat":"Investimentos"},{"id":1000000000047,"tipo":"despesa","valor":20.0,"desc":"tag itaú envio","data":"2026-01-12","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000048,"tipo":"despesa","valor":20.0,"desc":"tag 2 itaú envio","data":"2026-01-12","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000049,"tipo":"despesa","valor":30.0,"desc":"primeira recarga tag itau","data":"2026-01-12","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000050,"tipo":"despesa","valor":30.0,"desc":"primeira recarga tag 2 itau","data":"2026-01-12","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000051,"tipo":"despesa","valor":46.0,"desc":"Mercado","data":"2026-01-13","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000052,"tipo":"despesa","valor":85.09,"desc":"Ifood","data":"2026-01-13","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000053,"tipo":"despesa","valor":4.24,"desc":"Padaria","data":"2026-01-14","pgto":"PIX/boleto","cat":"Outro"},{"id":1000000000054,"tipo":"despesa","valor":37.0,"desc":"almoço na sede","data":"2026-01-14","pgto":"PIX/boleto","cat":"Desp. Trabalho"},{"id":1000000000055,"tipo":"despesa","valor":70.0,"desc":"treino Carlão","data":"2026-01-14","pgto":"PIX/boleto","cat":"Saúde"},{"id":1000000000056,"tipo":"despesa","valor":88.0,"desc":"Ifood","data":"2026-01-15","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000057,"tipo":"despesa","valor":120.0,"desc":"Fantasia minha","data":"2026-01-15","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000058,"tipo":"despesa","valor":39.0,"desc":"Meia","data":"2026-01-15","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000059,"tipo":"despesa","valor":115.0,"desc":"Bota","data":"2026-01-15","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000060,"tipo":"despesa","valor":133.34,"desc":"radiologia 1/3","data":"2026-01-15","pgto":"PIX/boleto","cat":"Saúde"},{"id":1000000000061,"tipo":"despesa","valor":53.09,"desc":"Ração","data":"2026-01-15","pgto":"PIX/boleto","cat":"Godofredo"},{"id":1000000000062,"tipo":"despesa","valor":132.8,"desc":"desktop","data":"2026-01-15","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000063,"tipo":"despesa","valor":980.0,"desc":"marcenaria res água doce (1/2 com Hemer)","data":"2026-01-15","pgto":"PIX/boleto","cat":"Investimentos"},{"id":1000000000064,"tipo":"despesa","valor":1696.44,"desc":"financiamento jan26","data":"2026-01-15","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000065,"tipo":"despesa","valor":305.45,"desc":"claro celular","data":"2026-01-15","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000066,"tipo":"despesa","valor":21.48,"desc":"seguro cartão","data":"2026-01-15","pgto":"PIX/boleto","cat":"Outro"},{"id":1000000000067,"tipo":"despesa","valor":320.0,"desc":"Boleto inegociável","data":"2026-01-16","pgto":"PIX/boleto","cat":"Investimentos"},{"id":1000000000068,"tipo":"despesa","valor":220.0,"desc":"Chopp Marisa","data":"2026-01-16","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000069,"tipo":"despesa","valor":220.0,"desc":"Chopp Do","data":"2026-01-16","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000070,"tipo":"despesa","valor":450.0,"desc":"Casa Carnaval","data":"2026-01-16","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000071,"tipo":"despesa","valor":100.0,"desc":"Caixinha Ano Novo","data":"2026-01-16","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000072,"tipo":"despesa","valor":45.0,"desc":"Material escolar","data":"2026-01-16","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000073,"tipo":"despesa","valor":323.0,"desc":"Mercado","data":"2026-01-16","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000074,"tipo":"despesa","valor":37.0,"desc":"refeição na sede","data":"2026-01-16","pgto":"PIX/boleto","cat":"Desp. Trabalho"},{"id":1000000000075,"tipo":"despesa","valor":46.0,"desc":"Fantasia","data":"2026-01-16","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000076,"tipo":"despesa","valor":200.0,"desc":"fucking fantasia","data":"2026-01-16","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000077,"tipo":"despesa","valor":72.88,"desc":"maravilhas do lar","data":"2026-01-17","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000078,"tipo":"despesa","valor":38.4,"desc":"Sorvete anomalia","data":"2026-01-17","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000079,"tipo":"despesa","valor":60.0,"desc":"Carrinho anomalia","data":"2026-01-17","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000080,"tipo":"despesa","valor":70.0,"desc":"Estacionamento  animalia","data":"2026-01-17","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000081,"tipo":"despesa","valor":62.07,"desc":"Mercado","data":"2026-01-18","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000082,"tipo":"despesa","valor":59.46,"desc":"boa","data":"2026-01-18","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000083,"tipo":"despesa","valor":79.41,"desc":"flex","data":"2026-01-19","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000084,"tipo":"despesa","valor":195.49,"desc":"Pic nic e lancheira","data":"2026-01-20","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000085,"tipo":"despesa","valor":37.0,"desc":"refeição na sede","data":"2026-01-20","pgto":"PIX/boleto","cat":"Desp. Trabalho"},{"id":1000000000086,"tipo":"despesa","valor":45.0,"desc":"cópias de chaves para apto","data":"2026-01-20","pgto":"PIX/boleto","cat":"Investimentos"},{"id":1000000000087,"tipo":"despesa","valor":517.5,"desc":"última parcela reforma pintura res água doce","data":"2026-01-21","pgto":"PIX/boleto","cat":"Investimentos"},{"id":1000000000088,"tipo":"despesa","valor":80.0,"desc":"Bateria da chave do carro","data":"2026-01-21","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000089,"tipo":"despesa","valor":78.8,"desc":"Strogonoff para o reizinho","data":"2026-01-21","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000090,"tipo":"despesa","valor":193.23,"desc":"material didático Fundamentum 1/12","data":"2026-01-21","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000091,"tipo":"despesa","valor":32.99,"desc":"Fantasia Bento","data":"2026-01-22","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000092,"tipo":"despesa","valor":41.8,"desc":"Confiance medicina 1/5","data":"2026-01-22","pgto":"Cartão","cat":"Saúde"},{"id":1000000000093,"tipo":"despesa","valor":41.8,"desc":"confiance medicina 1/4","data":"2026-01-22","pgto":"PIX/boleto","cat":"Saúde"},{"id":1000000000094,"tipo":"despesa","valor":52.87,"desc":"bacon, calabresa e pipoca","data":"2026-01-22","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000095,"tipo":"despesa","valor":37.0,"desc":"refeição na sede","data":"2026-01-23","pgto":"PIX/boleto","cat":"Desp. Trabalho"},{"id":1000000000096,"tipo":"despesa","valor":100.0,"desc":"pix para Luiz Gustavo","data":"2026-01-23","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000097,"tipo":"despesa","valor":34.9,"desc":"papel higiênico","data":"2026-01-23","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000098,"tipo":"despesa","valor":30.29,"desc":"Café da manhã","data":"2026-01-24","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000099,"tipo":"despesa","valor":19.0,"desc":"gelo","data":"2026-01-24","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000100,"tipo":"despesa","valor":111.85,"desc":"Mercado","data":"2026-01-24","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000101,"tipo":"despesa","valor":25.49,"desc":"Mercado","data":"2026-01-24","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000102,"tipo":"despesa","valor":146.25,"desc":"Almoço","data":"2026-01-25","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000103,"tipo":"despesa","valor":100.0,"desc":"pix Dessa","data":"2026-01-25","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000104,"tipo":"despesa","valor":129.2,"desc":"breja e gelo","data":"2026-01-25","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000105,"tipo":"despesa","valor":597.48,"desc":"Mercado","data":"2026-01-26","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000106,"tipo":"despesa","valor":151.96,"desc":"IPTU 1/12","data":"2026-01-26","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000107,"tipo":"despesa","valor":9.94,"desc":"Uber para buscar Kicks","data":"2026-01-27","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000108,"tipo":"despesa","valor":252.25,"desc":"conserto Kicks 1/4","data":"2026-01-27","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000109,"tipo":"despesa","valor":26.98,"desc":"Farmácia","data":"2026-01-28","pgto":"PIX/boleto","cat":"Saúde"},{"id":1000000000110,"tipo":"despesa","valor":44.96,"desc":"Toalhas para escola","data":"2026-01-28","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000111,"tipo":"despesa","valor":49.37,"desc":"Mercado","data":"2026-01-28","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000112,"tipo":"despesa","valor":91.73,"desc":"seguro residencial 1/8","data":"2026-01-28","pgto":"Cartão","cat":"Moradia"},{"id":1000000000113,"tipo":"despesa","valor":54.0,"desc":"Jantar meninas","data":"2026-01-28","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000114,"tipo":"despesa","valor":50.0,"desc":"Unha","data":"2026-01-29","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000115,"tipo":"despesa","valor":71.89,"desc":"Material escola","data":"2026-01-30","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000116,"tipo":"despesa","valor":118.19,"desc":"Mercado","data":"2026-01-31","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000117,"tipo":"despesa","valor":45.0,"desc":"Unha","data":"2026-01-31","pgto":"PIX/boleto","cat":"Outro"},{"id":1000000000118,"tipo":"despesa","valor":276.1,"desc":"Mercado","data":"2026-02-01","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000119,"tipo":"despesa","valor":34.0,"desc":"PIX Deto 02/02","data":"2026-02-02","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000120,"tipo":"despesa","valor":40.99,"desc":"Spotify","data":"2026-02-02","pgto":"PIX/boleto","cat":"Outro"},{"id":1000000000121,"tipo":"despesa","valor":316.19,"desc":"fds dos cumpadis","data":"2026-02-02","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000122,"tipo":"despesa","valor":46.0,"desc":"lavanderia avance","data":"2026-02-02","pgto":"PIX/boleto","cat":"Desp. Trabalho"},{"id":1000000000123,"tipo":"despesa","valor":6.5,"desc":"chiclete","data":"2026-02-02","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000124,"tipo":"despesa","valor":70.0,"desc":"Lampa e troca de lâmpada","data":"2026-02-03","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000125,"tipo":"despesa","valor":29.9,"desc":"livro o mesmo de sempre","data":"2026-02-03","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000126,"tipo":"despesa","valor":50.0,"desc":"Frutas","data":"2026-02-04","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000127,"tipo":"despesa","valor":175.0,"desc":"pix emerson 05/02","data":"2026-02-05","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000128,"tipo":"despesa","valor":40.0,"desc":"Unha","data":"2026-02-05","pgto":"PIX/boleto","cat":"Outro"},{"id":1000000000129,"tipo":"despesa","valor":18.0,"desc":"Lanche na rua","data":"2026-02-05","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000130,"tipo":"despesa","valor":39.99,"desc":"chinelo","data":"2026-02-06","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000131,"tipo":"despesa","valor":43.0,"desc":"Café da manhã","data":"2026-02-07","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000132,"tipo":"despesa","valor":130.0,"desc":"vistoria","data":"2026-02-07","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000133,"tipo":"despesa","valor":30.19,"desc":"ração","data":"2026-02-07","pgto":"PIX/boleto","cat":"Godofredo"},{"id":1000000000134,"tipo":"despesa","valor":55.0,"desc":"banho","data":"2026-02-07","pgto":"PIX/boleto","cat":"Godofredo"},{"id":1000000000135,"tipo":"despesa","valor":55.0,"desc":"Sobrancelha","data":"2026-02-07","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000136,"tipo":"despesa","valor":44.38,"desc":"Café da manhã","data":"2026-02-08","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000137,"tipo":"despesa","valor":290.54,"desc":"sabores","data":"2026-02-08","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000138,"tipo":"despesa","valor":8.49,"desc":"fartura espinafre","data":"2026-02-08","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000139,"tipo":"despesa","valor":94.76,"desc":"mestre churrasqueiro 3/10","data":"2026-02-08","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000140,"tipo":"despesa","valor":297.0,"desc":"chef gourmet 11/12","data":"2026-02-08","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000141,"tipo":"despesa","valor":111.4,"desc":"oticas carol 7/10","data":"2026-02-08","pgto":"Cartão","cat":"Saúde"},{"id":1000000000142,"tipo":"despesa","valor":50.09,"desc":"mercado pago ebazarcomp 09/11","data":"2026-02-08","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000143,"tipo":"despesa","valor":124.19,"desc":"kiwify*consultori 11/12","data":"2026-02-08","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000144,"tipo":"despesa","valor":100.0,"desc":"pix Maria Jose Avelar","data":"2026-02-09","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000145,"tipo":"despesa","valor":21.48,"desc":"seguro cartão","data":"2026-02-09","pgto":"PIX/boleto","cat":"Outro"},{"id":1000000000146,"tipo":"despesa","valor":4.0,"desc":"Adereco escola Bento","data":"2026-02-09","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000147,"tipo":"despesa","valor":106.33,"desc":"Mercado","data":"2026-02-09","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000148,"tipo":"despesa","valor":230.0,"desc":"cautelar","data":"2026-02-09","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000149,"tipo":"despesa","valor":164.74,"desc":"Gasolina","data":"2026-02-09","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000150,"tipo":"despesa","valor":153.0,"desc":"Cantina","data":"2026-02-09","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000151,"tipo":"despesa","valor":146.0,"desc":"Moletom","data":"2026-02-10","pgto":"Cartão","cat":"Educação"},{"id":1000000000152,"tipo":"despesa","valor":452.05,"desc":"sem parar","data":"2026-02-10","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000153,"tipo":"despesa","valor":37.0,"desc":"refeição na sede","data":"2026-02-10","pgto":"Cartão","cat":"Desp. Trabalho"},{"id":1000000000154,"tipo":"despesa","valor":161.8,"desc":"IPTU e condomínio RÉS ÁGUA DOCE","data":"2026-02-10","pgto":"Cartão","cat":"Investimentos"},{"id":1000000000155,"tipo":"despesa","valor":679.67,"desc":"condomínio","data":"2026-02-10","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000156,"tipo":"despesa","valor":2767.45,"desc":"fundamentum","data":"2026-02-10","pgto":"Cartão","cat":"Educação"},{"id":1000000000157,"tipo":"despesa","valor":250.0,"desc":"boleto inegociável","data":"2026-02-10","pgto":"PIX/boleto","cat":"Investimentos"},{"id":1000000000158,"tipo":"despesa","valor":20.9,"desc":"netflix","data":"2026-02-10","pgto":"Cartão","cat":"Moradia"},{"id":1000000000159,"tipo":"despesa","valor":49.09,"desc":"capa Kindle","data":"2026-02-10","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000160,"tipo":"despesa","valor":70.0,"desc":"PETLOVE SAUD*Petl","data":"2026-02-11","pgto":"Cartão","cat":"Godofredo"},{"id":1000000000161,"tipo":"despesa","valor":37.0,"desc":"refeição na sede","data":"2026-02-11","pgto":"Cartão","cat":"Desp. Trabalho"},{"id":1000000000162,"tipo":"despesa","valor":95.53,"desc":"Mercado","data":"2026-02-11","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000163,"tipo":"despesa","valor":268.35,"desc":"IPVA kicks","data":"2026-02-11","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000164,"tipo":"despesa","valor":30.0,"desc":"sal chef Wander","data":"2026-02-11","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000165,"tipo":"despesa","valor":23.28,"desc":"PAY Carto 12/02","data":"2026-02-12","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000166,"tipo":"despesa","valor":70.0,"desc":"Lavagem do carro","data":"2026-02-12","pgto":"Cartão","cat":"Transporte"},{"id":1000000000167,"tipo":"despesa","valor":23.28,"desc":"cartorio","data":"2026-02-12","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000168,"tipo":"despesa","valor":119.73,"desc":"flex","data":"2026-02-12","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000169,"tipo":"despesa","valor":20.4,"desc":"Padaria","data":"2026-02-12","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000170,"tipo":"despesa","valor":31.43,"desc":"livros Ben 1/4","data":"2026-02-12","pgto":"Cartão","cat":"Educação"},{"id":1000000000171,"tipo":"despesa","valor":287.8,"desc":"fisioterapia 1/2","data":"2026-02-13","pgto":"Cartão","cat":"Godofredo"},{"id":1000000000172,"tipo":"despesa","valor":334.28,"desc":"cpfl","data":"2026-02-13","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000173,"tipo":"despesa","valor":305.45,"desc":"claro celular","data":"2026-02-13","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000174,"tipo":"despesa","valor":64.5,"desc":"fabene","data":"2026-02-13","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000175,"tipo":"despesa","valor":1695.7,"desc":"financiamento casa","data":"2026-02-13","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000176,"tipo":"despesa","valor":5.0,"desc":"auto parque estacionamento","data":"2026-02-13","pgto":"Cartão","cat":"Transporte"},{"id":1000000000177,"tipo":"despesa","valor":174.89,"desc":"mercado livre Carla","data":"2026-02-13","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000178,"tipo":"despesa","valor":76.1,"desc":"boa - Carla","data":"2026-02-13","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000179,"tipo":"despesa","valor":129.99,"desc":"desktop","data":"2026-02-13","pgto":"Cartão","cat":"Moradia"},{"id":1000000000180,"tipo":"despesa","valor":370.0,"desc":"jim.com clínica","data":"2026-02-13","pgto":"Cartão","cat":"Saúde"},{"id":1000000000181,"tipo":"despesa","valor":1.99,"desc":"amazon digital","data":"2026-02-13","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000182,"tipo":"despesa","valor":5.89,"desc":"drogasil","data":"2026-02-13","pgto":"Cartão","cat":"Saúde"},{"id":1000000000183,"tipo":"despesa","valor":3.99,"desc":"crazy fantasy","data":"2026-02-13","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000184,"tipo":"despesa","valor":32.03,"desc":"mercado livre ABRAK01/05","data":"2026-02-13","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000185,"tipo":"despesa","valor":83.9,"desc":"pizza prime","data":"2026-02-13","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000186,"tipo":"despesa","valor":16.0,"desc":"coça olé Brasil pizza","data":"2026-02-13","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000187,"tipo":"despesa","valor":50.0,"desc":"Sabor do Sul","data":"2026-02-13","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000188,"tipo":"despesa","valor":41.76,"desc":"biscoitos para viagem","data":"2026-02-13","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000189,"tipo":"despesa","valor":61.84,"desc":"livro princípios ray dalio","data":"2026-02-13","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000190,"tipo":"despesa","valor":66.0,"desc":"Mercado LÍDICE","data":"2026-02-14","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000191,"tipo":"despesa","valor":45.0,"desc":"Lanche","data":"2026-02-14","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000192,"tipo":"despesa","valor":18.17,"desc":"Mercado LÍDICE","data":"2026-02-14","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000193,"tipo":"despesa","valor":26.0,"desc":"Mercea Santo Antonio","data":"2026-02-14","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000194,"tipo":"despesa","valor":40.4,"desc":"Mercea Santo Antonio","data":"2026-02-14","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000195,"tipo":"despesa","valor":43.0,"desc":"pão","data":"2026-02-15","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000196,"tipo":"despesa","valor":257.87,"desc":"multi mais carnaval Lídice","data":"2026-02-15","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000197,"tipo":"despesa","valor":14.67,"desc":"vinagrete de abacaxi","data":"2026-02-15","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000198,"tipo":"despesa","valor":5.2,"desc":"pimentão","data":"2026-02-15","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000199,"tipo":"despesa","valor":133.34,"desc":"radiologia 2/3","data":"2026-02-15","pgto":"Cartão","cat":"Saúde"},{"id":1000000000200,"tipo":"despesa","valor":17.98,"desc":"massa pastel","data":"2026-02-15","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000201,"tipo":"despesa","valor":50.0,"desc":"PIX luiz","data":"2026-02-15","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000202,"tipo":"despesa","valor":29.99,"desc":"vinho","data":"2026-02-16","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000203,"tipo":"despesa","valor":189.59,"desc":"combustível Lídice","data":"2026-02-16","pgto":"Cartão","cat":"Transporte"},{"id":1000000000204,"tipo":"despesa","valor":16.0,"desc":"Agua","data":"2026-02-16","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000205,"tipo":"despesa","valor":161.75,"desc":"cerveja passeio ilha","data":"2026-02-16","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000206,"tipo":"despesa","valor":425.0,"desc":"lancha","data":"2026-02-16","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000207,"tipo":"despesa","valor":425.0,"desc":"lancha","data":"2026-02-16","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000208,"tipo":"despesa","valor":30.0,"desc":"estacionamento angra","data":"2026-02-16","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000209,"tipo":"despesa","valor":57.0,"desc":"Padaria","data":"2026-02-17","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000210,"tipo":"despesa","valor":45.0,"desc":"Mercado","data":"2026-02-17","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000211,"tipo":"despesa","valor":2.6,"desc":"Tomate","data":"2026-02-17","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000212,"tipo":"despesa","valor":6.87,"desc":"Merecido","data":"2026-02-17","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000213,"tipo":"despesa","valor":279.25,"desc":"Peixe","data":"2026-02-17","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000214,"tipo":"despesa","valor":130.0,"desc":"queijo mauro","data":"2026-02-17","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000215,"tipo":"despesa","valor":20.0,"desc":"espuma na rua","data":"2026-02-17","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000216,"tipo":"despesa","valor":4.0,"desc":"Água","data":"2026-02-17","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000217,"tipo":"despesa","valor":23.0,"desc":"Parque","data":"2026-02-17","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000218,"tipo":"despesa","valor":153.35,"desc":"café da manhã volta Lídice","data":"2026-02-18","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000219,"tipo":"despesa","valor":160.0,"desc":"Luciene Da Silva Faria","data":"2026-02-18","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000220,"tipo":"despesa","valor":10.0,"desc":"reembolso camily compras","data":"2026-02-18","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000221,"tipo":"despesa","valor":40.0,"desc":"PIX Agua Na Boca","data":"2026-02-18","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000222,"tipo":"despesa","valor":7.9,"desc":"seg transação protegida","data":"2026-02-18","pgto":"PIX/boleto","cat":"Outro"},{"id":1000000000223,"tipo":"despesa","valor":73.89,"desc":"Mercado Livre","data":"2026-02-18","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000224,"tipo":"despesa","valor":62.99,"desc":"Shopee","data":"2026-02-18","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000225,"tipo":"despesa","valor":8.47,"desc":"Padaria","data":"2026-02-19","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000226,"tipo":"despesa","valor":350.0,"desc":"brendha","data":"2026-02-19","pgto":"PIX/boleto","cat":"Godofredo"},{"id":1000000000227,"tipo":"despesa","valor":57.03,"desc":"Mercado","data":"2026-02-20","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000228,"tipo":"despesa","valor":77.61,"desc":"MercadoLivre Starlumen","data":"2026-02-20","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000229,"tipo":"despesa","valor":90.0,"desc":"cabeleireiro","data":"2026-02-21","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000230,"tipo":"despesa","valor":33.06,"desc":"boa","data":"2026-02-21","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000231,"tipo":"despesa","valor":45.37,"desc":"MP*MERCADOLIVRE","data":"2026-02-21","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000232,"tipo":"despesa","valor":185.98,"desc":"fds","data":"2026-02-21","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000233,"tipo":"despesa","valor":193.23,"desc":"material didático Fundamentum 2/12","data":"2026-02-21","pgto":"Cartão","cat":"Educação"},{"id":1000000000234,"tipo":"despesa","valor":50.0,"desc":"dízimo","data":"2026-02-22","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000235,"tipo":"despesa","valor":41.8,"desc":"Confiance medicina 2/5","data":"2026-02-22","pgto":"Cartão","cat":"Saúde"},{"id":1000000000236,"tipo":"despesa","valor":55.53,"desc":"Ração e pipeta","data":"2026-02-22","pgto":"Cartão","cat":"Godofredo"},{"id":1000000000237,"tipo":"despesa","valor":9.99,"desc":"Dipirona","data":"2026-02-22","pgto":"Cartão","cat":"Saúde"},{"id":1000000000238,"tipo":"despesa","valor":32.03,"desc":"mercado livre ABRAK02/05","data":"2026-02-22","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000239,"tipo":"despesa","valor":10.0,"desc":"Auto parque Valinhos","data":"2026-02-22","pgto":"PIX/boleto","cat":"Transporte"},{"id":1000000000240,"tipo":"despesa","valor":25.0,"desc":"PIX Jessica Nascimento Lima","data":"2026-02-23","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000241,"tipo":"despesa","valor":86.23,"desc":"rio mais aguas","data":"2026-02-23","pgto":"PIX/boleto","cat":"Pais"},{"id":1000000000242,"tipo":"despesa","valor":7.99,"desc":"RAIA DROGASIL SA","data":"2026-02-23","pgto":"Cartão","cat":"Saúde"},{"id":1000000000243,"tipo":"despesa","valor":10.0,"desc":"Bala","data":"2026-02-23","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000244,"tipo":"despesa","valor":28.98,"desc":"Produto CL","data":"2026-02-23","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000245,"tipo":"despesa","valor":215.19,"desc":"Mercado","data":"2026-02-23","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000246,"tipo":"despesa","valor":9.78,"desc":"light","data":"2026-02-24","pgto":"PIX/boleto","cat":"Pais"},{"id":1000000000247,"tipo":"despesa","valor":320.0,"desc":"Limpeza de ar","data":"2026-02-24","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000248,"tipo":"despesa","valor":50.0,"desc":"Banho","data":"2026-02-24","pgto":"Cartão","cat":"Godofredo"},{"id":1000000000249,"tipo":"despesa","valor":29.6,"desc":"Complemento de vale presente","data":"2026-02-24","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000250,"tipo":"despesa","valor":118.0,"desc":"Unha","data":"2026-02-24","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000251,"tipo":"despesa","valor":35.36,"desc":"Mercado","data":"2026-02-24","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000252,"tipo":"despesa","valor":26.48,"desc":"Desejo do Bento","data":"2026-02-24","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000253,"tipo":"despesa","valor":118.0,"desc":"Mercado Livre","data":"2026-02-24","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000254,"tipo":"despesa","valor":79.74,"desc":"Almoço","data":"2026-02-26","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000255,"tipo":"despesa","valor":433.0,"desc":"Assessoria isenção 1/3","data":"2026-02-26","pgto":"Cartão","cat":"Transporte"},{"id":1000000000256,"tipo":"despesa","valor":259.0,"desc":"Gasolina","data":"2026-02-27","pgto":"Cartão","cat":"Transporte"},{"id":1000000000257,"tipo":"despesa","valor":236.5,"desc":"Gastos hotel foz","data":"2026-02-27","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000258,"tipo":"despesa","valor":149.0,"desc":"fisio godofredo","data":"2026-02-27","pgto":"Cartão","cat":"Godofredo"},{"id":1000000000259,"tipo":"despesa","valor":172.0,"desc":"chopp sitio","data":"2026-02-27","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000260,"tipo":"despesa","valor":461.38,"desc":"michigan","data":"2026-02-27","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000261,"tipo":"despesa","valor":136.5,"desc":"fabene","data":"2026-02-27","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000262,"tipo":"despesa","valor":159.62,"desc":"IPTU fev atrasado","data":"2026-02-27","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000263,"tipo":"despesa","valor":149.0,"desc":"fisioterapia","data":"2026-02-27","pgto":"Cartão","cat":"Godofredo"},{"id":1000000000264,"tipo":"despesa","valor":323.67,"desc":"Coisas para sitio","data":"2026-02-27","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000265,"tipo":"despesa","valor":252.25,"desc":"conserto Kicks 2/4","data":"2026-02-27","pgto":"Cartão","cat":"Transporte"},{"id":1000000000266,"tipo":"despesa","valor":107.98,"desc":"Aciclovir e protetor","data":"2026-02-27","pgto":"Cartão","cat":"Saúde"},{"id":1000000000267,"tipo":"despesa","valor":91.73,"desc":"seguro residencial 2/8","data":"2026-02-28","pgto":"Cartão","cat":"Moradia"},{"id":1000000000268,"tipo":"despesa","valor":67.42,"desc":"Boa","data":"2026-03-01","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000269,"tipo":"despesa","valor":150.0,"desc":"Brendha","data":"2026-03-02","pgto":"PIX/boleto","cat":"Godofredo"},{"id":1000000000270,"tipo":"despesa","valor":89.25,"desc":"Chopp sítio","data":"2026-03-02","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000271,"tipo":"despesa","valor":31.9,"desc":"Fonte carregador","data":"2026-03-02","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000272,"tipo":"despesa","valor":41.0,"desc":"Porco assado","data":"2026-03-02","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000273,"tipo":"despesa","valor":31.98,"desc":"Uber catavento","data":"2026-03-03","pgto":"Cartão","cat":"Transporte"},{"id":1000000000274,"tipo":"despesa","valor":17.97,"desc":"Uber catavento-hotel","data":"2026-03-03","pgto":"Cartão","cat":"Transporte"},{"id":1000000000275,"tipo":"despesa","valor":19.5,"desc":"Águas hotel","data":"2026-03-03","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000276,"tipo":"despesa","valor":28.0,"desc":"Granja Ari","data":"2026-03-03","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000277,"tipo":"despesa","valor":11.14,"desc":"Enterogermina","data":"2026-03-03","pgto":"Cartão","cat":"Saúde"},{"id":1000000000278,"tipo":"despesa","valor":566.21,"desc":"Sabores","data":"2026-03-03","pgto":"PIX/boleto","cat":"Supermercado"},{"id":1000000000279,"tipo":"despesa","valor":5.0,"desc":"Estacionamento","data":"2026-03-04","pgto":"Cartão","cat":"Transporte"},{"id":1000000000280,"tipo":"despesa","valor":15.95,"desc":"Uber escola-arteterapia","data":"2026-03-04","pgto":"Cartão","cat":"Transporte"},{"id":1000000000281,"tipo":"despesa","valor":9.98,"desc":"Uber arte terapia - casa","data":"2026-03-04","pgto":"Cartão","cat":"Transporte"},{"id":1000000000282,"tipo":"despesa","valor":30.0,"desc":"Sal chef Wander","data":"2026-03-04","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000283,"tipo":"despesa","valor":226.9,"desc":"MercadoLivre","data":"2026-03-04","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000284,"tipo":"despesa","valor":800.0,"desc":"Sirlene","data":"2026-03-05","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000285,"tipo":"despesa","valor":434.0,"desc":"Michigan","data":"2026-03-05","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000286,"tipo":"despesa","valor":32.9,"desc":"Presente professoras","data":"2026-03-05","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000287,"tipo":"despesa","valor":20.66,"desc":"Ração","data":"2026-03-05","pgto":"Cartão","cat":"Godofredo"},{"id":1000000000288,"tipo":"despesa","valor":206.54,"desc":"Boa - churras Belly","data":"2026-03-06","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000289,"tipo":"despesa","valor":80.0,"desc":"Flex","data":"2026-03-06","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000290,"tipo":"despesa","valor":53.35,"desc":"Flex - complemento","data":"2026-03-06","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000291,"tipo":"despesa","valor":17.07,"desc":"Flex","data":"2026-03-07","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000292,"tipo":"despesa","valor":36.78,"desc":"Festa belly","data":"2026-03-07","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000293,"tipo":"despesa","valor":179.4,"desc":"Swift","data":"2026-03-08","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000294,"tipo":"despesa","valor":61.93,"desc":"Zarelli","data":"2026-03-08","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000295,"tipo":"despesa","valor":30.0,"desc":"Presente professoras","data":"2026-03-09","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000296,"tipo":"despesa","valor":26.47,"desc":"Preply","data":"2026-03-09","pgto":"Cartão","cat":"Educação"},{"id":1000000000297,"tipo":"despesa","valor":195.87,"desc":"Metade condomínio RÉS ÁGUA DOCE","data":"2026-03-09","pgto":"PIX/boleto","cat":"Investimentos"},{"id":1000000000298,"tipo":"despesa","valor":2767.45,"desc":"Fundamentum","data":"2026-03-10","pgto":"Cartão","cat":"Educação"},{"id":1000000000299,"tipo":"despesa","valor":682.45,"desc":"Condomínio","data":"2026-03-10","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000300,"tipo":"despesa","valor":129.99,"desc":"Desktop","data":"2026-03-10","pgto":"Cartão","cat":"Moradia"},{"id":1000000000301,"tipo":"despesa","valor":70.0,"desc":"Brejas churras Belly","data":"2026-03-10","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000302,"tipo":"despesa","valor":31.0,"desc":"Uber","data":"2026-03-10","pgto":"Cartão","cat":"Transporte"},{"id":1000000000303,"tipo":"despesa","valor":35.98,"desc":"Uber","data":"2026-03-10","pgto":"Cartão","cat":"Transporte"},{"id":1000000000304,"tipo":"despesa","valor":409.79,"desc":"Vr","data":"2026-03-10","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000305,"tipo":"despesa","valor":252.25,"desc":"conserto Kicks 3/4","data":"2026-03-10","pgto":"Cartão","cat":"Transporte"},{"id":1000000000306,"tipo":"despesa","valor":91.73,"desc":"seguro residencial 3/8","data":"2026-03-10","pgto":"Cartão","cat":"Moradia"},{"id":1000000000307,"tipo":"despesa","valor":20.9,"desc":"netflix","data":"2026-03-10","pgto":"Cartão","cat":"Moradia"},{"id":1000000000308,"tipo":"despesa","valor":94.76,"desc":"mestre churrasqueiro 4/10","data":"2026-03-10","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000309,"tipo":"despesa","valor":111.4,"desc":"oticas carol 9/10","data":"2026-03-10","pgto":"Cartão","cat":"Saúde"},{"id":1000000000310,"tipo":"despesa","valor":50.09,"desc":"mercado pago ebazarcomp 08/11","data":"2026-03-10","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000311,"tipo":"despesa","valor":124.19,"desc":"kiwify*consultori 12/12","data":"2026-03-10","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000312,"tipo":"despesa","valor":152.01,"desc":"IPTU Março","data":"2026-03-11","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000313,"tipo":"despesa","valor":70.0,"desc":"PETLOVE SAUD*Petl","data":"2026-03-11","pgto":"Cartão","cat":"Godofredo"},{"id":1000000000314,"tipo":"despesa","valor":240.5,"desc":"Estudo do meio 1/2","data":"2026-03-12","pgto":"Cartão","cat":"Educação"},{"id":1000000000315,"tipo":"despesa","valor":260.0,"desc":"Unfome em 1/3","data":"2026-03-12","pgto":"Cartão","cat":"Educação"},{"id":1000000000316,"tipo":"despesa","valor":20.0,"desc":"Estacionamento engepack","data":"2026-03-12","pgto":"Cartão","cat":"Transporte"},{"id":1000000000317,"tipo":"despesa","valor":297.0,"desc":"chef gourmet 12/12","data":"2026-03-12","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000318,"tipo":"despesa","valor":31.43,"desc":"livros Ben 2/4","data":"2026-03-12","pgto":"Cartão","cat":"Educação"},{"id":1000000000319,"tipo":"despesa","valor":44.98,"desc":"Uber","data":"2026-03-13","pgto":"Cartão","cat":"Transporte"},{"id":1000000000320,"tipo":"despesa","valor":31.96,"desc":"Uber","data":"2026-03-13","pgto":"Cartão","cat":"Transporte"},{"id":1000000000321,"tipo":"despesa","valor":43.98,"desc":"Uber buscar Bento","data":"2026-03-13","pgto":"Cartão","cat":"Transporte"},{"id":1000000000322,"tipo":"despesa","valor":32.03,"desc":"mercado livre ABRAK03/05","data":"2026-03-13","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000323,"tipo":"despesa","valor":238.59,"desc":"Hambúrguer","data":"2026-03-13","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000324,"tipo":"despesa","valor":3.5,"desc":"Bala em Limeira","data":"2026-03-14","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000325,"tipo":"despesa","valor":86.78,"desc":"Chutoro","data":"2026-03-14","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000326,"tipo":"despesa","valor":29.99,"desc":"Uno Kasa Utilidades","data":"2026-03-14","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000327,"tipo":"despesa","valor":25.16,"desc":"Ração","data":"2026-03-14","pgto":"Cartão","cat":"Godofredo"},{"id":1000000000328,"tipo":"despesa","valor":193.46,"desc":"Mercado","data":"2026-03-15","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000329,"tipo":"despesa","valor":133.34,"desc":"radiologia 3/3","data":"2026-03-15","pgto":"Cartão","cat":"Saúde"},{"id":1000000000330,"tipo":"despesa","valor":149.0,"desc":"Petlove Fisioterapia","data":"2026-03-15","pgto":"Cartão","cat":"Godofredo"},{"id":1000000000331,"tipo":"despesa","valor":120.0,"desc":"Cantina escola","data":"2026-03-15","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000332,"tipo":"despesa","valor":18.94,"desc":"Uber","data":"2026-03-16","pgto":"Cartão","cat":"Transporte"},{"id":1000000000333,"tipo":"despesa","valor":163.63,"desc":"Localiza 1/3","data":"2026-03-16","pgto":"Cartão","cat":"Transporte"},{"id":1000000000334,"tipo":"despesa","valor":102.0,"desc":"Capinha mimos e acessórios","data":"2026-03-16","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000335,"tipo":"despesa","valor":276.5,"desc":"Vacina Ben 1/2 Santa Clara","data":"2026-03-16","pgto":"Cartão","cat":"Saúde"},{"id":1000000000336,"tipo":"despesa","valor":283.54,"desc":"Mercado","data":"2026-03-16","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000337,"tipo":"despesa","valor":34.08,"desc":"Combustível carro alugado","data":"2026-03-16","pgto":"Cartão","cat":"Transporte"},{"id":1000000000338,"tipo":"despesa","valor":130.0,"desc":"Gás","data":"2026-03-17","pgto":"Cartão","cat":"Moradia"},{"id":1000000000339,"tipo":"despesa","valor":50.0,"desc":"Michigan","data":"2026-03-17","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000340,"tipo":"despesa","valor":5.0,"desc":"Bala","data":"2026-03-17","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000341,"tipo":"despesa","valor":15.95,"desc":"Uber","data":"2026-03-17","pgto":"Cartão","cat":"Transporte"},{"id":1000000000342,"tipo":"despesa","valor":30.99,"desc":"Uber","data":"2026-03-17","pgto":"Cartão","cat":"Transporte"},{"id":1000000000343,"tipo":"despesa","valor":63.2,"desc":"Frutas","data":"2026-03-18","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000344,"tipo":"despesa","valor":9.99,"desc":"Farmácia","data":"2026-03-19","pgto":"Cartão","cat":"Saúde"},{"id":1000000000345,"tipo":"despesa","valor":155.55,"desc":"Câmera de ré 1/9","data":"2026-03-19","pgto":"Cartão","cat":"Transporte"},{"id":1000000000346,"tipo":"despesa","valor":131.8,"desc":"Combustível Fastback","data":"2026-03-19","pgto":"Cartão","cat":"Transporte"},{"id":1000000000347,"tipo":"despesa","valor":19.9,"desc":"applecombill","data":"2026-03-19","pgto":"Cartão","cat":"Moradia"},{"id":1000000000348,"tipo":"despesa","valor":23.9,"desc":"spotify","data":"2026-03-19","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000349,"tipo":"despesa","valor":19.9,"desc":"amazonprimebr","data":"2026-03-19","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000350,"tipo":"despesa","valor":50.0,"desc":"recarga tag itaú","data":"2026-03-19","pgto":"Cartão","cat":"Transporte"},{"id":1000000000351,"tipo":"despesa","valor":17.9,"desc":"melimais Disney+","data":"2026-03-19","pgto":"Cartão","cat":"Moradia"},{"id":1000000000352,"tipo":"despesa","valor":28.07,"desc":"preply","data":"2026-03-19","pgto":"Cartão","cat":"Educação"},{"id":1000000000353,"tipo":"despesa","valor":26.8,"desc":"panificadora dama - Carla","data":"2026-03-19","pgto":"Cartão","cat":"Gastos Extras"},{"id":1000000000354,"tipo":"despesa","valor":260.3,"desc":"loja fundamentum 1/3","data":"2026-03-19","pgto":"Cartão","cat":"Educação"},{"id":1000000000355,"tipo":"despesa","valor":128.49,"desc":"boa - Carla","data":"2026-03-19","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000356,"tipo":"despesa","valor":102.18,"desc":"boa - Carla","data":"2026-03-19","pgto":"Cartão","cat":"Supermercado"},{"id":1000000000357,"tipo":"despesa","valor":293.2,"desc":"azul seguro 1/10","data":"2026-03-19","pgto":"Cartão","cat":"Transporte"},{"id":1000000000358,"tipo":"despesa","valor":5.0,"desc":"autoparque","data":"2026-03-19","pgto":"Cartão","cat":"Transporte"},{"id":1000000000359,"tipo":"despesa","valor":110.0,"desc":"PIX Milquia - Carla","data":"2026-03-19","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000360,"tipo":"despesa","valor":72.0,"desc":"PIX Fabene","data":"2026-03-19","pgto":"PIX/boleto","cat":"Educação"},{"id":1000000000361,"tipo":"despesa","valor":30.0,"desc":"PIX Ana Carol Forti","data":"2026-03-19","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000362,"tipo":"despesa","valor":195.87,"desc":"Cond RES AGUA DOCE","data":"2026-03-19","pgto":"PIX/boleto","cat":"Investimentos"},{"id":1000000000363,"tipo":"despesa","valor":22.14,"desc":"Seguro cartão","data":"2026-03-19","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000364,"tipo":"despesa","valor":306.33,"desc":"claro celular","data":"2026-03-19","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000365,"tipo":"despesa","valor":1695.74,"desc":"financiamento casa","data":"2026-03-19","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000366,"tipo":"despesa","valor":270.42,"desc":"cpfl","data":"2026-03-19","pgto":"PIX/boleto","cat":"Moradia"},{"id":1000000000367,"tipo":"despesa","valor":50.0,"desc":"fumaça líquida","data":"2026-03-19","pgto":"PIX/boleto","cat":"Gastos Extras"},{"id":1000000000368,"tipo":"despesa","valor":250.0,"desc":"boleto inegociável","data":"2026-03-19","pgto":"PIX/boleto","cat":"Investimentos"},{"id":1000000000369,"tipo":"despesa","valor":193.23,"desc":"material didático Fundamentum 3/12","data":"2026-03-21","pgto":"Cartão","cat":"Educação"},{"id":1000000000370,"tipo":"despesa","valor":41.8,"desc":"Confiance medicina 3/5","data":"2026-03-22","pgto":"Cartão","cat":"Saúde"}];
+
+// CONFIG
+const FB={apiKey:"AIzaSyBYq3CiQmvD0YXbJNGL-ac4nPc8NoSkh-w",authDomain:"orcamento-familia-7dccf.firebaseapp.com",databaseURL:"https://orcamento-familia-7dccf-default-rtdb.firebaseio.com",projectId:"orcamento-familia-7dccf",storageBucket:"orcamento-familia-7dccf.firebasestorage.app",messagingSenderId:"935610123671",appId:"1:935610123671:web:4c8546b5e8771bdfb1f0d2"};
+const CC_FECHA=9,CC_VENCE=15;
+const CATS=[{label:"Supermercado",emoji:"🛒"},{label:"Moradia",emoji:"🏠"},{label:"Transporte",emoji:"🚗"},{label:"Saúde",emoji:"💊"},{label:"Educação",emoji:"📚"},{label:"Desp. Trabalho",emoji:"💼"},{label:"Godofredo",emoji:"🐾"},{label:"Pais",emoji:"👨‍👩‍👧"},{label:"Investimentos",emoji:"📈"},{label:"Gastos Extras",emoji:"🛍️"},{label:"Outro",emoji:"💳"}];
+const META_EMOJIS=["🎯","🏖️","🚗","🏠","📱","💻","💍","🎓","🌍","💰","🏋️","✈️"];
+const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const hoje=new Date();
+const fmt=v=>"R$ "+parseFloat(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtS=v=>"R$ "+parseFloat(v||0).toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:0});
+const ci=l=>CATS.find(c=>c.label===l)||{label:l,emoji:"💳"};
+let hideNums=false;
+function fmtH(v){return hideNums?"R$ ••••":fmt(v);}
+function fmtSH(v){return hideNums?"R$ ••••":fmtS(v);}
+function toggleHide(){hideNums=!hideNums;var btn=document.getElementById("hide-btn");if(btn)btn.textContent=hideNums?"🙈":"👁";renderAll();}
+const mesAnoAtual=()=>hoje.getFullYear()+"-"+String(hoje.getMonth()+1).padStart(2,"0");
+
+// STATE
+let lancamentos=[..._DADOS_INICIAIS].sort(function(a,b){return b.id-a.id;}),metas=[],orcamentos={};
+let tipoAtual="despesa",catAtual="",emojiAtual="🎯";
+let filtroAtual="todos",catFiltroAtual="",ordemAtual="recente";
+let modoAtual="cal",mesAtual=hoje.getMonth(),anoAtual=hoje.getFullYear(),cicloOffset=0,modoExt="";
+let metasView="mes";
+
+// METAS PESSOAIS
+let MP=[
+  {nome:"Missas",emoji:"⛪",meta_ano:11,meta_mes:1,realizado_ano:2,realizado_mes:0,falta_ano:9,falta_mes:1,pct_ano:18,pct_mes:0,mes_ref:"2026-03"},
+  {nome:"Passeios Godofredo",emoji:"🐾",meta_ano:200,meta_mes:17,realizado_ano:62,realizado_mes:26,falta_ano:138,falta_mes:0,pct_ano:31,pct_mes:153,mes_ref:"2026-03"},
+  {nome:"Encontros Casal",emoji:"💑",meta_ano:6,meta_mes:1,realizado_ano:1,realizado_mes:0,falta_ano:5,falta_mes:1,pct_ano:17,pct_mes:0,mes_ref:"2026-03"},
+  {nome:"Momentos Bento",emoji:"👦",meta_ano:10,meta_mes:1,realizado_ano:1,realizado_mes:0,falta_ano:9,falta_mes:1,pct_ano:10,pct_mes:0,mes_ref:"2026-03"},
+  {nome:"Exercicios",emoji:"🏋️",meta_ano:160,meta_mes:13,realizado_ano:27,realizado_mes:13,falta_ano:133,falta_mes:0,pct_ano:17,pct_mes:100,mes_ref:"2026-03"}
+];
+
+// GRUPOS 50-30-20
+const G5020=[
+  {nome:"Custos Fixos",ideal:50,orc:10000,cats:["Moradia","Educação","Transporte","Pais"]},
+  {nome:"Custos Variaveis",ideal:30,orc:7000,cats:["Supermercado","Godofredo","Gastos Extras","Desp. Trabalho","Saúde","Outro"]},
+  {nome:"Investimentos",ideal:20,orc:500,cats:["Investimentos"]}
+];
+const RENDA=17500;
+
+// FIREBASE
+let _db;
+function setStatus(msg,color){const e=document.getElementById("sync-status");if(e){e.textContent=msg;e.style.color=color;}}
+function fbSaveLanc(l){if(_db)_db.ref("lancamentos/"+l.id).set(l);}
+function fbSaveMetas(){if(_db){const o={};metas.forEach(m=>{o[m.id]=m;});_db.ref("metas").set(o);}}
+function fbSaveOrc(){if(_db)_db.ref("orcamentos").set(orcamentos);}
+function fbSaveMP(){
+  if(!_db)return;
+  const o={};
+  MP.forEach((m,i)=>{o[i]={realizado_ano:m.realizado_ano,realizado_mes:m.realizado_mes,mes_ref:m.mes_ref||mesAnoAtual()};});
+  _db.ref("metasPessoais").set(o);
+}
+
+function initFirebase(){
+  renderAll();
+  try{
+    firebase.initializeApp(FB);
+    _db=firebase.database();
+    setStatus("🔄 Conectando...","#60a5fa");
+    _db.ref("lancamentos").on("value",snap=>{
+      const v=snap.val();
+      if(v){
+        const m={...v};
+        _DADOS_INICIAIS.forEach(l=>{if(!m[l.id])m[l.id]=l;});
+        if(Object.keys(m).length>Object.keys(v).length)_db.ref("lancamentos").set(m);
+        lancamentos=Object.values(m).sort((a,b)=>b.id-a.id);
+      }else{
+        const o={};_DADOS_INICIAIS.forEach(l=>{o[l.id]=l;});
+        _db.ref("lancamentos").set(o);
+        lancamentos=[..._DADOS_INICIAIS].sort((a,b)=>b.id-a.id);
+      }
+      renderAll();
+      setStatus("✅ Sincronizado · "+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),"#34d399");
+    },err=>{setStatus("❌ "+err.message,"#f87171");lancamentos=[..._DADOS_INICIAIS].sort((a,b)=>b.id-a.id);renderAll();});
+    _db.ref("metas").on("value",snap=>{metas=snap.val()?Object.values(snap.val()):[];if(document.querySelector(".screen.active")?.id==="s-metas")renderMetas();});
+    _db.ref("orcamentos").on("value",snap=>{orcamentos=snap.val()||{};if(document.querySelector(".screen.active")?.id==="s-orc")renderOrc();});
+    _db.ref("metasPessoais").on("value",snap=>{
+      const v=snap.val();
+      if(v){
+        Object.keys(v).forEach(i=>{
+          const idx=parseInt(i);
+          if(MP[idx]){
+            MP[idx].realizado_ano=v[i].realizado_ano??MP[idx].realizado_ano;
+            MP[idx].realizado_mes=v[i].realizado_mes??MP[idx].realizado_mes;
+            MP[idx].mes_ref=v[i].mes_ref??MP[idx].mes_ref;
+          }
+        });
+        MP.forEach(recalcMP);
+      }
+      if(document.querySelector(".screen.active")?.id==="s-metas")renderMetas();
+    });
+  }catch(e){setStatus("❌ "+e.message,"#f87171");lancamentos=[..._DADOS_INICIAIS].sort((a,b)=>b.id-a.id);renderAll();}
+}
+
+// HELPERS
+function checkResetMes(m){
+  const a=mesAnoAtual();
+  if(m.mes_ref&&m.mes_ref!==a){m.realizado_mes=0;m.falta_mes=m.meta_mes;m.pct_mes=0;m.mes_ref=a;}
+}
+function recalcMP(m){
+  m.falta_mes=Math.max(0,m.meta_mes-m.realizado_mes);
+  m.falta_ano=Math.max(0,m.meta_ano-m.realizado_ano);
+  m.pct_mes=Math.round(m.realizado_mes/m.meta_mes*100);
+  m.pct_ano=Math.round(m.realizado_ano/m.meta_ano*100);
+}
+function showToast(msg,type="ok"){const t=document.getElementById("toast");t.textContent=msg;t.className="toast "+type+" show";clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2400);}
+
+// BUMP/EDIT META PESSOAL
+function bumpMeta(idx){
+  const m=MP[idx];
+  checkResetMes(m);
+  m.realizado_mes++;
+  m.realizado_ano++;
+  m.mes_ref=mesAnoAtual();
+  recalcMP(m);
+  fbSaveMP();
+  renderMetas();
+  showToast("✅ +1 em "+m.nome+" (mes e ano)");
+}
+function editMeta(idx){
+  const m=MP[idx];
+  checkResetMes(m);
+  const nm=prompt("Realizado este mes - "+m.nome+":",m.realizado_mes);
+  if(nm===null)return;
+  const vm=parseInt(nm);
+  if(isNaN(vm)||vm<0){showToast("Valor invalido","err");return;}
+  const diff=vm-m.realizado_mes;
+  m.realizado_mes=vm;
+  m.realizado_ano=Math.max(0,m.realizado_ano+diff);
+  m.mes_ref=mesAnoAtual();
+  recalcMP(m);
+  fbSaveMP();
+  renderMetas();
+  showToast("💾 "+m.nome+" atualizado!");
+}
+
+// NAV
+function navTo(id,el){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById("s-"+id).classList.add("active");
+  document.querySelectorAll(".nav-it").forEach(n=>n.classList.remove("on"));
+  if(el)el.classList.add("on");
+  if(id==="lanc")renderLanc();
+  else if(id==="orc")renderOrc();
+  else if(id==="metas")renderMetas();
+  else if(id==="rel")renderRel();
+}
+
+// MODO
+function setModo(modo,el){
+  modoAtual=modo;
+  document.querySelectorAll(".mode-toggle").forEach(tog=>{
+    tog.querySelectorAll(".mode-btn").forEach((b,i)=>{
+      b.classList.toggle("on",(modo==="cal"&&i===0)||(modo==="cc"&&i===1));
+    });
+  });
+  renderAll();
+}
+
+// PERÍODO
+function getLancYTD(){var ano=hoje.getFullYear();return lancamentos.filter(function(l){return new Date(l.data+"T00:00:00").getFullYear()===ano;});}
+function getLancMAT(){var d=new Date(hoje.getFullYear(),hoje.getMonth()-11,1);return lancamentos.filter(function(l){return new Date(l.data+"T00:00:00")>=d;});}
+function setModoExt(modo,el){modoExt=modo;modoAtual="ext";document.querySelectorAll(".mode-toggle .mode-btn").forEach(function(b){b.classList.remove("on");});if(el)el.classList.add("on");renderAll();}
+function getLancPeriodo(){
+  if(modoAtual==="ext"&&modoExt==="ytd")return getLancYTD();
+  if(modoAtual==="ext"&&modoExt==="mat")return getLancMAT();
+  return modoAtual==="cal"?lancDoMes():lancDoCiclo(cicloOffset);
+}
+function getPeriodoLabel(){if(modoAtual==="ext")return modoExt==="ytd"?"YTD "+hoje.getFullYear():"Ultimos 12 meses";return modoAtual==="cal"?MESES[mesAtual]+" "+anoAtual:cicloLabel(cicloOffset).main;}
+function getPeriodoSub(){if(modoAtual==="ext"&&modoExt==="ytd")return "Jan a "+MESES[hoje.getMonth()]+" "+hoje.getFullYear();if(modoAtual==="ext"&&modoExt==="mat")return "Ultimos 12 meses acumulados";return modoAtual==="cc"?cicloLabel(cicloOffset).sub:"";}
+function lancDoMes(){return lancamentos.filter(l=>{const d=new Date(l.data+"T00:00:00");return d.getMonth()===mesAtual&&d.getFullYear()===anoAtual;});}
+function getCicloAtual(offset){
+  let fechaMes,fechaAno;
+  if(hoje.getDate()<=CC_FECHA){fechaMes=hoje.getMonth();fechaAno=hoje.getFullYear();}
+  else{fechaMes=hoje.getMonth()+1;fechaAno=hoje.getFullYear();if(fechaMes>11){fechaMes=0;fechaAno++;}}
+  fechaMes+=offset;
+  while(fechaMes>11){fechaMes-=12;fechaAno++;}
+  while(fechaMes<0){fechaMes+=12;fechaAno--;}
+  const fechaDate=new Date(fechaAno,fechaMes,CC_FECHA);
+  let iMes=fechaMes-1,iAno=fechaAno;
+  if(iMes<0){iMes=11;iAno--;}
+  const inicioDate=new Date(iAno,iMes,CC_FECHA+1);
+  const venceDate=new Date(fechaAno,fechaMes,CC_VENCE);
+  return{inicioDate,fechaDate,venceDate};
+}
+function cicloLabel(offset){
+  const{inicioDate,fechaDate}=getCicloAtual(offset);
+  const d1=inicioDate.getDate().toString().padStart(2,"0")+"/"+(inicioDate.getMonth()+1).toString().padStart(2,"0");
+  const d2=fechaDate.getDate().toString().padStart(2,"0")+"/"+(fechaDate.getMonth()+1).toString().padStart(2,"0")+"/"+fechaDate.getFullYear();
+  return{main:d1+" → "+d2,sub:"Vence dia "+CC_VENCE+"/"+(fechaDate.getMonth()+1).toString().padStart(2,"0")+"/"+fechaDate.getFullYear()};
+}
+function lancDoCiclo(offset){
+  const{inicioDate,fechaDate}=getCicloAtual(offset);
+  const ini=inicioDate.getTime(),fim=fechaDate.getTime();
+  return lancamentos.filter(l=>{const d=new Date(l.data+"T00:00:00").getTime();return d>=ini&&d<=fim;});
+}
+function perAnt(){if(modoAtual==="cal"){mesAtual--;if(mesAtual<0){mesAtual=11;anoAtual--;}}else cicloOffset--;renderAll();}
+function perPrx(){if(modoAtual==="cal"){mesAtual++;if(mesAtual>11){mesAtual=0;anoAtual++;}}else cicloOffset++;renderAll();}
+
+// MODALS
+function openLancModal(tipo){
+  setTipo(tipo);catAtual="";
+  document.getElementById("f-val").value="";
+  document.getElementById("f-desc").value="";
+  document.getElementById("f-data").value=hoje.toISOString().split("T")[0];
+  document.getElementById("f-pgto").value=tipo==="despesa"?"Cartão":"PIX/boleto";
+  document.getElementById("f-parcelas").value="1";
+  toggleParcelas(tipo==="despesa"?"Cartão":"PIX/boleto");
+  renderCatGrid();
+  document.getElementById("modal-lanc").classList.add("open");
+}
+function openMetaModal(){
+  emojiAtual="🎯";
+  ["m-nome","m-alvo","m-atual"].forEach(id=>document.getElementById(id).value="");
+  renderMetaGrid();
+  document.getElementById("modal-meta").classList.add("open");
+}
+function openEditOrc(){
+  document.getElementById("orc-edit-list").innerHTML=CATS.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:20px;width:28px">${c.emoji}</span><span style="flex:1;font-size:14px;font-weight:500">${c.label}</span><input class="orc-inp" type="number" inputmode="decimal" min="0" step="0.01" id="oi-${c.label.replace(/[\s.]/g,"_")}" value="${orcamentos[c.label]||""}" placeholder="—"></div>`).join("");
+  document.getElementById("modal-orc").classList.add("open");
+}
+function closeModal(id){document.getElementById(id).classList.remove("open");}
+["modal-lanc","modal-meta","modal-orc"].forEach(id=>{document.getElementById(id).addEventListener("click",e=>{if(e.target.id===id)closeModal(id);});});
+
+// TIPO/CAT
+function setTipo(t){
+  tipoAtual=t;
+  document.getElementById("tb-desp").className="tipo-btn desp"+(t==="despesa"?" on":"");
+  document.getElementById("tb-rec").className="tipo-btn rec"+(t==="receita"?" on":"");
+  document.getElementById("f-cat-wrap").style.display=t==="despesa"?"block":"none";
+}
+function renderCatGrid(){document.getElementById("cat-grid").innerHTML=CATS.map(c=>`<div class="cat-it ${catAtual===c.label?"on":""}" onclick="pickCat('${c.label}',this)"><span class="ce">${c.emoji}</span><span class="cl">${c.label}</span></div>`).join("");}
+function pickCat(l,el){catAtual=l;document.querySelectorAll("#cat-grid .cat-it").forEach(e=>e.classList.remove("on"));el.classList.add("on");}
+function renderMetaGrid(){document.getElementById("meta-emoji-grid").innerHTML=META_EMOJIS.map(e=>`<div class="cat-it ${emojiAtual===e?"on":""}" onclick="pickEmoji('${e}',this)"><span class="ce">${e}</span></div>`).join("");}
+function pickEmoji(e,el){emojiAtual=e;document.querySelectorAll("#meta-emoji-grid .cat-it").forEach(x=>x.classList.remove("on"));el.classList.add("on");}
+
+// SAVE
+function saveLanc(){
+  var val=parseFloat(document.getElementById("f-val").value.replace(",","."));
+  var desc=document.getElementById("f-desc").value.trim();
+  var data=document.getElementById("f-data").value;
+  var pgto=document.getElementById("f-pgto").value;
+  var parcelasStr=document.getElementById("f-parcelas").value;
+  var parcelas=parseInt(parcelasStr)||1;
+  if(parcelas<1)parcelas=1;
+  if(parcelas>60)parcelas=60;
+  if(!val||val<=0){showToast("Informe um valor valido","err");return;}
+  if(!desc){showToast("Informe a descricao","err");return;}
+  if(!data){showToast("Informe a data","err");return;}
+
+  var dataBase=new Date(data+"T00:00:00");
+  var salvos=0;
+
+  for(var p=0;p<parcelas;p++){
+    var d=new Date(dataBase.getFullYear(),dataBase.getMonth()+p,dataBase.getDate());
+    var dataStr=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    var descP=parcelas>1?desc+" "+String(p+1)+"/"+String(parcelas):desc;
+    var l={id:Date.now()+p,tipo:tipoAtual,valor:val,desc:descP,data:dataStr,pgto:pgto,cat:catAtual||"Outro"};
+    lancamentos.unshift(l);
+    fbSaveLanc(l);
+    salvos++;
+  }
+
+  closeModal("modal-lanc");
+  if(parcelas>1){
+    showToast("✅ "+parcelas+" parcelas salvas!");
+  } else {
+    showToast("✅ Lancamento salvo!");
+  }
+  renderAll();
+}
+function saveMeta(){
+  const nome=document.getElementById("m-nome").value.trim();
+  const alvo=parseFloat(document.getElementById("m-alvo").value.replace(",","."));
+  const atual=parseFloat((document.getElementById("m-atual").value||"0").replace(",","."))||0;
+  if(!nome){showToast("Informe o nome","err");return;}
+  if(!alvo||alvo<=0){showToast("Informe o valor alvo","err");return;}
+  const nm={id:Date.now(),nome,alvo,atual,emoji:emojiAtual};
+  metas.push(nm);fbSaveMetas();
+  closeModal("modal-meta");showToast("🎯 Meta criada!");renderMetas();
+}
+function saveOrc(){
+  CATS.forEach(c=>{const el=document.getElementById("oi-"+c.label.replace(/[\s.]/g,"_"));const v=el?parseFloat(el.value):NaN;if(!isNaN(v)&&v>0)orcamentos[c.label]=v;else delete orcamentos[c.label];});
+  fbSaveOrc();closeModal("modal-orc");showToast("💾 Orcamentos salvos!");renderOrc();
+}
+function delLanc(id){if(_db)_db.ref("lancamentos/"+id).remove();lancamentos=lancamentos.filter(l=>l.id!==id);renderAll();}
+function delMeta(id){metas=metas.filter(m=>m.id!==id);fbSaveMetas();renderMetas();}
+
+// ALERTS
+function buildAlerts(lm){
+  const g={};lm.filter(l=>l.tipo==="despesa").forEach(l=>{g[l.cat]=(g[l.cat]||0)+l.valor;});
+  return CATS.flatMap(c=>{const orc=orcamentos[c.label],gasto=g[c.label]||0;if(!orc||gasto===0)return[];const pct=gasto/orc*100;if(pct>=100)return[{cat:c,gasto,orc,pct,level:"over"}];if(pct>=80)return[{cat:c,gasto,orc,pct,level:"warn"}];return[];});
+}
+function renderAlerts(lm,id){document.getElementById(id).innerHTML=buildAlerts(lm).map(a=>`<div class="alert-item ${a.level}"><span class="alert-ico">${a.level==="over"?"🚨":"⚠️"}</span><div class="alert-txt"><strong>${a.cat.emoji} ${a.cat.label}</strong><br>${a.level==="over"?"Estourou em <strong>"+fmt(a.gasto-a.orc)+"</strong> — "+Math.round(a.pct)+"%":"<strong>"+Math.round(a.pct)+"% utilizado</strong> — faltam "+fmt(a.orc-a.gasto)}</div></div>`).join("");}
+
+// CARTAO
+function renderCCCard(){
+  const{inicioDate,fechaDate,venceDate}=getCicloAtual(cicloOffset);
+  const lancCC=lancDoCiclo(cicloOffset).filter(l=>l.pgto==="Cartão");
+  const fatura=lancCC.filter(l=>l.tipo==="despesa").reduce((a,b)=>a+b.valor,0);
+  const msDay=86400000,agora=hoje.getTime();
+  const diasFecha=Math.max(0,Math.round((fechaDate.getTime()-agora)/msDay));
+  const diasVence=Math.max(0,Math.round((venceDate.getTime()-agora)/msDay));
+  const diasTotais=Math.max(1,Math.round((fechaDate.getTime()-inicioDate.getTime())/msDay));
+  const diasDec=Math.max(1,diasTotais-diasFecha);
+  const proj=fatura>0?fatura/diasDec*diasTotais:0;
+  const prog=Math.min(100,Math.round(diasDec/diasTotais*100));
+  const jaFechou=agora>fechaDate.getTime();
+  document.getElementById("cc-fatura-val").textContent=fmt(fatura);
+  document.getElementById("cc-dias-fechar").textContent=jaFechou?"Fechado":diasFecha+" dias";
+  document.getElementById("cc-dias-vencer").textContent=diasVence>0?diasVence+" dias":"Vencido";
+  document.getElementById("cc-projecao").textContent=proj>0?fmtS(proj):"--";
+  document.getElementById("cc-status-chip").textContent=jaFechou?"Fechado":"Fecha em "+diasFecha+"d";
+  document.getElementById("cc-prog-pct").textContent=prog+"%";
+  document.getElementById("cc-prog-fill").style.width=prog+"%";
+}
+
+// TX HTML
+function txHTML(l,compact){
+  var d=l.tipo==="despesa";
+  var ic=ci(l.cat);
+  var isCC=l.pgto==="Cartao";
+  var dataFmt=l.data.split("-").reverse().join("/");
+  var tagSpan=l.pgto?" · <span class=\"tag"+(isCC?" cc":"")+"\">"+(l.pgto)+"</span>":"";
+  var delBtn=compact?"":"<span class=\"tx-del\" onclick=\"delLanc("+l.id+")\">🗑</span>";
+  var val=(d?"-":"+")+fmt(l.valor);
+  var valClass="tx-val "+(d?"r":"g");
+  var bg=d?"#f8717118":"#34d39918";
+  var ico=d?ic.emoji:"💰";
+  var cat=d?l.cat:"Receita";
+  return "<div class=\"tx\">"+
+    "<div class=\"tx-ico\" style=\"background:"+bg+"\">"+ico+"</div>"+
+    "<div class=\"tx-info\">"+
+      "<div class=\"tx-name\">"+l.desc+"</div>"+
+      "<div class=\"tx-sub\">"+cat+" · "+dataFmt+tagSpan+"</div>"+
+    "</div>"+
+    "<div class=\"tx-right\">"+
+      "<div class=\""+valClass+"\">"+val+"</div>"+
+      delBtn+
+    "</div>"+
+  "</div>";
+}
+
+// RENDER HOME
+function renderHome(){
+  const lm=getLancPeriodo();
+  const rec=lm.filter(l=>l.tipo==="receita").reduce((a,b)=>a+b.valor,0);
+  const desp=lm.filter(l=>l.tipo==="despesa").reduce((a,b)=>a+b.valor,0);
+  const s=rec-desp;
+  const lbl=getPeriodoLabel(),sub=getPeriodoSub();
+  document.getElementById("per-home-lbl").innerHTML=lbl+(sub?`<span class="per-sub">${sub}</span>`:"");
+  document.getElementById("home-cal-area").style.display=modoAtual==="cc"?"none":"block";
+  document.getElementById("home-cc-area").style.display=modoAtual==="cc"?"block":"none";
+  if(modoAtual==="cc"){
+    renderCCCard();
+  }else{
+    const sv=document.getElementById("h-saldo");sv.textContent=fmtH(s);sv.className="bal-val"+(s<0?" neg":"");
+    document.getElementById("h-rec").textContent=fmtSH(rec);
+    document.getElementById("h-desp").textContent=fmtSH(desp);
+  }
+  const ul=lm.slice(0,5);
+  document.getElementById("h-recentes").innerHTML=ul.length===0?'<div class="empty"><div class="ei">📋</div><div class="et">Nenhum lancamento neste periodo</div></div>':ul.map(l=>txHTML(l,true)).join("");
+}
+
+// FILTROS LANCAMENTOS
+function setFiltro(t,el){filtroAtual=t;document.querySelectorAll("#filter-tipo .chip").forEach(c=>c.classList.remove("on","cc-chip-on"));el.classList.add("on");if(t==="cartao")el.classList.add("cc-chip-on");renderLanc();}
+function toggleParcelas(pgto){
+  var wrap=document.getElementById("f-parcelas-wrap");
+  if(wrap)wrap.style.display=(pgto==="Cartão")?"block":"none";
+  if(pgto!=="Cartão"){var p=document.getElementById("f-parcelas");if(p)p.value="1";}
+}
+function toggleOrdem(){
+  var ordens=["recente","maior","menor"];
+  var icons=["🕐","⬇️","⬆️"];
+  var labels=["Mais recente","Maior valor","Menor valor"];
+  var idx=(ordens.indexOf(ordemAtual)+1)%3;
+  ordemAtual=ordens[idx];
+  document.getElementById("sort-ico").textContent=icons[idx];
+  document.getElementById("sort-lbl").textContent=labels[idx];
+  renderLanc();
+}
+function setCatFiltro(cat,el){catFiltroAtual=cat||"";document.querySelectorAll("#filter-cat .chip").forEach(c=>c.classList.remove("on"));el.classList.add("on");renderLanc();}
+function buildCatChips(){
+  const lm=getLancPeriodo();
+  const cats=[...new Set(lm.filter(l=>l.tipo==="despesa").map(l=>l.cat))].sort();
+  const row=document.getElementById("filter-cat");
+  if(!row)return;
+  let html='<div class="chip'+(catFiltroAtual===""?" on":"")+'" onclick="setCatFiltro(this.dataset.cat,this)" data-cat="">Todas as categorias</div>';
+  cats.forEach(function(cat){
+    const c=CATS.find(x=>x.label===cat)||{emoji:"💳",label:cat};
+    const sel=catFiltroAtual===cat?" on":"";
+    html+='<div class="chip'+sel+'" onclick="setCatFiltro(this.dataset.cat,this)" data-cat="'+cat.replace(/"/g,"&quot;")+'">'+c.emoji+" "+cat+"</div>";
+  });
+  row.innerHTML=html;
+}
+function renderLanc(){
+  const lm=getLancPeriodo();
+  document.getElementById("mes-lanc-sub").textContent=getPeriodoLabel()+(getPeriodoSub()?" · "+getPeriodoSub():"");
+  buildCatChips();
+  let items=lm;
+  if(filtroAtual==="despesa")items=lm.filter(l=>l.tipo==="despesa");
+  else if(filtroAtual==="receita")items=lm.filter(l=>l.tipo==="receita");
+  else if(filtroAtual==="cartao")items=lm.filter(l=>l.pgto==="Cartão");
+  if(catFiltroAtual)items=items.filter(l=>l.cat===catFiltroAtual);
+  if(ordemAtual==="maior")items=[...items].sort((a,b)=>b.valor-a.valor);
+  else if(ordemAtual==="menor")items=[...items].sort((a,b)=>a.valor-b.valor);
+  else items=[...items].sort((a,b)=>b.id-a.id);
+  document.getElementById("lanc-list").innerHTML=items.length===0?'<div class="empty"><div class="ei">📭</div><div class="et">Nenhum lancamento</div></div>':'<div class="card">'+items.map(l=>txHTML(l,false)).join('')+'</div>';
+}
+
+// RENDER ORC
+function renderOrc(){
+  const lm=getLancPeriodo();
+  document.getElementById("mes-orc-sub").textContent=getPeriodoLabel()+(getPeriodoSub()?" · "+getPeriodoSub():"");
+  const gastos={};lm.filter(l=>l.tipo==="despesa").forEach(l=>{gastos[l.cat]=(gastos[l.cat]||0)+l.valor;});
+  renderAlerts(lm,"orc-alerts");
+  const catsOrc=CATS.filter(c=>orcamentos[c.label]);
+  const chartEl=document.getElementById("chart-area");
+  if(catsOrc.length===0){chartEl.innerHTML='<div class="empty"><div class="ei">📊</div><div class="et">Defina orcamentos tocando em Editar.</div></div>';}
+  else{
+    const maxVal=Math.max(...catsOrc.map(c=>Math.max(orcamentos[c.label],gastos[c.label]||0)));
+    chartEl.innerHTML=`<div class="chart-legend"><div style="display:flex;align-items:center;gap:5px"><div class="legend-dot" style="background:var(--surface3);border:1px solid var(--border)"></div>Orcamento</div><div style="display:flex;align-items:center;gap:5px"><div class="legend-dot" style="background:var(--accent)"></div>Gasto</div></div><div class="chart-bars">${catsOrc.map(c=>{const orc=orcamentos[c.label],gasto=gastos[c.label]||0,pct=orc>0?gasto/orc*100:0,over=gasto>orc,color=over?"var(--red)":pct>=80?"var(--yellow)":"var(--accent)",orcW=maxVal>0?orc/maxVal*100:100,gastW=maxVal>0?Math.min(gasto/maxVal*100,100):0;return`<div class="bar-row"><div class="bar-label">${c.emoji} ${c.label}</div><div class="bar-track"><div class="bar-fill-orc" style="width:${orcW}%"></div><div class="bar-fill-gasto" style="width:${gastW}%;background:${color}">${gasto>0?`<span class="bar-inner-lbl">${fmtSH(gasto)}</span>`:""}</div></div><div class="bar-pct-lbl" style="color:${color}">${Math.round(pct)}%</div></div>`;}).join("")}</div>`;
+  }
+  document.getElementById("orc-cats").innerHTML=CATS.map(c=>{
+    const orc=orcamentos[c.label],gasto=gastos[c.label]||0;
+    if(!orc&&gasto===0)return"";
+    if(!orc)return`<div class="orc-card"><div class="orc-hdr"><span class="orc-emoji">${c.emoji}</span><div class="orc-info"><div class="orc-name">${c.label}</div><div class="orc-sub">Sem orcamento</div></div><div class="orc-right"><div class="orc-pct-val r">${fmtH(gasto)}</div></div></div></div>`;
+    const pct=Math.round(gasto/orc*100),over=gasto>orc,warn=pct>=80&&!over,color=over?"var(--red)":warn?"var(--yellow)":"var(--green)";
+    const badge=over?`<div class="alert-badge alert-over">🚨 Estourou ${fmtH(gasto-orc)}</div>`:warn?`<div class="alert-badge alert-warn">⚠️ ${pct}%</div>`:`<div class="alert-badge alert-ok">✅ ${pct}%</div>`;
+    return`<div class="orc-card"><div class="orc-hdr"><span class="orc-emoji">${c.emoji}</span><div class="orc-info"><div class="orc-name">${c.label}</div><div class="orc-sub">Orcamento: ${fmtH(orc)}</div></div><div class="orc-right"><div class="orc-pct-val" style="color:${color}">${pct}%</div></div></div><div class="prog-bg"><div class="prog-fill" style="width:${Math.min(pct,100)}%;background:${color}"></div></div><div class="orc-vals"><span style="color:var(--muted)">Gasto: ${fmtH(gasto)}</span><span>Restante: <span style="color:${over?"var(--red)":"var(--green)"}">${fmtH(orc-gasto)}</span></span></div>${badge}</div>`;
+  }).join("");
+}
+
+// RENDER METAS
+function renderMetas(){
+  MP.forEach(m=>{checkResetMes(m);recalcMP(m);});
+  renderMetasChart();renderMetasFin();
+}
+function setMetasView(v,el){metasView=v;document.querySelectorAll("#metas-view-toggle .mode-btn").forEach((b,i)=>{b.classList.toggle("on",(v==="mes"&&i===0)||(v==="ano"&&i===1));});renderMetas();}
+function renderMetasChart(){
+  const isMes=metasView==="mes";
+  const el=document.getElementById("metas-chart");
+  const maxVal=Math.max(...MP.map(m=>isMes?Math.max(m.meta_mes,m.realizado_mes+m.falta_mes):Math.max(m.meta_ano,m.realizado_ano+m.falta_ano)));
+  el.innerHTML=`<div class="metas-chart-wrap"><div class="mc-title">Metas (${isMes?"Mes":"Ano"})</div><div class="mc-legend"><span class="mc-dot" style="background:#34d399"></span>Realizado <span class="mc-dot" style="background:#fb923c;margin-left:8px"></span>Falta <span class="mc-dot" style="background:#60a5fa;margin-left:8px"></span>Meta</div><div class="mc-bars">${MP.map((m,mi)=>{const real=isMes?m.realizado_mes:m.realizado_ano,falta=isMes?m.falta_mes:m.falta_ano,meta=isMes?m.meta_mes:m.meta_ano,pct=isMes?m.pct_mes:m.pct_ano,over=real>meta;const W=v=>maxVal>0?Math.max(0,v/maxVal*100):0;const rW=W(real),fW=W(falta),mW=W(meta);return`<div class="mc-row"><div class="mc-label">${m.emoji} ${m.nome}</div><div class="mc-track"><div class="mc-seg meta-bg" style="width:${mW}%"></div><div class="mc-seg realizado" style="width:${over?Math.min(rW,100):Math.min(rW,mW)}%">${real>0?`<span class="mc-val">${real}</span>`:""}</div>${falta>0?`<div class="mc-seg falta" style="left:${Math.min(rW,over?0:mW)}%;width:${fW}%"><span class="mc-val">${falta}</span></div>`:""}</div><div style="display:flex;align-items:center;gap:5px;flex-shrink:0"><span style="font-size:10px;color:var(--muted);font-weight:700;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px">${meta}</span><div class="mc-pct" style="color:${pct>=100?"var(--green)":pct>=50?"var(--yellow)":"var(--muted)"}">${pct}%</div><button onclick="bumpMeta(${mi})" style="font-size:11px;font-weight:800;background:var(--accent);color:#fff;border:none;border-radius:6px;padding:2px 7px;cursor:pointer">+1</button><button onclick="editMeta(${mi})" style="font-size:12px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:2px 6px;cursor:pointer">✏️</button></div></div>`;}).join("")}</div></div>`;
+}
+function renderMetasFin(){
+  var el=document.getElementById("metas-fin-list");
+  if(!metas||metas.length===0){
+    el.innerHTML='<div class="empty" style="padding:20px 0"><div style="font-size:13px;color:var(--muted)">Nenhuma meta financeira ainda.</div><button class="btn-p" style="margin-top:12px;padding:10px" onclick="openMetaModal()">+ Adicionar meta financeira</button></div>';
+    return;
+  }
+  el.innerHTML=metas.map(function(m){
+    var pct=Math.min(100,Math.round(m.atual/m.alvo*100));
+    var doneClass=pct>=100?" done":"";
+    var atingida=pct>=100?'<div style="text-align:center;margin-top:8px;font-size:13px;color:var(--green);font-weight:600">🎉 Meta atingida!</div>':"";
+    return '<div class="meta-card">'+
+      '<div class="meta-hdr">'+
+        '<div style="display:flex;align-items:center;gap:8px">'+
+          '<span style="font-size:22px">'+m.emoji+'</span>'+
+          '<div class="meta-nm">'+m.nome+'</div>'+
+        '</div>'+
+        '<div style="display:flex;align-items:center;gap:8px">'+
+          '<div class="meta-pct">'+pct+'%</div>'+
+          '<span class="tx-del" onclick="delMeta('+m.id+')">🗑</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="prog-bg"><div class="prog-fill'+doneClass+'" style="width:'+pct+'%"></div></div>'+
+      '<div class="meta-vals"><span>'+fmtH(m.atual)+' guardados</span><span>Meta: '+fmtH(m.alvo)+'</span></div>'+
+      atingida+
+    '</div>';
+  }).join("");
+}
+
+// RENDER REL
+function renderRel(){
+  const lm=getLancPeriodo();
+  document.getElementById("mes-rel-sub").textContent=getPeriodoLabel()+(getPeriodoSub()?" · "+getPeriodoSub():"");
+  const rec=lm.filter(l=>l.tipo==="receita").reduce((a,b)=>a+b.valor,0);
+  const desp=lm.filter(l=>l.tipo==="despesa").reduce((a,b)=>a+b.valor,0);
+  const s=rec-desp,fatCC=lm.filter(l=>l.tipo==="despesa"&&l.pgto==="Cartão").reduce((a,b)=>a+b.valor,0);
+  document.getElementById("rel-stats").innerHTML=`<div class="stat-c"><div class="stat-ico">💰</div><div class="stat-val g">${fmtSH(rec)}</div><div class="stat-lbl">Receitas</div></div><div class="stat-c"><div class="stat-ico">💸</div><div class="stat-val r">${fmtSH(desp)}</div><div class="stat-lbl">Despesas</div></div><div class="stat-c"><div class="stat-ico">${s>=0?"📈":"📉"}</div><div class="stat-val" style="color:${s>=0?"var(--green)":"var(--red)"}">${fmtSH(s)}</div><div class="stat-lbl">Saldo</div></div><div class="stat-c"><div class="stat-ico">💳</div><div class="stat-val b">${fmtSH(fatCC)}</div><div class="stat-lbl">No cartao</div></div>`;
+  const porCat={};lm.filter(l=>l.tipo==="despesa").forEach(l=>{porCat[l.cat]=(porCat[l.cat]||0)+l.valor;});
+  const entries=Object.entries(porCat).sort((a,b)=>b[1]-a[1]),max=entries[0]?.[1]||1;
+  document.getElementById("rel-cats").innerHTML=entries.length===0?'<div class="empty"><div class="ei">📊</div><div class="et">Sem despesas neste periodo</div></div>':entries.map(([cat,val])=>{const c=ci(cat),orc=orcamentos[cat],pct=orc?Math.round(val/orc*100):null;return`<div class="tx"><div class="tx-ico" style="background:#7c6af718">${c.emoji}</div><div class="tx-info"><div class="tx-name">${cat}</div><div style="height:5px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:5px"><div style="height:100%;width:${Math.round(val/max*100)}%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px"></div></div></div><div class="tx-right" style="flex-direction:column;align-items:flex-end;gap:2px"><div class="tx-val r">${fmtH(val)}</div>${pct!==null?`<div style="font-size:10px;color:${pct>=100?"var(--red)":pct>=80?"var(--yellow)":"var(--muted)"}">${pct}% orc.</div>`:""}</div></div>`;}).join("");
+  render502030(lm);
+  renderAcumulados();
+}
+
+// 50-30-20
+function renderAcumulados(){
+  var el=document.getElementById("rel-acumulados");if(!el)return;
+  var ytd=getLancYTD(),mat=getLancMAT();
+  function resumo(lm){var rec=lm.filter(function(l){return l.tipo==="receita";}).reduce(function(a,b){return a+b.valor;},0);var desp=lm.filter(function(l){return l.tipo==="despesa";}).reduce(function(a,b){return a+b.valor;},0);return{rec:rec,desp:desp,saldo:rec-desp};}
+  var ry=resumo(ytd),rm=resumo(mat);
+  function card(t,r){return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px"><div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">'+t+'</div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">Receitas</div><div style="font-size:15px;font-weight:800;color:var(--green);margin-bottom:8px">'+fmtSH(r.rec)+'</div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">Despesas</div><div style="font-size:15px;font-weight:800;color:var(--red);margin-bottom:8px">'+fmtSH(r.desp)+'</div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">Saldo</div><div style="font-size:15px;font-weight:800;color:'+(r.saldo>=0?"var(--green)":"var(--red)")+'">'+fmtSH(r.saldo)+'</div></div>';}
+  el.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px">'+card("YTD "+hoje.getFullYear(),ry)+card("MAT 12m",rm)+'</div>';
+}
+function render502030(lm){
+  const el=document.getElementById("rel-502030");if(!el)return;
+  const gMap={};lm.filter(l=>l.tipo==="despesa").forEach(l=>{G5020.forEach(g=>{if(g.cats.includes(l.cat))gMap[g.nome]=(gMap[g.nome]||0)+l.valor;});});
+  const rows=G5020.map(g=>{const gasto=gMap[g.nome]||0,rIdeal=RENDA*g.ideal/100,pctIdeal=g.ideal,pctOrc=Math.round(g.orc/RENDA*100),pctGasto=Math.round(gasto/RENDA*100),diffOrc=g.orc-rIdeal,faltaOrc=gasto-g.orc;return{g,gasto,rIdeal,pctIdeal,pctOrc,pctGasto,diffOrc,faltaOrc};});
+  const tbl=`<div style="overflow-x:auto;margin-bottom:20px"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:600;min-width:100px"></th><th style="text-align:center;padding:6px 4px;color:var(--blue);font-weight:700">Ideal</th><th style="text-align:right;padding:6px 4px;color:var(--muted)">R$ Ideal</th><th style="text-align:center;padding:6px 4px;color:#fb923c;font-weight:700">Orc.</th><th style="text-align:right;padding:6px 4px;color:var(--muted)">vs Ideal</th><th style="text-align:center;padding:6px 4px;color:var(--yellow);font-weight:700">Gasto</th><th style="text-align:right;padding:6px 4px;color:var(--muted)">vs Orc.</th></tr></thead><tbody>${rows.map(({g,rIdeal,pctIdeal,pctOrc,pctGasto,diffOrc,faltaOrc})=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;font-weight:700;font-size:13px">${g.nome}</td><td style="text-align:center;padding:8px 4px;color:var(--blue);font-weight:700">${pctIdeal}%</td><td style="text-align:right;padding:8px 4px;color:var(--muted)">${fmtH(rIdeal)}</td><td style="text-align:center;padding:8px 4px;color:#fb923c;font-weight:700">${pctOrc}%</td><td style="text-align:right;padding:8px 4px;font-weight:700;color:${diffOrc>0?"var(--red)":"var(--green)"}"> ${diffOrc>=0?"+":"-"}${fmtH(Math.abs(diffOrc))}</td><td style="text-align:center;padding:8px 4px;color:var(--yellow);font-weight:700">${pctGasto}%</td><td style="text-align:right;padding:8px 4px;font-weight:700;color:${faltaOrc>0?"var(--red)":"var(--green)"}"> ${faltaOrc>=0?"-":"+"}${fmtH(Math.abs(faltaOrc))}</td></tr>`).join("")}<tr style="border-top:2px solid var(--border)"><td colspan="2" style="padding:8px;font-weight:700">Renda base</td><td colspan="5" style="text-align:right;padding:8px;font-weight:700;color:var(--green)">${fmtH(RENDA)}</td></tr></tbody></table></div>`;
+  const chart=`<div><div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:14px;padding-left:120px"><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#60a5fa;display:inline-block"></span>Ideal</span><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#fb923c;display:inline-block"></span>Orc.</span><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#fbbf24;display:inline-block"></span>Gasto</span></div>${rows.map(({g,pctIdeal,pctOrc,pctGasto})=>{const sc=pct=>`${Math.min(pct,65)/65*100}%`,bar=(pct,color,tc,lbl)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><div style="width:116px;flex-shrink:0"></div><div style="flex:1;height:22px;background:var(--border);border-radius:5px;overflow:hidden;position:relative"><div style="position:absolute;left:0;top:0;height:100%;width:${sc(pct)};background:${color};border-radius:5px;display:flex;align-items:center;justify-content:flex-end;padding-right:7px;min-width:${pct>0?"32px":"0"}">${pct>0?`<span style="font-size:10px;font-weight:800;color:${tc}">${lbl}</span>`:""}</div></div></div>`;return`<div style="margin-bottom:18px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:116px;font-size:11px;color:var(--muted);text-align:right;flex-shrink:0;font-weight:600">${g.nome}</div><div style="flex:1;height:22px;background:var(--border);border-radius:5px;overflow:hidden;position:relative"><div style="position:absolute;left:0;top:0;height:100%;width:${sc(pctIdeal)};background:#60a5fa;border-radius:5px;display:flex;align-items:center;justify-content:flex-end;padding-right:7px"><span style="font-size:10px;font-weight:800;color:#fff">${pctIdeal}%</span></div></div></div>${bar(pctOrc,"#fb923c","#fff",pctOrc+"%")}${bar(pctGasto,"#fbbf24","#000",pctGasto+"%")}</div>`;}).join("")}</div>`;
+  el.innerHTML=tbl+chart;
+}
+
+// EXPORT
+function exportCSV(){const lm=getLancPeriodo();if(!lm.length){showToast("Nenhum lancamento no periodo","warn");return;}gerarCSV(lm,modoAtual==="cal"?"orcamento_"+MESES[mesAtual]+"_"+anoAtual+".csv":"fatura_ciclo.csv");}
+function exportCSVTudo(){if(!lancamentos.length){showToast("Nenhum lancamento","warn");return;}gerarCSV(lancamentos,"orcamento_completo.csv");}
+function gerarCSV(lista,nome){var headers=["Data","Tipo","Descricao","Categoria","Valor (R$)","Pagamento"];var rows=lista.map(function(l){var desc='"' + (l.desc||"").replace(/"/g,'""')+'"';return[l.data.split("-").reverse().join("/"),l.tipo==="despesa"?"Despesa":"Receita",desc,l.cat||"",l.valor.toFixed(2).replace(".",","),l.pgto||""];});var bom="\uFEFF";var csv=[headers].concat(rows).map(function(x){return x.join(";");}).join("\n");var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([bom+csv],{type:"text/csv;charset=utf-8;"}));a.download=nome;a.click();showToast("📤 CSV exportado!");}
+
+// RENDER ALL
+function renderAll(){renderHome();const a=document.querySelector(".screen.active")?.id;if(a==="s-lanc")renderLanc();else if(a==="s-orc")renderOrc();else if(a==="s-metas")renderMetas();else if(a==="s-rel")renderRel();}
+
+// INIT
+document.getElementById("hdr-hoje").textContent=hoje.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
+setTipo("despesa");
+initFirebase();
+</script>
+</body>
+</html>
