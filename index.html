@@ -340,51 +340,90 @@ select.finp{-webkit-appearance:none;appearance:none}
       <div class="sheet-title" style="margin-bottom:0">📈 Gráficos & Insights</div>
       <span onclick="closeModal('modal-graficos')" style="font-size:13px;color:var(--muted);cursor:pointer">✕ Fechar</span>
     </div>
-    <!-- Period tabs -->
-    <div style="display:flex;gap:3px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none">
-      <div class="mode-btn on" id="gtab-ano"    onclick="setGPeriod('ano',this)"   style="flex:1;min-width:42px;font-size:10px">Ano</div>
-      <div class="mode-btn"    id="gtab-ytd"    onclick="setGPeriod('ytd',this)"   style="flex:1;min-width:42px;font-size:10px">YTD</div>
-      <div class="mode-btn"    id="gtab-mat"    onclick="setGPeriod('mat',this)"   style="flex:1;min-width:42px;font-size:10px">MAT</div>
-      <div class="mode-btn"    id="gtab-cartao" onclick="setGPeriod('cartao',this)" style="flex:1;min-width:42px;font-size:10px">Cartão</div>
+    <!-- Main tabs: Evolução / Categorias -->
+    <div style="display:flex;gap:3px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:12px">
+      <div class="mode-btn on" id="gmain-evo" onclick="setGMain('evo',this)" style="flex:1;font-size:11px">📈 Evolução</div>
+      <div class="mode-btn"    id="gmain-cat" onclick="setGMain('cat',this)" style="flex:1;font-size:11px">🗂 Categorias</div>
     </div>
-    <!-- Series toggles -->
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <div id="gtog-desp" onclick="toggleGSeries('desp')" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--red);color:var(--red);background:#fff0f0">
-        <span style="width:8px;height:8px;border-radius:50%;background:var(--red);display:inline-block"></span>Despesas
-      </div>
-      <div id="gtog-rec" onclick="toggleGSeries('rec')" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--green);color:var(--green);background:#f0fff8">
-        <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Receitas
-      </div>
-      <div id="gtog-saldo" onclick="toggleGSeries('saldo')" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);color:var(--muted);background:var(--surface2)">
-        <span style="width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block"></span>Saldo
-      </div>
-    </div>
-    <!-- Chart -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px;position:relative">
-      <div id="g-title" style="font-size:13px;font-weight:700;margin-bottom:12px"></div>
-      <div style="position:relative">
-        <svg id="g-svg" viewBox="0 0 340 160" style="width:100%;height:170px;overflow:visible">
-          <defs>
-            <linearGradient id="gg-desp" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#f87171" stop-opacity="0"/>
-            </linearGradient>
-            <linearGradient id="gg-rec" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
-            </linearGradient>
-          </defs>
-          <g id="g-grid"></g><g id="g-ylbl"></g><g id="g-xlbl"></g>
-          <g id="g-arec"></g><g id="g-adesp"></g>
-          <g id="g-lsaldo"></g><g id="g-lrec"></g><g id="g-ldesp"></g>
-          <g id="g-dots"></g>
-        </svg>
-        <div id="g-tip" style="position:absolute;background:#1a1a1a;color:#fff;border-radius:10px;padding:9px 12px;font-size:11px;pointer-events:none;opacity:0;transition:opacity .15s;min-width:130px;z-index:10;top:8px;left:0"></div>
-      </div>
-    </div>
-    <!-- Stats -->
-    <div id="g-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px"></div>
-    <!-- Insights -->
-    <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">💡 Insights</div>
-    <div id="g-insights"></div>
+
+```
+<!-- EVO SECTION -->
+<div id="g-section-evo">
+  <!-- Period tabs -->
+  <div style="display:flex;gap:3px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none">
+    <div class="mode-btn on" id="gtab-ano"    onclick="setGPeriod('ano',this)"   style="flex:1;min-width:42px;font-size:10px">Ano</div>
+    <div class="mode-btn"    id="gtab-ytd"    onclick="setGPeriod('ytd',this)"   style="flex:1;min-width:42px;font-size:10px">YTD</div>
+    <div class="mode-btn"    id="gtab-mat"    onclick="setGPeriod('mat',this)"   style="flex:1;min-width:42px;font-size:10px">MAT</div>
+    <div class="mode-btn"    id="gtab-cartao" onclick="setGPeriod('cartao',this)" style="flex:1;min-width:42px;font-size:10px">Cartão</div>
+  </div>
+</div>
+
+<!-- CAT SECTION (hidden by default) -->
+<div id="g-section-cat" style="display:none">
+  <!-- Period tabs (same) -->
+  <div style="display:flex;gap:3px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none">
+    <div class="mode-btn on" id="ctab-ano"    onclick="setGCatPeriod('ano',this)"    style="flex:1;min-width:42px;font-size:10px">Ano</div>
+    <div class="mode-btn"    id="ctab-ytd"    onclick="setGCatPeriod('ytd',this)"    style="flex:1;min-width:42px;font-size:10px">YTD</div>
+    <div class="mode-btn"    id="ctab-mat"    onclick="setGCatPeriod('mat',this)"    style="flex:1;min-width:42px;font-size:10px">MAT</div>
+    <div class="mode-btn"    id="ctab-cartao" onclick="setGCatPeriod('cartao',this)" style="flex:1;min-width:42px;font-size:10px">Cartão</div>
+  </div>
+  <!-- Chart type sub-tabs -->
+  <div style="display:flex;gap:4px;margin-bottom:12px">
+    <div class="mode-btn on" id="ctype-bar"   onclick="setGCatType('bar',this)"   style="flex:1;font-size:10px;background:var(--surface2);border-radius:8px;padding:6px">📊 Barras</div>
+    <div class="mode-btn"    id="ctype-donut" onclick="setGCatType('donut',this)" style="flex:1;font-size:10px;background:var(--surface2);border-radius:8px;padding:6px">🍩 Donut</div>
+    <div class="mode-btn"    id="ctype-linha" onclick="setGCatType('linha',this)" style="flex:1;font-size:10px;background:var(--surface2);border-radius:8px;padding:6px">📈 Linha</div>
+  </div>
+  <!-- Cat chart area -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">
+    <div id="cat-chart-title" style="font-size:13px;font-weight:700;margin-bottom:10px"></div>
+    <div id="cat-chart-area"></div>
+  </div>
+  <!-- Cat insights -->
+  <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">💡 Insights por categoria</div>
+  <div id="cat-insights"></div>
+</div>
+<!-- Series toggles (inside evo) -->
+<div id="g-section-evo-inner">
+<div style="display:flex;gap:6px;margin-bottom:12px">
+  <div id="gtog-desp" onclick="toggleGSeries('desp')" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--red);color:var(--red);background:#fff0f0">
+    <span style="width:8px;height:8px;border-radius:50%;background:var(--red);display:inline-block"></span>Despesas
+  </div>
+  <div id="gtog-rec" onclick="toggleGSeries('rec')" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--green);color:var(--green);background:#f0fff8">
+    <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Receitas
+  </div>
+  <div id="gtog-saldo" onclick="toggleGSeries('saldo')" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);color:var(--muted);background:var(--surface2)">
+    <span style="width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block"></span>Saldo
+  </div>
+</div>
+<!-- Chart -->
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px;position:relative">
+  <div id="g-title" style="font-size:13px;font-weight:700;margin-bottom:12px"></div>
+  <div style="position:relative">
+    <svg id="g-svg" viewBox="0 0 340 160" style="width:100%;height:170px;overflow:visible">
+      <defs>
+        <linearGradient id="gg-desp" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#f87171" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="gg-rec" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <g id="g-grid"></g><g id="g-ylbl"></g><g id="g-xlbl"></g>
+      <g id="g-arec"></g><g id="g-adesp"></g>
+      <g id="g-lsaldo"></g><g id="g-lrec"></g><g id="g-ldesp"></g>
+      <g id="g-dots"></g>
+    </svg>
+    <div id="g-tip" style="position:absolute;background:#1a1a1a;color:#fff;border-radius:10px;padding:9px 12px;font-size:11px;pointer-events:none;opacity:0;transition:opacity .15s;min-width:130px;z-index:10;top:8px;left:0"></div>
+  </div>
+</div>
+</div><!-- end evo-inner -->
+<!-- Stats -->
+<div id="g-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px"></div>
+<!-- Insights -->
+<div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">💡 Insights</div>
+<div id="g-insights"></div>
+```
+
   </div>
 </div>
 
@@ -948,6 +987,14 @@ var gPeriod='ano', gShowDesp=true, gShowRec=true, gShowSaldo=false;
 function openGraficos(){
   buildGData();
   renderGrafico();
+  // Init main tabs state
+  document.getElementById('g-section-evo').style.display='block';
+  document.getElementById('g-section-evo-inner').style.display='block';
+  document.getElementById('g-section-cat').style.display='none';
+  document.getElementById('g-stats').style.display='grid';
+  document.getElementById('g-insights').style.display='block';
+  document.querySelectorAll('[id^="gmain-"]').forEach(function(t){t.classList.remove('on');});
+  document.getElementById('gmain-evo').classList.add('on');
   document.getElementById('modal-graficos').classList.add('open');
 }
 
@@ -1134,6 +1181,286 @@ function showGTip(i,d,saldo){
   if(gShowSaldo)              html+='<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#a78bfa">📊 Saldo</span><strong style="color:'+(saldo[i]>=0?'#34d399':'#f87171')+'">'+fs2(saldo[i])+'</strong></div>';
   tip.innerHTML=html;tip.style.opacity='1';
   setTimeout(function(){tip.style.opacity='0';},2500);
+}
+
+
+var gMain = 'evo';
+var gCatPeriod = 'ano';
+var gCatType = 'bar';
+var CAT_COLORS = ['#7c6af7','#f87171','#34d399','#fbbf24','#60a5fa','#fb923c','#a78bfa','#34d399','#f472b6','#4ade80','#facc15'];
+
+function setGMain(tab, el) {
+  gMain = tab;
+  document.querySelectorAll('[id^="gmain-"]').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on');
+  document.getElementById('g-section-evo').style.display = tab==='evo' ? 'block' : 'none';
+  document.getElementById('g-section-evo-inner').style.display = tab==='evo' ? 'block' : 'none';
+  document.getElementById('g-section-cat').style.display = tab==='cat' ? 'block' : 'none';
+  // also hide/show shared stats+insights
+  document.getElementById('g-stats').style.display = tab==='evo' ? 'grid' : 'none';
+  document.getElementById('g-insights').style.display = tab==='evo' ? 'block' : 'none';
+  if(tab==='cat') renderCatChart();
+}
+
+function setGCatPeriod(p, el) {
+  gCatPeriod = p;
+  document.querySelectorAll('[id^="ctab-"]').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on');
+  renderCatChart();
+}
+
+function setGCatType(t, el) {
+  gCatType = t;
+  document.querySelectorAll('[id^="ctype-"]').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');
+  renderCatChart();
+}
+
+function getCatData(period) {
+  var lms;
+  if(period==='ytd') lms=getLancYTD();
+  else if(period==='mat') lms=getLancMAT();
+  else if(period==='cartao') lms=lancDoCiclo(cicloOffset);
+  else {
+    // Ano: all months of current year
+    lms=getLancYTD();
+  }
+  return lms;
+}
+
+function renderCatChart() {
+  var lms = getCatData(gCatPeriod);
+  var despesas = lms.filter(function(l){return l.tipo==='despesa';});
+
+  // Aggregate by category
+  var catMap = {};
+  despesas.forEach(function(l){
+    catMap[l.cat] = (catMap[l.cat]||0) + l.valor;
+  });
+
+  var entries = Object.entries(catMap).sort(function(a,b){return b[1]-a[1];});
+  var total = entries.reduce(function(s,e){return s+e[1];},0);
+
+  var titles = {ano:'Categorias · Ano '+hoje.getFullYear(), ytd:'Categorias · YTD', mat:'Categorias · MAT 12m', cartao:'Categorias · Ciclo Cartão'};
+  document.getElementById('cat-chart-title').textContent = titles[gCatPeriod] || '';
+
+  if(entries.length===0){
+    document.getElementById('cat-chart-area').innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Sem despesas neste período</div>';
+    document.getElementById('cat-insights').innerHTML='';
+    return;
+  }
+
+  if(gCatType==='bar')   renderCatBar(entries, total);
+  if(gCatType==='donut') renderCatDonut(entries, total);
+  if(gCatType==='linha') renderCatLinha(lms);
+
+  renderCatInsights(entries, total, lms);
+}
+
+function fsCat(v){return'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});}
+
+function renderCatBar(entries, total) {
+  var top = entries.slice(0,8);
+  var max = top[0][1];
+  var ci2 = function(label){ return CATS.find(function(c){return c.label===label;})||{emoji:'💳',label:label}; };
+  var html = top.map(function(e,i){
+    var cat=e[0], val=e[1];
+    var pct = Math.round(val/total*100);
+    var barW = Math.round(val/max*100);
+    var c = ci2(cat);
+    var color = CAT_COLORS[i % CAT_COLORS.length];
+    return '<div style="margin-bottom:10px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'+
+        '<span style="font-size:12px;font-weight:600">'+(c.emoji)+' '+cat+'</span>'+
+        '<span style="font-size:12px;font-weight:700;color:'+color+'">'+fsCat(val)+' <span style="color:var(--muted);font-weight:400;font-size:10px">'+pct+'%</span></span>'+
+      '</div>'+
+      '<div style="height:10px;background:var(--surface2);border-radius:99px;overflow:hidden">'+
+        '<div style="height:100%;width:'+barW+'%;background:'+color+';border-radius:99px;transition:width .6s"></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  document.getElementById('cat-chart-area').innerHTML = html;
+}
+
+function renderCatDonut(entries, total) {
+  var top = entries.slice(0,7);
+  var other = entries.slice(7).reduce(function(s,e){return s+e[1];},0);
+  if(other>0) top.push(['Outras',other]);
+
+  var W=280, cx=140, cy=110, R=80, r=50;
+  var svgParts = [];
+  var legendParts = [];
+  var angle = -Math.PI/2;
+
+  top.forEach(function(e,i){
+    var val=e[0]==='Outras'?e[1]:e[1];
+    var slice = (val/total)*Math.PI*2;
+    var x1=cx+R*Math.cos(angle), y1=cy+R*Math.sin(angle);
+    var x2=cx+R*Math.cos(angle+slice), y2=cy+R*Math.sin(angle+slice);
+    var ix1=cx+r*Math.cos(angle), iy1=cy+r*Math.sin(angle);
+    var ix2=cx+r*Math.cos(angle+slice), iy2=cy+r*Math.sin(angle+slice);
+    var large=slice>Math.PI?1:0;
+    var color=CAT_COLORS[i%CAT_COLORS.length];
+    var ci2=CATS.find(function(c){return c.label===e[0];})||{emoji:'•'};
+    var pct=Math.round(val/total*100);
+    svgParts.push(
+      '<path d="M '+ix1.toFixed(1)+' '+iy1.toFixed(1)+
+      ' L '+x1.toFixed(1)+' '+y1.toFixed(1)+
+      ' A '+R+' '+R+' 0 '+large+' 1 '+x2.toFixed(1)+' '+y2.toFixed(1)+
+      ' L '+ix2.toFixed(1)+' '+iy2.toFixed(1)+
+      ' A '+r+' '+r+' 0 '+large+' 0 '+ix1.toFixed(1)+' '+iy1.toFixed(1)+' Z"'+
+      ' fill="'+color+'" stroke="white" stroke-width="2"/>'
+    );
+    legendParts.push(
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">'+
+        '<span style="width:10px;height:10px;border-radius:3px;background:'+color+';display:inline-block;flex-shrink:0"></span>'+
+        '<span style="font-size:11px;flex:1">'+(ci2.emoji||'•')+' '+e[0]+'</span>'+
+        '<span style="font-size:11px;font-weight:700;color:'+color+'">'+pct+'%</span>'+
+      '</div>'
+    );
+    angle += slice;
+  });
+
+  var totalDesp = fsCat(total);
+  var svgHTML = '<svg viewBox="0 0 '+W+' 220" style="width:100%;max-height:220px">'+
+    svgParts.join('')+
+    '<text x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" style="font-size:11px;fill:var(--muted);font-family:Calibri">Total</text>'+
+    '<text x="'+cx+'" y="'+(cy+12)+'" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--text);font-family:Calibri">'+totalDesp+'</text>'+
+  '</svg>';
+
+  document.getElementById('cat-chart-area').innerHTML =
+    svgHTML +
+    '<div style="margin-top:8px">'+legendParts.join('')+'</div>';
+}
+
+function renderCatLinha(lms) {
+  // Show top 3 categories evolution month by month
+  var catMap={};
+  lms.filter(function(l){return l.tipo==='despesa';}).forEach(function(l){
+    catMap[l.cat]=(catMap[l.cat]||0)+l.valor;
+  });
+  var top3=Object.entries(catMap).sort(function(a,b){return b[1]-a[1];}).slice(0,3).map(function(e){return e[0];});
+
+  // Get months with data
+  var months={};
+  lms.filter(function(l){return l.tipo==='despesa';}).forEach(function(l){
+    var key=l.data.substring(0,7);
+    if(!months[key]) months[key]={};
+    top3.forEach(function(cat){if(l.cat===cat) months[key][cat]=(months[key][cat]||0)+l.valor;});
+  });
+
+  var mKeys=Object.keys(months).sort();
+  var MLAB=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var labels=mKeys.map(function(k){var m=parseInt(k.substring(5))-1;return MLAB[m];});
+
+  if(mKeys.length<2){
+    document.getElementById('cat-chart-area').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Dados insuficientes para evolução.<br>Selecione Ano, MAT ou YTD com múltiplos meses.</div>';
+    return;
+  }
+
+  var n=mKeys.length;
+  var PL=44,PR=10,PT=14,PB=26,W=340,H=140;
+  var CW=W-PL-PR, CH=H-PT-PB;
+  var allV=[];
+  top3.forEach(function(cat){mKeys.forEach(function(k){allV.push(months[k][cat]||0);});});
+  var maxV=Math.max.apply(null,allV)*1.15||1000;
+  function xP(i){return PL+(i/Math.max(n-1,1))*CW;}
+  function yP(v){return PT+CH-(v/maxV)*CH;}
+  function fmtK(v){return v>=1000?'R$'+(v/1000).toFixed(0)+'k':'R$'+v.toFixed(0);}
+
+  var svgContent='';
+  // Grid
+  for(var gi=0;gi<=3;gi++){
+    var gv=maxV/3*gi,gy=yP(gv);
+    svgContent+='<line x1="'+PL+'" y1="'+gy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+gy.toFixed(1)+'" stroke="var(--border)" stroke-width="1"/>';
+    svgContent+='<text x="'+(PL-4)+'" y="'+(gy+3).toFixed(1)+'" text-anchor="end" style="font-size:9px;fill:var(--muted);font-family:Calibri">'+fmtK(gv)+'</text>';
+  }
+  // X labels
+  var step=n<=6?1:Math.ceil(n/6);
+  for(var xi=0;xi<n;xi+=step){
+    svgContent+='<text x="'+xP(xi).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" style="font-size:9px;fill:var(--muted);font-family:Calibri">'+labels[xi]+'</text>';
+  }
+  // Lines per top3 cat
+  top3.forEach(function(cat,ci){
+    var color=CAT_COLORS[ci];
+    var pts=mKeys.map(function(k,i){return xP(i).toFixed(1)+','+(yP(months[k][cat]||0)).toFixed(1);}).join(' L ');
+    svgContent+='<path d="M '+pts+'" fill="none" stroke="'+color+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+    mKeys.forEach(function(k,i){
+      var v=months[k][cat]||0;
+      if(v>0) svgContent+='<circle cx="'+xP(i).toFixed(1)+'" cy="'+yP(v).toFixed(1)+'" r="3.5" fill="'+color+'" stroke="white" stroke-width="2"/>';
+    });
+  });
+
+  var legend=top3.map(function(cat,ci){
+    var c2=CATS.find(function(c){return c.label===cat;})||{emoji:'💳'};
+    return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;margin-right:10px">'+
+      '<span style="width:8px;height:8px;border-radius:50%;background:'+CAT_COLORS[ci]+';display:inline-block"></span>'+
+      c2.emoji+' '+cat+'</span>';
+  }).join('');
+
+  document.getElementById('cat-chart-area').innerHTML=
+    '<div style="margin-bottom:8px">'+legend+'</div>'+
+    '<svg viewBox="0 0 340 140" style="width:100%;height:150px;overflow:visible">'+svgContent+'</svg>';
+}
+
+function renderCatInsights(entries, total, lms) {
+  var ins=[];
+  var top1=entries[0], top2=entries[1];
+  var ci2=function(l){return CATS.find(function(c){return c.label===l;})||{emoji:'💳',label:l};};
+
+  // Top category
+  if(top1){
+    var pct1=Math.round(top1[1]/total*100);
+    ins.push({
+      icon: ci2(top1[0]).emoji,
+      title: top1[0]+' é a maior despesa ('+pct1+'%)',
+      text: fsCat(top1[0])+' — '+fsCat(top1[1])+' dos '+fsCat(total)+' totais neste período.',
+      cor: pct1>40?'#dc2626':'#d97706',
+      bg: pct1>40?'#fef2f2':'#fffbeb'
+    });
+  }
+
+  // Top 3 concentration
+  var top3sum=entries.slice(0,3).reduce(function(s,e){return s+e[1];},0);
+  var pct3=Math.round(top3sum/total*100);
+  if(entries.length>=3){
+    ins.push({
+      icon:'📊',
+      title:'Top 3 categorias = '+pct3+'% dos gastos',
+      text: entries.slice(0,3).map(function(e){return ci2(e[0]).emoji+' '+e[0];}).join(', ')+' concentram a maior parte das despesas.',
+      cor: pct3>70?'#dc2626':'#1d4ed8',
+      bg: pct3>70?'#fef2f2':'#eff6ff'
+    });
+  }
+
+  // Category with orçamento over budget
+  var overBudget=[];
+  var catGastos={};
+  lms.filter(function(l){return l.tipo==='despesa';}).forEach(function(l){catGastos[l.cat]=(catGastos[l.cat]||0)+l.valor;});
+  CATS.forEach(function(c){
+    if(orcamentos[c.label]&&catGastos[c.label]){
+      var pct=catGastos[c.label]/orcamentos[c.label]*100;
+      if(pct>=100) overBudget.push(c.label+' ('+Math.round(pct)+'%)');
+    }
+  });
+  if(overBudget.length>0){
+    ins.push({icon:'🚨',title:overBudget.length+' categoria(s) estourou orçamento',text:overBudget.join(', ')+' ultrapassaram o limite definido.',cor:'#dc2626',bg:'#fef2f2'});
+  } else if(Object.keys(orcamentos).length>0){
+    ins.push({icon:'✅',title:'Todas as categorias dentro do orçamento',text:'Nenhuma categoria ultrapassou o limite definido neste período.',cor:'#059669',bg:'#f0fdf4'});
+  }
+
+  // Smallest category
+  var last=entries[entries.length-1];
+  if(last && entries.length>3){
+    ins.push({icon:'💡',title:'Menor gasto: '+last[0],text:fsCat(last[1])+' — apenas '+Math.round(last[1]/total*100)+'% do total. Categoria bem controlada.',cor:'#059669',bg:'#f0fdf4'});
+  }
+
+  document.getElementById('cat-insights').innerHTML=ins.map(function(i){
+    return '<div style="background:'+i.bg+';border:1px solid '+i.cor+'33;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;gap:10px">'+
+      '<span style="font-size:20px;flex-shrink:0">'+i.icon+'</span>'+
+      '<div><div style="font-size:12px;font-weight:700;color:'+i.cor+';margin-bottom:3px">'+i.title+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);line-height:1.5">'+i.text+'</div></div></div>';
+  }).join('');
 }
 
 function renderGInsights(d,td,tr,ts,nm){
