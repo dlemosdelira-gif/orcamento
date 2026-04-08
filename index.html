@@ -449,7 +449,7 @@ select.finp{-webkit-appearance:none;appearance:none}
     <div class="fg" id="f-cat-wrap"><label class="flbl">Categoria</label><div class="cat-grid" id="cat-grid"></div></div>
     <div class="fg">
       <label class="flbl">Forma de Pagamento</label>
-      <select class="finp" id="f-pgto">
+      <select class="finp" id="f-pgto" onchange="toggleParcelas(this.value)">
         <option value="PIX/boleto">📲 PIX / Boleto</option>
         <option value="Cartão">💳 Cartao de credito</option>
         <option value="Debito">🏦 Debito</option>
@@ -458,6 +458,13 @@ select.finp{-webkit-appearance:none;appearance:none}
         <option value="VR">🍴 Vale Refeição (VR)</option>
         <option value="Outro">🔖 Outro</option>
       </select>
+    </div>
+    <div class="fg" id="f-parcelas-wrap" style="display:none">
+      <label class="flbl">Parcelado em quantas vezes?</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input class="finp" type="text" inputmode="numeric" id="f-parcelas" placeholder="1" style="width:90px;text-align:center;font-size:22px;font-weight:800" value="1">
+        <span style="font-size:13px;color:var(--muted);line-height:1.5">vezes<br><span style="font-size:11px">Uma parcela por mês</span></span>
+      </div>
     </div>
     <div class="fg"><label class="flbl">Data</label><input class="finp" type="date" id="f-data"></div>
     <button class="btn-p" onclick="saveLanc()">Salvar lancamento</button>
@@ -699,7 +706,10 @@ function openLancModal(tipo){
   document.getElementById("f-val").value="";
   document.getElementById("f-desc").value="";
   document.getElementById("f-data").value=hoje.toISOString().split("T")[0];
-  document.getElementById("f-pgto").value=tipo==="despesa"?"Cartão":"PIX/boleto";
+  var pgtoDefault=tipo==="despesa"?"Cartão":"PIX/boleto";
+  document.getElementById("f-pgto").value=pgtoDefault;
+  var pEl=document.getElementById("f-parcelas");if(pEl)pEl.value="1";
+  toggleParcelas(pgtoDefault);
   renderCatGrid();
   document.getElementById("modal-lanc").classList.add("open");
 }
@@ -734,13 +744,22 @@ function saveLanc(){
   const desc=document.getElementById("f-desc").value.trim();
   const data=document.getElementById("f-data").value;
   const pgto=document.getElementById("f-pgto").value;
+  const parcelasEl=document.getElementById("f-parcelas");
+  const parcelas=parcelasEl?Math.max(1,Math.min(60,parseInt(parcelasEl.value)||1)):1;
   if(!val||val<=0){showToast("Informe um valor valido","err");return;}
   if(!desc){showToast("Informe a descricao","err");return;}
-  const l={id:Date.now(),tipo:tipoAtual,valor:val,desc,data,pgto,cat:catAtual||"Outro"};
-  lancamentos.unshift(l);
-  fbSaveLanc(l);
+  if(!data){showToast("Informe a data","err");return;}
+  const dataBase=new Date(data+"T00:00:00");
+  for(let p=0;p<parcelas;p++){
+    const d=new Date(dataBase.getFullYear(),dataBase.getMonth()+p,dataBase.getDate());
+    const ds=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    const descP=parcelas>1?desc+" "+String(p+1)+"/"+String(parcelas):desc;
+    const l={id:Date.now()+p,tipo:tipoAtual,valor:val,desc:descP,data:ds,pgto,cat:catAtual||"Outro"};
+    lancamentos.unshift(l);
+    fbSaveLanc(l);
+  }
   closeModal("modal-lanc");
-  showToast("✅ Lancamento salvo!");
+  showToast(parcelas>1?"✅ "+parcelas+" parcelas salvas!":"✅ Lancamento salvo!");
   renderAll();
 }
 function saveMeta(){
@@ -837,6 +856,11 @@ function renderHome(){
 }
 
 // FILTROS LANCAMENTOS
+function toggleParcelas(pgto){
+  var wrap=document.getElementById("f-parcelas-wrap");
+  if(wrap) wrap.style.display=(pgto==="Cartão")?"block":"none";
+  if(pgto!=="Cartão"){var p=document.getElementById("f-parcelas");if(p)p.value="1";}
+}
 function setFiltro(t,el){filtroAtual=t;document.querySelectorAll("#filter-tipo .chip").forEach(c=>c.classList.remove("on","cc-chip-on"));el.classList.add("on");if(t==="cartao")el.classList.add("cc-chip-on");renderLanc();}
 function toggleOrdem(){
   var ordens=["recente","maior","menor"];
