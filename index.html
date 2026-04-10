@@ -187,15 +187,15 @@ select.finp{-webkit-appearance:none;appearance:none}
 .mc-title{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:16px;font-weight:800;margin-bottom:10px}
 .mc-legend{display:flex;flex-wrap:wrap;gap:6px;font-size:11px;color:var(--muted);margin-bottom:14px;align-items:center}
 .mc-dot{width:11px;height:11px;border-radius:3px;display:inline-block;flex-shrink:0}
-.mc-bars{display:flex;flex-direction:column;gap:14px}
-.mc-row{display:flex;align-items:center;gap:8px}
-.mc-label{font-size:11px;color:var(--muted);width:88px;flex-shrink:0;text-align:right;line-height:1.25}
-.mc-track{flex:1;height:26px;position:relative;background:var(--border);border-radius:6px;overflow:hidden}
-.mc-seg{position:absolute;top:0;left:0;height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:5px;transition:width .6s}
+.mc-bars{display:flex;flex-direction:column;gap:20px}
+.mc-row{display:flex;align-items:center;gap:10px}
+.mc-label{font-size:11px;color:var(--muted);width:96px;flex-shrink:0;text-align:right;line-height:1.4}
+.mc-track{flex:1;height:36px;position:relative;background:var(--border);border-radius:8px;overflow:hidden}
+.mc-seg{position:absolute;top:0;left:0;height:100%;border-radius:8px;display:flex;align-items:center;justify-content:flex-end;padding-right:7px;transition:width .6s}
 .mc-seg.meta-bg{background:var(--surface3);border:1px solid var(--border);z-index:1}
 .mc-seg.realizado{background:#34d399;z-index:3}
 .mc-seg.falta{background:#fb923c;z-index:2;justify-content:flex-start;padding-left:5px}
-.mc-val{font-size:11px;font-weight:800;color:#fff;white-space:nowrap}
+.mc-val{font-size:12px;font-weight:800;color:#fff;white-space:nowrap}
 .mc-pct{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:12px;font-weight:800;width:38px;flex-shrink:0;text-align:right}
 </style>
 </head>
@@ -877,10 +877,10 @@ function toggleParcelas(pgto){
 }
 function setFiltro(t,el){filtroAtual=t;document.querySelectorAll("#filter-tipo .chip").forEach(c=>c.classList.remove("on","cc-chip-on"));el.classList.add("on");if(t==="cartao")el.classList.add("cc-chip-on");renderLanc();}
 function toggleOrdem(){
-  var ordens=["recente","maior","menor"];
-  var icons=["🕐","⬇️","⬆️"];
-  var labels=["Mais recente","Maior valor","Menor valor"];
-  var idx=(ordens.indexOf(ordemAtual)+1)%3;
+  var ordens=["recente","maior","menor","dia-asc","dia-desc"];
+  var icons=["🕐","⬇️","⬆️","📅","📅"];
+  var labels=["Mais recente","Maior valor","Menor valor","Dia 01→hoje","Dia hoje→01"];
+  var idx=(ordens.indexOf(ordemAtual)+1)%ordens.length;
   ordemAtual=ordens[idx];
   document.getElementById("sort-ico").textContent=icons[idx];
   document.getElementById("sort-lbl").textContent=labels[idx];
@@ -911,6 +911,8 @@ function renderLanc(){
   if(catFiltroAtual)items=items.filter(l=>l.cat===catFiltroAtual);
   if(ordemAtual==="maior")items=[...items].sort((a,b)=>b.valor-a.valor);
   else if(ordemAtual==="menor")items=[...items].sort((a,b)=>a.valor-b.valor);
+  else if(ordemAtual==="dia-asc")items=[...items].sort((a,b)=>a.data.localeCompare(b.data));
+  else if(ordemAtual==="dia-desc")items=[...items].sort((a,b)=>b.data.localeCompare(a.data));
   else items=[...items].sort((a,b)=>b.id-a.id);
   document.getElementById("lanc-list").innerHTML=items.length===0?'<div class="empty"><div class="ei">📭</div><div class="et">Nenhum lancamento</div></div>':'<div class="card">'+items.map(l=>txHTML(l,false)).join('')+'</div>';
 }
@@ -1533,25 +1535,6 @@ function renderGInsights(d,td,tr,ts,nm){
   }).join('');
 }
 
-// FAB
-var fabOpen_state = false;
-function toggleFab(){
-  fabOpen_state = !fabOpen_state;
-  document.getElementById('fab-opts').classList.toggle('show', fabOpen_state);
-  document.getElementById('fab-main').classList.toggle('open', fabOpen_state);
-  document.getElementById('fab-backdrop').classList.toggle('show', fabOpen_state);
-}
-function closeFab(){
-  fabOpen_state = false;
-  document.getElementById('fab-opts').classList.remove('show');
-  document.getElementById('fab-main').classList.remove('open');
-  document.getElementById('fab-backdrop').classList.remove('show');
-}
-function fabOpen(tipo){
-  closeFab();
-  openLancModal(tipo);
-}
-
 // INIT
 document.getElementById("hdr-hoje").textContent=hoje.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
 setTipo("despesa");
@@ -1559,19 +1542,8 @@ initFirebase();
 </script>
 
 <!-- FAB -->
-<div class="fab-backdrop" id="fab-backdrop" onclick="closeFab()"></div>
 <div class="fab" id="fab">
-  <div class="fab-opts" id="fab-opts">
-    <div class="fab-opt" onclick="fabOpen('receita')">
-      <div class="fab-opt-lbl">Receita</div>
-      <div class="fab-opt-btn rec">💰</div>
-    </div>
-    <div class="fab-opt" onclick="fabOpen('despesa')">
-      <div class="fab-opt-lbl">Despesa</div>
-      <div class="fab-opt-btn desp">💸</div>
-    </div>
-  </div>
-  <button class="fab-main" id="fab-main" onclick="toggleFab()">+</button>
+  <button class="fab-main" id="fab-main" onclick="openLancModal('despesa')">+</button>
 </div>
 </body>
 </html>
