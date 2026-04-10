@@ -473,11 +473,14 @@ select.finp{-webkit-appearance:none;appearance:none}
         <option value="Outro">🔖 Outro</option>
       </select>
     </div>
-    <div class="fg" id="f-parcelas-wrap" style="display:none">
-      <label class="flbl">Parcelado em quantas vezes?</label>
+    <div class="fg" id="f-repetir-wrap" style="display:none">
+      <label class="flbl" id="f-repetir-lbl">Repetir por quantos meses?</label>
       <div style="display:flex;align-items:center;gap:10px">
         <input class="finp" type="text" inputmode="numeric" id="f-parcelas" placeholder="1" style="width:90px;text-align:center;font-size:22px;font-weight:800" value="1">
-        <span style="font-size:13px;color:var(--muted);line-height:1.5">vezes<br><span style="font-size:11px">Uma parcela por mês</span></span>
+        <div>
+          <div id="f-repetir-desc" style="font-size:13px;color:var(--muted)">vezes</div>
+          <div id="f-repetir-sub" style="font-size:11px;color:var(--muted);margin-top:2px">Um lançamento por mês</div>
+        </div>
       </div>
     </div>
     <div class="fg"><label class="flbl">Data</label><input class="finp" type="date" id="f-data"></div>
@@ -534,7 +537,7 @@ const mesAnoAtual=()=>hoje.getFullYear()+"-"+String(hoje.getMonth()+1).padStart(
 // STATE
 let lancamentos=[..._DADOS_INICIAIS].sort(function(a,b){return b.id-a.id;}),metas=[],orcamentos={};
 let tipoAtual="despesa",catAtual="",emojiAtual="🎯";
-let filtroAtual="todos",catFiltroAtual="",ordemAtual="recente";
+let filtroAtual="todos",catFiltroAtual="",ordemAtual="recente",editandoId=null;
 let modoAtual="cal",mesAtual=hoje.getMonth(),anoAtual=hoje.getFullYear(),cicloOffset=0,modoExt="";
 let metasView="mes";
 
@@ -715,7 +718,25 @@ function perAnt(){if(modoAtual==="cal"){mesAtual--;if(mesAtual<0){mesAtual=11;an
 function perPrx(){if(modoAtual==="cal"){mesAtual++;if(mesAtual>11){mesAtual=0;anoAtual++;}}else cicloOffset++;renderAll();}
 
 // MODALS
+function editLanc(id){
+  var l=lancamentos.find(function(x){return x.id===id;});
+  if(!l)return;
+  editandoId=id;
+  setTipo(l.tipo);
+  catAtual=l.cat||"";
+  document.getElementById("f-val").value=String(l.valor).replace(".",",");
+  document.getElementById("f-desc").value=l.desc||"";
+  document.getElementById("f-data").value=l.data||"";
+  document.getElementById("f-pgto").value=l.pgto||"PIX/boleto";
+  var pEl=document.getElementById("f-parcelas");if(pEl)pEl.value="1";
+  toggleParcelas(l.pgto||"PIX/boleto");
+  renderCatGrid();
+  var title=document.querySelector("#modal-lanc .sheet-title");
+  if(title)title.textContent="Editar Lancamento";
+  document.getElementById("modal-lanc").classList.add("open");
+}
 function openLancModal(tipo){
+  editandoId=null;
   setTipo(tipo);catAtual="";
   document.getElementById("f-val").value="";
   document.getElementById("f-desc").value="";
@@ -725,6 +746,8 @@ function openLancModal(tipo){
   var pEl=document.getElementById("f-parcelas");if(pEl)pEl.value="1";
   toggleParcelas(pgtoDefault);
   renderCatGrid();
+  var title=document.querySelector("#modal-lanc .sheet-title");
+  if(title)title.textContent="Novo Lancamento";
   document.getElementById("modal-lanc").classList.add("open");
 }
 function openMetaModal(){
@@ -746,6 +769,8 @@ function setTipo(t){
   document.getElementById("tb-desp").className="tipo-btn desp"+(t==="despesa"?" on":"");
   document.getElementById("tb-rec").className="tipo-btn rec"+(t==="receita"?" on":"");
   document.getElementById("f-cat-wrap").style.display=t==="despesa"?"block":"none";
+  var pgtoEl=document.getElementById("f-pgto");
+  toggleParcelas(pgtoEl?pgtoEl.value:"PIX/boleto");
 }
 function renderCatGrid(){document.getElementById("cat-grid").innerHTML=CATS.map(c=>`<div class="cat-it ${catAtual===c.label?"on":""}" onclick="pickCat('${c.label}',this)"><span class="ce">${c.emoji}</span><span class="cl">${c.label}</span></div>`).join("");}
 function pickCat(l,el){catAtual=l;document.querySelectorAll("#cat-grid .cat-it").forEach(e=>e.classList.remove("on"));el.classList.add("on");}
@@ -759,21 +784,38 @@ function saveLanc(){
   const data=document.getElementById("f-data").value;
   const pgto=document.getElementById("f-pgto").value;
   const parcelasEl=document.getElementById("f-parcelas");
-  const parcelas=parcelasEl?Math.max(1,Math.min(60,parseInt(parcelasEl.value)||1)):1;
+  const parcelas=(!editandoId&&parcelasEl)?Math.max(1,Math.min(60,parseInt(parcelasEl.value)||1)):1;
   if(!val||val<=0){showToast("Informe um valor valido","err");return;}
   if(!desc){showToast("Informe a descricao","err");return;}
   if(!data){showToast("Informe a data","err");return;}
-  const dataBase=new Date(data+"T00:00:00");
-  for(let p=0;p<parcelas;p++){
-    const d=new Date(dataBase.getFullYear(),dataBase.getMonth()+p,dataBase.getDate());
-    const ds=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-    const descP=parcelas>1?desc+" "+String(p+1)+"/"+String(parcelas):desc;
-    const l={id:Date.now()+p,tipo:tipoAtual,valor:val,desc:descP,data:ds,pgto,cat:catAtual||"Outro"};
-    lancamentos.unshift(l);
-    fbSaveLanc(l);
+
+  if(editandoId){
+    // EDIT mode: update existing
+    const idx=lancamentos.findIndex(function(x){return x.id===editandoId;});
+    if(idx>=0){
+      lancamentos[idx]={id:editandoId,tipo:tipoAtual,valor:val,desc:desc,data:data,pgto:pgto,cat:catAtual||lancamentos[idx].cat||"Outro"};
+      fbSaveLanc(lancamentos[idx]);
+    }
+    editandoId=null;
+    var title=document.querySelector("#modal-lanc .sheet-title");
+    if(title)title.textContent="Novo Lancamento";
+    closeModal("modal-lanc");
+    showToast("✅ Lancamento atualizado!");
+  } else {
+    // CREATE mode: new entry (with parcelas)
+    const dataBase=new Date(data+"T00:00:00");
+    for(let p=0;p<parcelas;p++){
+      const d=new Date(dataBase.getFullYear(),dataBase.getMonth()+p,dataBase.getDate());
+      const ds=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+      const descP=parcelas>1?desc+" "+String(p+1)+"/"+String(parcelas):desc;
+      const l={id:Date.now()+p,tipo:tipoAtual,valor:val,desc:descP,data:ds,pgto:pgto,cat:catAtual||"Outro"};
+      lancamentos.unshift(l);
+      fbSaveLanc(l);
+    }
+    closeModal("modal-lanc");
+    var isCartao=pgto==="Cartão";
+    showToast(parcelas>1?(isCartao?"✅ "+parcelas+"x parcelado!":"✅ "+parcelas+" meses lançados!"):"✅ Lancamento salvo!");
   }
-  closeModal("modal-lanc");
-  showToast(parcelas>1?"✅ "+parcelas+" parcelas salvas!":"✅ Lancamento salvo!");
   renderAll();
 }
 function saveMeta(){
@@ -829,7 +871,7 @@ function txHTML(l,compact){
   var isCC=l.pgto==="Cartao";
   var dataFmt=l.data.split("-").reverse().join("/");
   var tagSpan=l.pgto?" · <span class=\"tag"+(isCC?" cc":"")+"\">"+(l.pgto)+"</span>":"";
-  var delBtn=compact?"":"<span class=\"tx-del\" onclick=\"delLanc("+l.id+")\">🗑</span>";
+  var delBtn=compact?"":"<span class=\"tx-del\" onclick=\"editLanc("+l.id+")\">✏️</span><span class=\"tx-del\" onclick=\"delLanc("+l.id+")\">🗑</span>";
   var val=(d?"-":"+")+fmt(l.valor);
   var valClass="tx-val "+(d?"r":"g");
   var bg=d?"#f8717118":"#34d39918";
@@ -871,9 +913,27 @@ function renderHome(){
 
 // FILTROS LANCAMENTOS
 function toggleParcelas(pgto){
-  var wrap=document.getElementById("f-parcelas-wrap");
-  if(wrap) wrap.style.display=(pgto==="Cartão")?"block":"none";
-  if(pgto!=="Cartão"){var p=document.getElementById("f-parcelas");if(p)p.value="1";}
+  var wrap=document.getElementById("f-repetir-wrap");
+  var lbl=document.getElementById("f-repetir-lbl");
+  var desc=document.getElementById("f-repetir-desc");
+  var sub=document.getElementById("f-repetir-sub");
+  if(!wrap)return;
+  // Show for all types when in despesa mode
+  if(tipoAtual==="despesa"){
+    wrap.style.display="block";
+    if(pgto==="Cartão"){
+      if(lbl)lbl.textContent="Parcelado em quantas vezes?";
+      if(desc)desc.textContent="vezes";
+      if(sub)sub.textContent="Uma parcela por mês (ex: 3x = 3 meses)";
+    } else {
+      if(lbl)lbl.textContent="Repetir por quantos meses?";
+      if(desc)desc.textContent="meses";
+      if(sub)sub.textContent="Lança automaticamente nos próximos meses";
+    }
+  } else {
+    wrap.style.display="none";
+    var p=document.getElementById("f-parcelas");if(p)p.value="1";
+  }
 }
 function setFiltro(t,el){filtroAtual=t;document.querySelectorAll("#filter-tipo .chip").forEach(c=>c.classList.remove("on","cc-chip-on"));el.classList.add("on");if(t==="cartao")el.classList.add("cc-chip-on");renderLanc();}
 function toggleOrdem(){
