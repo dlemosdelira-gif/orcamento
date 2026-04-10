@@ -152,6 +152,20 @@ select.finp{-webkit-appearance:none;appearance:none}
 .nav-it.on{color:var(--accent)!important}
 .nav-ico{font-size:21px}
 .nav-lbl{font-size:9px;font-weight:600;letter-spacing:.3px;color:inherit!important}
+/* FAB */
+.fab{position:fixed;bottom:calc(var(--nav-h) + 16px);right:18px;z-index:300;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.fab-main{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;box-shadow:0 4px 16px #7c6af755;transition:transform .2s;-webkit-appearance:none}
+.fab-main:active{transform:scale(.92)}
+.fab-main.open{transform:rotate(45deg)}
+.fab-opts{display:flex;flex-direction:column;align-items:flex-end;gap:8px;opacity:0;pointer-events:none;transform:translateY(10px);transition:all .2s}
+.fab-opts.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+.fab-opt{display:flex;align-items:center;gap:10px;cursor:pointer}
+.fab-opt-lbl{background:#1a1a1a;color:#fff;font-size:12px;font-weight:700;padding:6px 12px;border-radius:99px;white-space:nowrap;box-shadow:0 2px 8px #0002}
+.fab-opt-btn{width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 10px #0002;-webkit-appearance:none}
+.fab-opt-btn.desp{background:#f87171}
+.fab-opt-btn.rec{background:#34d399}
+.fab-backdrop{position:fixed;inset:0;z-index:299;display:none}
+.fab-backdrop.show{display:block}
 .toast{position:fixed;top:58px;left:50%;transform:translateX(-50%);padding:10px 18px;border-radius:99px;font-size:13px;font-weight:600;z-index:400;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none}
 .toast.ok{background:var(--green);color:#000}
 .toast.err{background:var(--red);color:#fff}
@@ -1519,11 +1533,45 @@ function renderGInsights(d,td,tr,ts,nm){
   }).join('');
 }
 
+// FAB
+var fabOpen_state = false;
+function toggleFab(){
+  fabOpen_state = !fabOpen_state;
+  document.getElementById('fab-opts').classList.toggle('show', fabOpen_state);
+  document.getElementById('fab-main').classList.toggle('open', fabOpen_state);
+  document.getElementById('fab-backdrop').classList.toggle('show', fabOpen_state);
+}
+function closeFab(){
+  fabOpen_state = false;
+  document.getElementById('fab-opts').classList.remove('show');
+  document.getElementById('fab-main').classList.remove('open');
+  document.getElementById('fab-backdrop').classList.remove('show');
+}
+function fabOpen(tipo){
+  closeFab();
+  openLancModal(tipo);
+}
+
 // INIT
 document.getElementById("hdr-hoje").textContent=hoje.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
 setTipo("despesa");
 initFirebase();
 </script>
 
+<!-- FAB -->
+<div class="fab-backdrop" id="fab-backdrop" onclick="closeFab()"></div>
+<div class="fab" id="fab">
+  <div class="fab-opts" id="fab-opts">
+    <div class="fab-opt" onclick="fabOpen('receita')">
+      <div class="fab-opt-lbl">Receita</div>
+      <div class="fab-opt-btn rec">💰</div>
+    </div>
+    <div class="fab-opt" onclick="fabOpen('despesa')">
+      <div class="fab-opt-lbl">Despesa</div>
+      <div class="fab-opt-btn desp">💸</div>
+    </div>
+  </div>
+  <button class="fab-main" id="fab-main" onclick="toggleFab()">+</button>
+</div>
 </body>
 </html>
