@@ -273,6 +273,11 @@ select.finp{-webkit-appearance:none;appearance:none}
     <div class="mode-btn"   onclick="setModoExt('ytd',this)">&#128197; YTD</div>
     <div class="mode-btn"   onclick="setModoExt('mat',this)">&#128467; MAT</div>
   </div>
+  <div class="per-nav">
+    <div class="per-btn" onclick="perAnt()">&#8249;</div>
+    <div class="per-txt" id="per-lanc-lbl">...</div>
+    <div class="per-btn" onclick="perPrx()">&#8250;</div>
+  </div>
   <div class="filter-row" id="filter-tipo">
     <div class="chip on" onclick="setFiltro('todos',this)">Todos</div>
     <div class="chip" onclick="setFiltro('despesa',this)">💸 Despesas</div>
@@ -302,6 +307,11 @@ select.finp{-webkit-appearance:none;appearance:none}
     <div class="mode-btn"   onclick="setModoExt('ytd',this)">&#128197; YTD</div>
     <div class="mode-btn"   onclick="setModoExt('mat',this)">&#128467; MAT</div>
   </div>
+  <div class="per-nav">
+    <div class="per-btn" onclick="perAnt()">&#8249;</div>
+    <div class="per-txt" id="per-orc-lbl">...</div>
+    <div class="per-btn" onclick="perPrx()">&#8250;</div>
+  </div>
   <div id="orc-total-summary"></div>
   <div id="orc-alerts"></div>
   <div class="slbl" style="margin-bottom:14px">Gasto vs Orcamento</div>
@@ -316,6 +326,11 @@ select.finp{-webkit-appearance:none;appearance:none}
   <div class="mode-toggle" id="metas-view-toggle" style="margin-bottom:16px">
     <div class="mode-btn on" onclick="setMetasView('mes',this)">&#128197; Este mes</div>
     <div class="mode-btn"    onclick="setMetasView('ano',this)">&#128467;&#65039; Este ano</div>
+  </div>
+  <div class="per-nav">
+    <div class="per-btn" onclick="perAnt()">&#8249;</div>
+    <div class="per-txt" id="per-metas-lbl">...</div>
+    <div class="per-btn" onclick="perPrx()">&#8250;</div>
   </div>
   <div id="metas-chart"></div>
   <div class="divider"></div>
@@ -975,6 +990,7 @@ function buildCatChips(){
 function renderLanc(){
   const lm=getLancPeriodo();
   document.getElementById("mes-lanc-sub").textContent=getPeriodoLabel()+(getPeriodoSub()?" · "+getPeriodoSub():"");
+  const _llbl=document.getElementById("per-lanc-lbl");if(_llbl){const _ls=getPeriodoSub();_llbl.innerHTML=getPeriodoLabel()+(_ls?`<span class="per-sub">${_ls}</span>`:"")}
   buildCatChips();
   let items=lm;
   if(filtroAtual==="despesa")items=lm.filter(l=>l.tipo==="despesa");
@@ -1004,6 +1020,7 @@ function renderLanc(){
 function renderOrc(){
   const lm=getLancPeriodo();
   document.getElementById("mes-orc-sub").textContent=getPeriodoLabel()+(getPeriodoSub()?" · "+getPeriodoSub():"");
+  const _olbl=document.getElementById("per-orc-lbl");if(_olbl){const _os=getPeriodoSub();_olbl.innerHTML=getPeriodoLabel()+(_os?`<span class="per-sub">${_os}</span>`:"")}
   const gastos={};lm.filter(l=>l.tipo==="despesa").forEach(l=>{gastos[l.cat]=(gastos[l.cat]||0)+l.valor;});
   const totalOrc=Object.values(orcamentos).reduce((a,b)=>a+b,0);
   const totalGasto=Object.values(gastos).reduce((a,b)=>a+b,0);
@@ -1038,6 +1055,7 @@ function renderOrc(){
 // RENDER METAS
 function renderMetas(){
   MP.forEach(m=>{checkResetMes(m);recalcMP(m);});
+  const _mlbl=document.getElementById("per-metas-lbl");if(_mlbl){const _ms=getPeriodoSub();_mlbl.innerHTML=getPeriodoLabel()+(_ms?`<span class="per-sub">${_ms}</span>`:"")}
   renderMetasChart();renderMetasFin();
 }
 function showMetaTip(idx,isMes){
