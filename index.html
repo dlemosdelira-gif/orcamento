@@ -236,6 +236,7 @@ select.finp{-webkit-appearance:none;appearance:none}
     </div>
   </div>
   <div id="home-cc-area" style="display:none">
+    <div id="home-cc-balance" style="display:none;margin-bottom:12px"></div>
     <div class="card-cc">
       <div class="cc-row1">
         <div class="cc-title">&#128179; Fatura do ciclo</div>
@@ -272,6 +273,11 @@ select.finp{-webkit-appearance:none;appearance:none}
     <div class="mode-btn"   onclick="setModoExt('ytd',this)">&#128197; YTD</div>
     <div class="mode-btn"   onclick="setModoExt('mat',this)">&#128467; MAT</div>
   </div>
+  <div class="per-nav">
+    <div class="per-btn" onclick="perAnt()">&#8249;</div>
+    <div class="per-txt" id="per-lanc-lbl">...</div>
+    <div class="per-btn" onclick="perPrx()">&#8250;</div>
+  </div>
   <div class="filter-row" id="filter-tipo">
     <div class="chip on" onclick="setFiltro('todos',this)">Todos</div>
     <div class="chip" onclick="setFiltro('despesa',this)">💸 Despesas</div>
@@ -301,6 +307,12 @@ select.finp{-webkit-appearance:none;appearance:none}
     <div class="mode-btn"   onclick="setModoExt('ytd',this)">&#128197; YTD</div>
     <div class="mode-btn"   onclick="setModoExt('mat',this)">&#128467; MAT</div>
   </div>
+  <div class="per-nav">
+    <div class="per-btn" onclick="perAnt()">&#8249;</div>
+    <div class="per-txt" id="per-orc-lbl">...</div>
+    <div class="per-btn" onclick="perPrx()">&#8250;</div>
+  </div>
+  <div id="orc-total-summary"></div>
   <div id="orc-alerts"></div>
   <div class="slbl" style="margin-bottom:14px">Gasto vs Orcamento</div>
   <div id="chart-area"></div>
@@ -314,6 +326,11 @@ select.finp{-webkit-appearance:none;appearance:none}
   <div class="mode-toggle" id="metas-view-toggle" style="margin-bottom:16px">
     <div class="mode-btn on" onclick="setMetasView('mes',this)">&#128197; Este mes</div>
     <div class="mode-btn"    onclick="setMetasView('ano',this)">&#128467;&#65039; Este ano</div>
+  </div>
+  <div class="per-nav">
+    <div class="per-btn" onclick="perAnt()">&#8249;</div>
+    <div class="per-txt" id="per-metas-lbl">...</div>
+    <div class="per-btn" onclick="perPrx()">&#8250;</div>
   </div>
   <div id="metas-chart"></div>
   <div class="divider"></div>
@@ -905,7 +922,14 @@ function renderHome(){
   document.getElementById("home-cc-area").style.display=modoAtual==="cc"?"block":"none";
   if(modoAtual==="cc"){
     renderCCCard();
+    const ccBalEl=document.getElementById("home-cc-balance");
+    if(ccBalEl){
+      ccBalEl.style.display="block";
+      ccBalEl.innerHTML=`<div class="bal-card"><div class="bal-lbl">Receitas vs Despesas do ciclo</div><div class="bal-val${s<0?" neg":""}" style="margin:6px 0">${fmtH(s)}</div><div class="bal-row"><div class="bal-mini"><div class="bal-mini-lbl">Receitas</div><div class="bal-mini-val g">${fmtSH(rec)}</div></div><div class="bal-mini"><div class="bal-mini-lbl">Despesas</div><div class="bal-mini-val r">${fmtSH(desp)}</div></div></div></div>`;
+    }
   }else{
+    const ccBalEl=document.getElementById("home-cc-balance");
+    if(ccBalEl)ccBalEl.style.display="none";
     const sv=document.getElementById("h-saldo");sv.textContent=fmtH(s);sv.className="bal-val"+(s<0?" neg":"");
     document.getElementById("h-rec").textContent=fmtSH(rec);
     document.getElementById("h-desp").textContent=fmtSH(desp);
@@ -966,6 +990,7 @@ function buildCatChips(){
 function renderLanc(){
   const lm=getLancPeriodo();
   document.getElementById("mes-lanc-sub").textContent=getPeriodoLabel()+(getPeriodoSub()?" · "+getPeriodoSub():"");
+  const _llbl=document.getElementById("per-lanc-lbl");if(_llbl){const _ls=getPeriodoSub();_llbl.innerHTML=getPeriodoLabel()+(_ls?`<span class="per-sub">${_ls}</span>`:"")}
   buildCatChips();
   let items=lm;
   if(filtroAtual==="despesa")items=lm.filter(l=>l.tipo==="despesa");
@@ -995,7 +1020,20 @@ function renderLanc(){
 function renderOrc(){
   const lm=getLancPeriodo();
   document.getElementById("mes-orc-sub").textContent=getPeriodoLabel()+(getPeriodoSub()?" · "+getPeriodoSub():"");
+  const _olbl=document.getElementById("per-orc-lbl");if(_olbl){const _os=getPeriodoSub();_olbl.innerHTML=getPeriodoLabel()+(_os?`<span class="per-sub">${_os}</span>`:"")}
   const gastos={};lm.filter(l=>l.tipo==="despesa").forEach(l=>{gastos[l.cat]=(gastos[l.cat]||0)+l.valor;});
+  const totalOrc=Object.values(orcamentos).reduce((a,b)=>a+b,0);
+  const totalGasto=Object.values(gastos).reduce((a,b)=>a+b,0);
+  const summEl=document.getElementById("orc-total-summary");
+  if(summEl){
+    if(totalOrc>0){
+      const tPct=Math.round(totalGasto/totalOrc*100);
+      const tColor=totalGasto>totalOrc?"var(--red)":tPct>=80?"var(--yellow)":"var(--green)";
+      summEl.innerHTML=`<div class="bal-card" style="margin-bottom:16px"><div class="bal-lbl">Total gasto vs Orcamento</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin:8px 0 4px"><div style="font-size:22px;font-weight:700;color:${tColor}">${fmtH(totalGasto)}</div><div style="font-size:12px;color:var(--muted)">de ${fmtH(totalOrc)}</div></div><div class="prog-bg" style="margin:4px 0 8px"><div class="prog-fill" style="width:${Math.min(tPct,100)}%;background:${tColor}"></div></div><div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:${tColor}">${tPct}% utilizado</span><span style="color:${totalGasto>totalOrc?"var(--red)":"var(--green)"}">${totalGasto>totalOrc?"Estourou "+fmtSH(totalGasto-totalOrc):"Restam "+fmtSH(totalOrc-totalGasto)}</span></div></div>`;
+    }else{
+      summEl.innerHTML="";
+    }
+  }
   renderAlerts(lm,"orc-alerts");
   const catsOrc=CATS.filter(c=>orcamentos[c.label]);
   const chartEl=document.getElementById("chart-area");
@@ -1017,6 +1055,7 @@ function renderOrc(){
 // RENDER METAS
 function renderMetas(){
   MP.forEach(m=>{checkResetMes(m);recalcMP(m);});
+  const _mlbl=document.getElementById("per-metas-lbl");if(_mlbl){const _ms=getPeriodoSub();_mlbl.innerHTML=getPeriodoLabel()+(_ms?`<span class="per-sub">${_ms}</span>`:"")}
   renderMetasChart();renderMetasFin();
 }
 function showMetaTip(idx,isMes){
