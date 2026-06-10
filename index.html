@@ -198,6 +198,32 @@ select.finp{-webkit-appearance:none;appearance:none}
 .mc-seg.falta{background:#fb923c;z-index:2;justify-content:flex-start;padding-left:5px}
 .mc-val{font-size:11px;font-weight:800;color:#fff;white-space:nowrap}
 .mc-pct{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:11px;font-weight:800;width:38px;flex-shrink:0;text-align:right}
+/* LOTE */
+.lote-row{background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px;transition:border-color .2s}
+.lote-row.valid{border-color:#34d39966}
+.lote-row-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.lote-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.lote-tipo-tog{display:flex;gap:5px;flex:1}
+.lote-tipo-btn{flex:1;padding:6px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--surface)!important;color:var(--muted);text-align:center;-webkit-appearance:none;transition:all .12s}
+.lote-tipo-btn.desp.on{background:#f8717120!important;border-color:var(--red)!important;color:var(--red)!important;-webkit-text-fill-color:var(--red)!important}
+.lote-tipo-btn.rec.on{background:#34d39920!important;border-color:var(--green)!important;color:var(--green)!important;-webkit-text-fill-color:var(--green)!important}
+.lote-del{width:26px;height:26px;border-radius:50%;background:var(--surface3);border:1px solid var(--border);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--muted);-webkit-appearance:none}
+.lote-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.lote-full{grid-column:1/-1}
+.lote-lbl{font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px}
+.lote-inp{width:100%;background:var(--surface)!important;border:1px solid var(--border);border-radius:9px;padding:7px 10px;font-size:13px;color:var(--text)!important;-webkit-text-fill-color:var(--text)!important;font-family:'Calibri','Trebuchet MS',sans-serif;outline:none;transition:border-color .15s}
+.lote-inp:focus{border-color:var(--accent)}
+select.lote-inp{-webkit-appearance:none;appearance:none}
+/* IMPORT */
+.imp-row{display:flex;align-items:flex-start;gap:9px;padding:10px 0;border-bottom:1px solid var(--border)}
+.imp-row:last-child{border:none}
+.imp-chk{width:17px;height:17px;accent-color:var(--accent);flex-shrink:0;margin-top:3px;cursor:pointer}
+.imp-info{flex:1;min-width:0}
+.imp-desc{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.imp-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.imp-val{font-size:13px;font-weight:700;flex-shrink:0;margin-top:2px}
+.imp-dup-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;background:#fbbf2422;color:#d97706;border:1px solid #fbbf2444;margin-left:5px}
+.imp-cat-sel{width:100%;background:var(--surface2)!important;border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:11px;color:var(--text)!important;-webkit-text-fill-color:var(--text)!important;font-family:'Calibri','Trebuchet MS',sans-serif;outline:none;-webkit-appearance:none;appearance:none;margin-top:5px}
 </style>
 </head>
 <body>
@@ -364,6 +390,7 @@ select.finp{-webkit-appearance:none;appearance:none}
   <div id="rel-acumulados"></div>
   <div class="divider"></div>
   <div class="slbl" style="margin-bottom:10px">Exportar dados</div>
+  <button class="btn-exp" onclick="openImportModal()">&#128194; Importar extrato CSV</button>
   <button class="btn-exp" onclick="exportCSV()">&#128228; Exportar CSV do periodo</button>
   <button class="btn-exp" onclick="exportCSVTudo()">&#128230; Exportar tudo</button>
 </div>
@@ -786,7 +813,7 @@ function openEditOrc(){
   document.getElementById("modal-orc").classList.add("open");
 }
 function closeModal(id){document.getElementById(id).classList.remove("open");}
-["modal-lanc","modal-meta","modal-orc"].forEach(id=>{document.getElementById(id).addEventListener("click",e=>{if(e.target.id===id)closeModal(id);});});
+["modal-lanc","modal-meta","modal-orc","modal-lote","modal-import"].forEach(id=>{var el=document.getElementById(id);if(el)el.addEventListener("click",function(e){if(e.target.id===id)closeModal(id);});});
 
 // TIPO/CAT
 function setTipo(t){
@@ -1743,15 +1770,341 @@ function renderGInsights(d,td,tr,ts,nm){
   }).join('');
 }
 
+// FAB
+function toggleFab(){
+  var opts=document.getElementById("fab-opts"),main=document.getElementById("fab-main"),bd=document.getElementById("fab-backdrop");
+  if(opts.classList.contains("show")){closeFab();}
+  else{opts.classList.add("show");main.classList.add("open");bd.classList.add("show");}
+}
+function closeFab(){
+  var opts=document.getElementById("fab-opts"),main=document.getElementById("fab-main"),bd=document.getElementById("fab-backdrop");
+  opts.classList.remove("show");main.classList.remove("open");bd.classList.remove("show");
+}
+
+// LOTE
+var loteCounter=0;
+function openLoteModal(){
+  loteCounter=0;
+  document.getElementById("lote-rows").innerHTML="";
+  addLoteRow();addLoteRow();addLoteRow();
+  updateLoteBtn();
+  document.getElementById("modal-lote").classList.add("open");
+}
+function loteRowHTML(idx){
+  var todayStr=hoje.toISOString().split("T")[0];
+  var catOpts=CATS.map(function(c){return'<option value="'+c.label+'">'+c.emoji+' '+c.label+'</option>';}).join("");
+  var pgtoOpts='<option value="PIX/boleto">PIX/Boleto</option><option value="Cartão">Cartao de credito</option><option value="Debito">Debito</option><option value="Dinheiro">Dinheiro</option><option value="VA">Vale Alimentacao</option><option value="VR">Vale Refeicao</option><option value="Outro">Outro</option>';
+  return '<div class="lote-row" id="lote-row-'+idx+'">'+
+    '<div class="lote-row-hdr">'+
+      '<div class="lote-num">'+(idx+1)+'</div>'+
+      '<div class="lote-tipo-tog">'+
+        '<div class="lote-tipo-btn desp on" id="ltb-d-'+idx+'" onclick="setLoteTipo('+idx+',\'despesa\')">&#128184; Despesa</div>'+
+        '<div class="lote-tipo-btn rec" id="ltb-r-'+idx+'" onclick="setLoteTipo('+idx+',\'receita\')">&#128176; Receita</div>'+
+      '</div>'+
+      '<button class="lote-del" onclick="delLoteRow('+idx+')">&times;</button>'+
+    '</div>'+
+    '<div class="lote-grid">'+
+      '<div><div class="lote-lbl">Data</div><input class="lote-inp" type="date" id="lr-data-'+idx+'" value="'+todayStr+'"></div>'+
+      '<div><div class="lote-lbl">Valor R$</div><input class="lote-inp" type="text" inputmode="decimal" id="lr-val-'+idx+'" placeholder="0,00" oninput="updateLoteBtn()"></div>'+
+      '<div class="lote-full"><div class="lote-lbl">Descricao</div><input class="lote-inp" type="text" id="lr-desc-'+idx+'" placeholder="Descricao..." oninput="updateLoteBtn()"></div>'+
+      '<div id="lr-cat-wrap-'+idx+'"><div class="lote-lbl">Categoria</div><select class="lote-inp" id="lr-cat-'+idx+'"><option value="">Selecionar...</option>'+catOpts+'</select></div>'+
+      '<div><div class="lote-lbl">Pagamento</div><select class="lote-inp" id="lr-pgto-'+idx+'">'+pgtoOpts+'</select></div>'+
+    '</div>'+
+  '</div>';
+}
+function addLoteRow(){
+  var idx=loteCounter++;
+  document.getElementById("lote-rows").insertAdjacentHTML("beforeend",loteRowHTML(idx));
+  var pg=document.getElementById("lr-pgto-"+idx);if(pg)pg.value="Cartão";
+}
+function delLoteRow(idx){
+  var r=document.getElementById("lote-row-"+idx);if(r)r.remove();
+  updateLoteBtn();
+}
+function setLoteTipo(idx,tipo){
+  var d=document.getElementById("ltb-d-"+idx),r=document.getElementById("ltb-r-"+idx),cw=document.getElementById("lr-cat-wrap-"+idx);
+  if(d)d.className="lote-tipo-btn desp"+(tipo==="despesa"?" on":"");
+  if(r)r.className="lote-tipo-btn rec"+(tipo==="receita"?" on":"");
+  if(cw)cw.style.display=tipo==="despesa"?"block":"none";
+}
+function getLoteRowTipo(idx){
+  var b=document.getElementById("ltb-d-"+idx);return b&&b.classList.contains("on")?"despesa":"receita";
+}
+function updateLoteBtn(){
+  var rows=document.querySelectorAll(".lote-row"),count=0;
+  rows.forEach(function(row){
+    var id=parseInt(row.id.replace("lote-row-",""));if(isNaN(id))return;
+    var val=parseFloat((document.getElementById("lr-val-"+id)?.value||"").replace(",","."));
+    var desc=(document.getElementById("lr-desc-"+id)?.value||"").trim();
+    row.classList.toggle("valid",val>0&&desc.length>0);
+    if(val>0&&desc.length>0)count++;
+  });
+  var btn=document.getElementById("lote-save-btn");if(!btn)return;
+  if(count===0){btn.textContent="Preencha pelo menos uma linha";btn.disabled=true;btn.style.opacity="0.5";}
+  else{btn.textContent="&#128190; Salvar "+count+" lancamento"+(count>1?"s":"");btn.disabled=false;btn.style.opacity="1";}
+}
+function saveLote(){
+  var rows=document.querySelectorAll(".lote-row"),saved=0,baseTs=Date.now();
+  rows.forEach(function(row,ri){
+    var id=parseInt(row.id.replace("lote-row-",""));if(isNaN(id))return;
+    var val=parseFloat((document.getElementById("lr-val-"+id)?.value||"").replace(",","."));
+    var desc=(document.getElementById("lr-desc-"+id)?.value||"").trim();
+    if(!val||val<=0||!desc)return;
+    var data=document.getElementById("lr-data-"+id)?.value||hoje.toISOString().split("T")[0];
+    var tipo=getLoteRowTipo(id);
+    var cat=(document.getElementById("lr-cat-"+id)?.value)||"Outro";
+    var pgto=(document.getElementById("lr-pgto-"+id)?.value)||"PIX/boleto";
+    var l={id:baseTs+ri,tipo:tipo,valor:val,desc:desc,data:data,pgto:pgto,cat:tipo==="receita"?"":cat};
+    lancamentos.unshift(l);fbSaveLanc(l);saved++;
+  });
+  if(saved===0){showToast("Nenhum lancamento valido","err");return;}
+  closeModal("modal-lote");
+  showToast("&#9989; "+saved+" lancamento"+(saved>1?"s salvos":"")+"!");
+  renderAll();
+}
+
+// IMPORT EXTRATO
+var _importEntries=[];
+function openImportModal(){
+  resetImport();
+  document.getElementById("modal-import").classList.add("open");
+}
+function resetImport(){
+  _importEntries=[];
+  document.getElementById("import-s1").style.display="block";
+  document.getElementById("import-s2").style.display="none";
+  var fi=document.getElementById("import-file-inp");if(fi)fi.value="";
+}
+function handleImportFile(inp){
+  var f=inp.files[0];if(!f)return;
+  var tryParse=function(enc){
+    var r=new FileReader();
+    r.onload=function(e){
+      var text=e.target.result;
+      _importEntries=parseCSVExtrato(text);
+      if(!_importEntries.length&&enc==="UTF-8"){tryParse("ISO-8859-1");return;}
+      if(!_importEntries.length){showToast("Nenhuma entrada encontrada. Verifique o formato.","err");return;}
+      renderImportPreview(_importEntries);
+    };
+    r.onerror=function(){showToast("Erro ao ler o arquivo","err");};
+    r.readAsText(f,enc);
+  };
+  tryParse("UTF-8");
+}
+function _parseLine(line,sep){
+  var res=[],cur="",inQ=false;
+  for(var i=0;i<line.length;i++){
+    if(line[i]==='"'){inQ=!inQ;}
+    else if(line[i]===sep&&!inQ){res.push(cur);cur="";}
+    else cur+=line[i];
+  }
+  res.push(cur);return res;
+}
+function _parseDateBR(s){
+  s=(s||"").trim();
+  var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m){var yr=m[3].length===2?(parseInt(m[3])>50?"19":"20")+m[3]:m[3];return yr+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0");}
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+  var m2=s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if(m2)return m2[3]+"-"+m2[2]+"-"+m2[1];
+  return null;
+}
+function _parseBRNum(s){
+  if(!s)return 0;s=String(s).trim().replace(/R\$\s*/i,"").replace(/\s/g,"");
+  var neg=s.charAt(0)==="-";s=s.replace(/^-/,"");
+  if(s.includes(","))s=s.replace(/\./g,"").replace(",",".");
+  var n=parseFloat(s);return isNaN(n)?0:(neg?-n:n);
+}
+function _findCol(hdrs,names){
+  for(var i=0;i<names.length;i++){
+    for(var j=0;j<hdrs.length;j++){
+      if(hdrs[j].replace(/[^a-z]/g,"").includes(names[i]))return j;
+    }
+  }
+  return -1;
+}
+function autoCategoria(desc,tipo){
+  if(tipo==="receita")return"";
+  var d=desc.toLowerCase();
+  var kws=[
+    ["Supermercado",["mercado","supermercado","atacadao","carrefour","hortifruti","sacolao","walmart","assai","coop","boa","flex","sabores","swift","zarelli","granja","frutas"]],
+    ["Moradia",["condominio","aluguel","iptu","cpfl","energia","gas","luz","agua","netflix","claro","vivo","tim","oi","internet","sirlene","liberty","desktop","applecombill","melimais","amazon prime","disney","hbo"]],
+    ["Transporte",["uber","combustivel","gasolina","estacionamento","pedagio","sem parar","tag","ipva","revisao","revisão","localiza","cautelar","cartorio","onibus","metro","autoparque","autoparq","transito"]],
+    ["Saúde & Higiene",["farmacia","drogasil","drogaria","raia","medico","hospital","clinica","fisioterapia","radiologia","vacina","consulta","exame","laboratorio","confiance","jim.com","dipirona","aciclovir"]],
+    ["Educação",["escola","colegio","faculdade","curso","mensalidade","material escolar","fundamentum","michigan","preply","fabene","cantina","uniforme","moletom","livro","apostila"]],
+    ["Godofredo",["petlove","petshop","racao","ração","veterinario","veterinário","brendha","fisio"]],
+    ["Pais",["rio mais","light","geladeira"]],
+    ["Investimentos",["financiamento","boleto inegociavel","cond res","condominio res","agua doce","marcenaria","reforma"]],
+    ["Desp. Trabalho",["sede","lavanderia","nota fiscal"]],
+    ["Gastos Extras",["ifood","rappi","amazon","mercado livre","shopee","magazine","americanas"]]
+  ];
+  for(var i=0;i<kws.length;i++){
+    for(var j=0;j<kws[i][1].length;j++){if(d.includes(kws[i][1][j]))return kws[i][0];}
+  }
+  return"Gastos Extras";
+}
+function parseCSVExtrato(text){
+  var lines=text.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
+  if(lines.length<2)return[];
+  var headerIdx=0;
+  for(var i=0;i<Math.min(lines.length,8);i++){
+    var ll=lines[i].toLowerCase();
+    if(ll.includes("data")||ll.includes("lancamento")||ll.includes("historico")||ll.includes("lançamento")||ll.includes("histórico")){headerIdx=i;break;}
+  }
+  var sep=lines[headerIdx].includes(";")?";":","
+  var hdrs=_parseLine(lines[headerIdx],sep).map(function(h){return h.toLowerCase().trim().replace(/['"]/g,"");});
+  var iData=_findCol(hdrs,["data","date"]);
+  var iDesc=_findCol(hdrs,["descricao","descrição","historico","histórico","lancamento","lançamento","titulo","título","memo","narrativa"]);
+  var iValor=_findCol(hdrs,["valor","value","amount","montante"]);
+  var iCred=_findCol(hdrs,["credito","crédito","entrada","credit"]);
+  var iDeb=_findCol(hdrs,["debito","débito","saida","saída","debit"]);
+  if(iData===-1)iData=0;if(iDesc===-1)iDesc=1;
+  var entries=[];
+  for(var i=headerIdx+1;i<lines.length;i++){
+    var cols=_parseLine(lines[i],sep);if(!cols.length)continue;
+    var dateStr=_parseDateBR(cols[iData]||"");if(!dateStr)continue;
+    var desc=(cols[iDesc]||"").replace(/^"+|"+$/g,"").trim();if(!desc)continue;
+    var valor=0,tipo="despesa";
+    if(iValor>=0){
+      valor=_parseBRNum(cols[iValor]);
+      tipo=valor>=0?"receita":"despesa";valor=Math.abs(valor);
+    }else if(iCred>=0||iDeb>=0){
+      var c=Math.abs(_parseBRNum(iCred>=0?cols[iCred]:""));
+      var dv=Math.abs(_parseBRNum(iDeb>=0?cols[iDeb]:""));
+      if(c>0){valor=c;tipo="receita";}else if(dv>0){valor=dv;tipo="despesa";}else continue;
+    }else continue;
+    if(!valor||valor<=0)continue;
+    var dup=lancamentos.some(function(l){return l.data===dateStr&&Math.abs(l.valor-valor)<0.01;});
+    entries.push({data:dateStr,desc:desc,valor:valor,tipo:tipo,cat:autoCategoria(desc,tipo),pgto:"PIX/boleto",dup:dup});
+  }
+  return entries;
+}
+function renderImportPreview(entries){
+  document.getElementById("import-s1").style.display="none";
+  document.getElementById("import-s2").style.display="block";
+  var novos=entries.filter(function(e){return!e.dup;}).length;
+  var dups=entries.filter(function(e){return e.dup;}).length;
+  document.getElementById("import-summary-bar").innerHTML=
+    '<strong>'+entries.length+'</strong> entradas detectadas &nbsp;&#183;&nbsp; '+
+    '<span style="color:var(--green)"><strong>'+novos+'</strong> novas</span> &nbsp;&#183;&nbsp; '+
+    (dups>0?'<span style="color:var(--yellow)"><strong>'+dups+'</strong> possiveis duplicatas</span> (desmarcadas)':'<span style="color:var(--muted)">0 duplicatas</span>');
+  var catOpts='<option value="">Categoria...</option>'+CATS.map(function(c){return'<option value="'+c.label+'">'+c.emoji+' '+c.label+'</option>';}).join("");
+  document.getElementById("import-preview-list").innerHTML=entries.map(function(e,i){
+    var chk=e.dup?"":" checked";
+    var selCat=catOpts.replace('value="'+e.cat+'"','value="'+e.cat+'" selected');
+    return '<div class="imp-row">'+
+      '<input type="checkbox"'+chk+' class="imp-chk" id="imp-chk-'+i+'" onchange="updateImportBtn()">'+
+      '<div class="imp-info">'+
+        '<div class="imp-desc">'+e.desc+(e.dup?'<span class="imp-dup-badge">&#9888; duplicata?</span>':'')+'</div>'+
+        '<div class="imp-meta">'+e.data.split("-").reverse().join("/")+(e.tipo==="despesa"?" · &#128184; Despesa":" · &#128176; Receita")+'</div>'+
+        (e.tipo==="despesa"?'<select class="imp-cat-sel" id="imp-cat-'+i+'">'+selCat+'</select>':'')+
+      '</div>'+
+      '<div class="imp-val '+(e.tipo==="receita"?"g":"r")+'">'+(e.tipo==="receita"?"+":"-")+fmt(e.valor)+'</div>'+
+    '</div>';
+  }).join("");
+  updateImportBtn();
+}
+function updateImportBtn(){
+  var n=document.querySelectorAll(".imp-chk:checked").length;
+  var btn=document.getElementById("import-confirm-btn");if(!btn)return;
+  btn.textContent=n===0?"Selecione entradas":"&#128229; Importar "+n+" lancamento"+(n>1?"s":"");
+  btn.disabled=n===0;btn.style.opacity=n===0?"0.5":"1";
+}
+function confirmImport(){
+  var n=0,baseTs=Date.now();
+  _importEntries.forEach(function(e,i){
+    var chk=document.getElementById("imp-chk-"+i);if(!chk||!chk.checked)return;
+    var catEl=document.getElementById("imp-cat-"+i);
+    var catVal=catEl?catEl.value||e.cat||"Outro":e.cat||"";
+    var l={id:baseTs+i,tipo:e.tipo,valor:e.valor,desc:e.desc,data:e.data,pgto:e.pgto,cat:e.tipo==="receita"?"":catVal};
+    lancamentos.unshift(l);fbSaveLanc(l);n++;
+  });
+  if(n===0){showToast("Nenhum selecionado","err");return;}
+  closeModal("modal-import");_importEntries=[];
+  showToast("&#128229; "+n+" lancamento"+(n>1?"s importados":"")+"!");
+  renderAll();
+}
+
+// ATALHO CTRL+D = nova despesa
+document.addEventListener("keydown",function(e){
+  if(e.ctrlKey&&e.key==="d"){e.preventDefault();closeFab();openLancModal("despesa");}
+});
+
 // INIT
 document.getElementById("hdr-hoje").textContent=hoje.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
 setTipo("despesa");
 initFirebase();
 </script>
 
+<!-- MODAL LOTE -->
+<div class="overlay" id="modal-lote">
+  <div class="sheet" style="max-height:95dvh;padding-bottom:52px">
+    <div class="handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <div class="sheet-title" style="margin-bottom:0">&#128203; Lancamentos em Lote</div>
+      <span onclick="closeModal('modal-lote')" style="font-size:12px;color:var(--muted);cursor:pointer">&#10005; Fechar</span>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:16px;line-height:1.5">Preencha valor + descricao para salvar a linha. Linhas vazias sao ignoradas.</p>
+    <div id="lote-rows"></div>
+    <button onclick="addLoteRow()" style="width:100%;padding:10px;border-radius:10px;background:var(--surface2);border:1.5px dashed var(--border);color:var(--muted);font-family:'Calibri','Trebuchet MS',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:14px;-webkit-appearance:none">+ Adicionar linha</button>
+    <button class="btn-p" id="lote-save-btn" onclick="saveLote()" disabled style="opacity:.5">Preencha pelo menos uma linha</button>
+  </div>
+</div>
+
+<!-- MODAL IMPORT -->
+<div class="overlay" id="modal-import">
+  <div class="sheet" style="max-height:95dvh;padding-bottom:52px">
+    <div class="handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="sheet-title" style="margin-bottom:0">&#128194; Importar Extrato</div>
+      <span onclick="closeModal('modal-import')" style="font-size:12px;color:var(--muted);cursor:pointer">&#10005; Fechar</span>
+    </div>
+    <div id="import-s1">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6">Selecione um arquivo CSV exportado do seu banco. Duplicatas (mesmo dia + valor) sao detectadas automaticamente.</p>
+      <label style="display:block;padding:24px;border:2px dashed var(--border);border-radius:14px;text-align:center;cursor:pointer;background:var(--surface2);margin-bottom:14px" for="import-file-inp">
+        <div style="font-size:36px;margin-bottom:8px">&#128196;</div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:4px">Toque para selecionar</div>
+        <div style="font-size:11px;color:var(--muted)">CSV com campos: data, descricao, valor</div>
+        <input type="file" accept=".csv,.txt" id="import-file-inp" style="display:none" onchange="handleImportFile(this)">
+      </label>
+      <div style="font-size:10px;color:var(--muted);padding:10px 12px;background:var(--surface2);border-radius:10px;line-height:1.9">
+        <strong>Formatos suportados:</strong><br>
+        &#8226; Nubank: Data;Descricao;Valor<br>
+        &#8226; Itau/Bradesco: Data;Historico;Credito;Debito<br>
+        &#8226; Inter e outros: detectado automaticamente
+      </div>
+    </div>
+    <div id="import-s2" style="display:none">
+      <div id="import-summary-bar" style="background:var(--surface2);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;line-height:1.7"></div>
+      <div style="overflow-y:auto;max-height:46dvh;border-radius:14px;border:1px solid var(--border);padding:0 14px;background:var(--surface)" id="import-preview-list"></div>
+      <button class="btn-p" id="import-confirm-btn" onclick="confirmImport()" style="margin-top:14px;opacity:.5" disabled>Selecione entradas</button>
+      <button class="btn-sec" onclick="resetImport()">&#8617; Outro arquivo</button>
+    </div>
+  </div>
+</div>
+
 <!-- FAB -->
+<div class="fab-backdrop" id="fab-backdrop" onclick="closeFab()"></div>
 <div class="fab" id="fab">
-  <button class="fab-main" id="fab-main" onclick="openLancModal('despesa')">+</button>
+  <div class="fab-opts" id="fab-opts">
+    <div class="fab-opt" onclick="closeFab();openImportModal()">
+      <span class="fab-opt-lbl">Importar Extrato</span>
+      <button class="fab-opt-btn" style="background:#60a5fa;color:#fff">&#128194;</button>
+    </div>
+    <div class="fab-opt" onclick="closeFab();openLoteModal()">
+      <span class="fab-opt-lbl">Lancar em Lote</span>
+      <button class="fab-opt-btn" style="background:#a855f7;color:#fff">&#128203;</button>
+    </div>
+    <div class="fab-opt" onclick="closeFab();openLancModal('receita')">
+      <span class="fab-opt-lbl">Receita</span>
+      <button class="fab-opt-btn rec">&#128176;</button>
+    </div>
+    <div class="fab-opt" onclick="closeFab();openLancModal('despesa')">
+      <span class="fab-opt-lbl">Despesa</span>
+      <button class="fab-opt-btn desp">&#128184;</button>
+    </div>
+  </div>
+  <button class="fab-main" id="fab-main" onclick="toggleFab()">+</button>
 </div>
 </body>
 </html>
