@@ -708,6 +708,7 @@ function editMeta(idx){
 
 // NAV
 function navTo(id,el){
+  closeFab();
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   document.getElementById("s-"+id).classList.add("active");
   document.querySelectorAll(".nav-it").forEach(n=>n.classList.remove("on"));
@@ -1772,9 +1773,14 @@ function renderGInsights(d,td,tr,ts,nm){
 
 // FAB
 function toggleFab(){
-  var opts=document.getElementById("fab-opts"),main=document.getElementById("fab-main"),bd=document.getElementById("fab-backdrop");
-  if(opts.classList.contains("show")){closeFab();}
-  else{opts.classList.add("show");main.classList.add("open");bd.classList.add("show");}
+  var active=document.querySelector(".screen.active");
+  if(active&&active.id==="s-lanc"){
+    var opts=document.getElementById("fab-opts"),main=document.getElementById("fab-main"),bd=document.getElementById("fab-backdrop");
+    if(opts.classList.contains("show")){closeFab();}
+    else{opts.classList.add("show");main.classList.add("open");bd.classList.add("show");}
+  }else{
+    openLancModal("despesa");
+  }
 }
 function closeFab(){
   var opts=document.getElementById("fab-opts"),main=document.getElementById("fab-main"),bd=document.getElementById("fab-backdrop");
