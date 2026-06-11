@@ -613,6 +613,7 @@ const RENDA=17500;
 let _db;
 function setStatus(msg,color){const e=document.getElementById("sync-status");if(e){e.textContent=msg;e.style.color=color;}}
 function fbSaveLanc(l){if(_db)_db.ref("lancamentos/"+l.id).set(l);}
+function fbSaveLancBatch(arr){if(!_db||!arr.length)return;var o={};arr.forEach(function(l){o[l.id]=l;});_db.ref("lancamentos").update(o);}
 function fbSaveMetas(){if(_db){const o={};metas.forEach(m=>{o[m.id]=m;});_db.ref("metas").set(o);}}
 function fbSaveOrc(){if(_db)_db.ref("orcamentos").set(orcamentos);}
 function fbSaveMP(){
@@ -622,6 +623,7 @@ function fbSaveMP(){
   _db.ref("metasPessoais").set(o);
 }
 
+var _rtimer=null;
 function initFirebase(){
   renderAll();
   try{
@@ -641,8 +643,8 @@ function initFirebase(){
         _db.ref("lancamentos").set(o);
         lancamentos=[..._DADOS_INICIAIS].sort((a,b)=>b.id-a.id);
       }
-      renderAll();
       setStatus("✅ Sincronizado · "+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),"#34d399");
+      clearTimeout(_rtimer);_rtimer=setTimeout(renderAll,150);
     },err=>{setStatus("❌ "+err.message,"#f87171");lancamentos=[..._DADOS_INICIAIS].sort((a,b)=>b.id-a.id);renderAll();});
     _db.ref("metas").on("value",snap=>{metas=snap.val()?Object.values(snap.val()):[];if(document.querySelector(".screen.active")?.id==="s-metas")renderMetas();});
     _db.ref("orcamentos").on("value",snap=>{orcamentos=snap.val()||{};if(document.querySelector(".screen.active")?.id==="s-orc")renderOrc();});
@@ -772,7 +774,7 @@ function perPrx(){if(modoAtual==="cal"){mesAtual++;if(mesAtual>11){mesAtual=0;an
 
 // MODALS
 function editLanc(id){
-  var l=lancamentos.find(function(x){return x.id===id;});
+  var l=lancamentos.find(function(x){return String(x.id)===String(id);});
   if(!l)return;
   editandoId=id;
   setTipo(l.tipo);
@@ -783,6 +785,7 @@ function editLanc(id){
   document.getElementById("f-pgto").value=l.pgto||"PIX/boleto";
   var pEl=document.getElementById("f-parcelas");if(pEl)pEl.value="1";
   toggleParcelas(l.pgto||"PIX/boleto");
+  var pWrap=document.getElementById("f-repetir-wrap");if(pWrap)pWrap.style.display="none";
   renderCatGrid();
   var title=document.querySelector("#modal-lanc .sheet-title");
   if(title)title.textContent="Editar Lancamento";
@@ -844,7 +847,7 @@ function saveLanc(){
 
   if(editandoId){
     // EDIT mode: update existing
-    const idx=lancamentos.findIndex(function(x){return x.id===editandoId;});
+    const idx=lancamentos.findIndex(function(x){return String(x.id)===String(editandoId);});
     if(idx>=0){
       lancamentos[idx]={id:editandoId,tipo:tipoAtual,valor:val,desc:desc,data:data,pgto:pgto,cat:catAtual||lancamentos[idx].cat||"Outro"};
       fbSaveLanc(lancamentos[idx]);
@@ -857,14 +860,15 @@ function saveLanc(){
   } else {
     // CREATE mode: new entry (with parcelas)
     const dataBase=new Date(data+"T00:00:00");
+    const _toSave=[];
     for(let p=0;p<parcelas;p++){
       const d=new Date(dataBase.getFullYear(),dataBase.getMonth()+p,dataBase.getDate());
       const ds=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
       const descP=parcelas>1?desc+" "+String(p+1)+"/"+String(parcelas):desc;
       const l={id:Date.now()+p,tipo:tipoAtual,valor:val,desc:descP,data:ds,pgto:pgto,cat:catAtual||"Outro"};
-      lancamentos.unshift(l);
-      fbSaveLanc(l);
+      lancamentos.unshift(l);_toSave.push(l);
     }
+    fbSaveLancBatch(_toSave);
     closeModal("modal-lanc");
     var isCartao=pgto==="Cartão";
     showToast(parcelas>1?(isCartao?"✅ "+parcelas+"x parcelado!":"✅ "+parcelas+" meses lançados!"):"✅ Lancamento salvo!");
@@ -885,7 +889,7 @@ function saveOrc(){
   CATS.forEach(c=>{const el=document.getElementById("oi-"+c.label.replace(/[\s.]/g,"_"));const v=el?parseFloat(el.value):NaN;if(!isNaN(v)&&v>0)orcamentos[c.label]=v;else delete orcamentos[c.label];});
   fbSaveOrc();closeModal("modal-orc");showToast("💾 Orcamentos salvos!");renderOrc();
 }
-function delLanc(id){if(_db)_db.ref("lancamentos/"+id).remove();lancamentos=lancamentos.filter(l=>l.id!==id);renderAll();}
+function delLanc(id){if(_db)_db.ref("lancamentos/"+id).remove();lancamentos=lancamentos.filter(l=>String(l.id)!==String(id));renderAll();}
 function delMeta(id){metas=metas.filter(m=>m.id!==id);fbSaveMetas();renderMetas();}
 
 // ALERTS
@@ -1850,7 +1854,7 @@ function updateLoteBtn(){
   else{btn.textContent="&#128190; Salvar "+count+" lancamento"+(count>1?"s":"");btn.disabled=false;btn.style.opacity="1";}
 }
 function saveLote(){
-  var rows=document.querySelectorAll(".lote-row"),saved=0,baseTs=Date.now();
+  var rows=document.querySelectorAll(".lote-row"),saved=0,baseTs=Date.now(),_toSave=[];
   rows.forEach(function(row,ri){
     var id=parseInt(row.id.replace("lote-row-",""));if(isNaN(id))return;
     var val=parseFloat((document.getElementById("lr-val-"+id)?.value||"").replace(",","."));
@@ -1861,9 +1865,10 @@ function saveLote(){
     var cat=(document.getElementById("lr-cat-"+id)?.value)||"Outro";
     var pgto=(document.getElementById("lr-pgto-"+id)?.value)||"PIX/boleto";
     var l={id:baseTs+ri,tipo:tipo,valor:val,desc:desc,data:data,pgto:pgto,cat:tipo==="receita"?"":cat};
-    lancamentos.unshift(l);fbSaveLanc(l);saved++;
+    lancamentos.unshift(l);_toSave.push(l);saved++;
   });
   if(saved===0){showToast("Nenhum lancamento valido","err");return;}
+  fbSaveLancBatch(_toSave);
   closeModal("modal-lote");
   showToast("&#9989; "+saved+" lancamento"+(saved>1?"s salvos":"")+"!");
   renderAll();
@@ -2026,15 +2031,16 @@ function updateImportBtn(){
   btn.disabled=n===0;btn.style.opacity=n===0?"0.5":"1";
 }
 function confirmImport(){
-  var n=0,baseTs=Date.now();
+  var n=0,baseTs=Date.now(),_toSave=[];
   _importEntries.forEach(function(e,i){
     var chk=document.getElementById("imp-chk-"+i);if(!chk||!chk.checked)return;
     var catEl=document.getElementById("imp-cat-"+i);
     var catVal=catEl?catEl.value||e.cat||"Outro":e.cat||"";
     var l={id:baseTs+i,tipo:e.tipo,valor:e.valor,desc:e.desc,data:e.data,pgto:e.pgto,cat:e.tipo==="receita"?"":catVal};
-    lancamentos.unshift(l);fbSaveLanc(l);n++;
+    lancamentos.unshift(l);_toSave.push(l);n++;
   });
   if(n===0){showToast("Nenhum selecionado","err");return;}
+  fbSaveLancBatch(_toSave);
   closeModal("modal-import");_importEntries=[];
   showToast("&#128229; "+n+" lancamento"+(n>1?"s importados":"")+"!");
   renderAll();
