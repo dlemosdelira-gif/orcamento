@@ -80,7 +80,7 @@ body{font-family:'Calibri','Trebuchet MS','Gill Sans',sans-serif;background:var(
 .tx-val{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:14px;font-weight:700;color:var(--text)!important}
 .tx-val.r{color:var(--red)!important;-webkit-text-fill-color:var(--red)!important}
 .tx-val.g{color:var(--green)!important;-webkit-text-fill-color:var(--green)!important}
-.tx-del{font-size:15px;cursor:pointer;color:var(--muted);padding:3px}
+.tx-del{font-size:15px;cursor:pointer;color:var(--muted);padding:3px;background:none;border:none;-webkit-appearance:none;line-height:1}
 .filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none}
 .filter-row::-webkit-scrollbar{display:none}
 .chip{display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:5px 12px;font-size:11px;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .12s}
@@ -715,7 +715,8 @@ function navTo(id,el){
   document.getElementById("s-"+id).classList.add("active");
   document.querySelectorAll(".nav-it").forEach(n=>n.classList.remove("on"));
   if(el)el.classList.add("on");
-  if(id==="lanc")renderLanc();
+  if(id==="home")renderHome();
+  else if(id==="lanc")renderLanc();
   else if(id==="orc")renderOrc();
   else if(id==="metas")renderMetas();
   else if(id==="rel")renderRel();
@@ -928,7 +929,7 @@ function txHTML(l,compact){
   var isCC=l.pgto==="Cartao";
   var dataFmt=l.data.split("-").reverse().join("/");
   var tagSpan=l.pgto?" · <span class=\"tag"+(isCC?" cc":"")+"\">"+(l.pgto)+"</span>":"";
-  var delBtn=compact?"":"<span class=\"tx-del\" onclick=\"editLanc("+l.id+")\">✏️</span><span class=\"tx-del\" onclick=\"delLanc("+l.id+")\">🗑</span>";
+  var delBtn=compact?"":"<button class=\"tx-del\" onclick=\"editLanc("+l.id+")\">✏️</button><button class=\"tx-del\" onclick=\"delLanc("+l.id+")\">🗑</button>";
   var val=(d?"-":"+")+fmt(l.valor);
   var valClass="tx-val "+(d?"r":"g");
   var bg=d?"#f8717118":"#34d39918";
@@ -1259,7 +1260,7 @@ function exportCSVTudo(){if(!lancamentos.length){showToast("Nenhum lancamento","
 function gerarCSV(lista,nome){var headers=["Data","Tipo","Descricao","Categoria","Valor (R$)","Pagamento"];var rows=lista.map(function(l){var desc='"' + (l.desc||"").replace(/"/g,'""')+'"';return[l.data.split("-").reverse().join("/"),l.tipo==="despesa"?"Despesa":"Receita",desc,l.cat||"",l.valor.toFixed(2).replace(".",","),l.pgto||""];});var bom="\uFEFF";var csv=[headers].concat(rows).map(function(x){return x.join(";");}).join("\n");var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([bom+csv],{type:"text/csv;charset=utf-8;"}));a.download=nome;a.click();showToast("📤 CSV exportado!");}
 
 // RENDER ALL
-function renderAll(){renderHome();const a=document.querySelector(".screen.active")?.id;if(a==="s-lanc")renderLanc();else if(a==="s-orc")renderOrc();else if(a==="s-metas")renderMetas();else if(a==="s-rel")renderRel();}
+function renderAll(){const a=document.querySelector(".screen.active")?.id;if(a==="s-home")renderHome();else if(a==="s-lanc")renderLanc();else if(a==="s-orc")renderOrc();else if(a==="s-metas")renderMetas();else if(a==="s-rel")renderRel();}
 
 // ── GRÁFICOS & INSIGHTS ──
 var gPeriod='ano', gShowDesp=true, gShowRec=true, gShowSaldo=false;
@@ -2058,7 +2059,7 @@ initFirebase();
 </script>
 
 <!-- MODAL LOTE -->
-<div class="overlay" id="modal-lote">
+<div class="overlay" id="modal-lote" onclick="if(event.target===this)closeModal('modal-lote')">
   <div class="sheet" style="max-height:95dvh;padding-bottom:52px">
     <div class="handle"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
@@ -2073,7 +2074,7 @@ initFirebase();
 </div>
 
 <!-- MODAL IMPORT -->
-<div class="overlay" id="modal-import">
+<div class="overlay" id="modal-import" onclick="if(event.target===this)closeModal('modal-import')">
   <div class="sheet" style="max-height:95dvh;padding-bottom:52px">
     <div class="handle"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
