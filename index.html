@@ -154,8 +154,8 @@ select.finp{-webkit-appearance:none;appearance:none}
 .nav-ico{font-size:22px}
 .nav-lbl{font-size:10px;font-weight:600;letter-spacing:.3px;color:inherit!important}
 /* FAB */
-.fab{position:fixed;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);right:18px;z-index:300;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
-.fab-main{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:25px;color:#fff;box-shadow:0 4px 16px #7c6af755;transition:transform .2s;-webkit-appearance:none}
+.fab{position:fixed;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);right:18px;z-index:300;display:flex;flex-direction:column;align-items:flex-end;gap:10px;pointer-events:none}
+.fab-main{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:25px;color:#fff;box-shadow:0 4px 16px #7c6af755;transition:transform .2s;-webkit-appearance:none;pointer-events:auto}
 .fab-main:active{transform:scale(.92)}
 .fab-main.open{transform:rotate(45deg)}
 .fab-opts{display:flex;flex-direction:column;align-items:flex-end;gap:8px;opacity:0;pointer-events:none;transform:translateY(10px);transition:all .2s}
@@ -612,15 +612,16 @@ const RENDA=17500;
 // FIREBASE
 let _db;
 function setStatus(msg,color){const e=document.getElementById("sync-status");if(e){e.textContent=msg;e.style.color=color;}}
-function fbSaveLanc(l){if(_db)_db.ref("lancamentos/"+l.id).set(l);}
-function fbSaveLancBatch(arr){if(!_db||!arr.length)return;var o={};arr.forEach(function(l){o[l.id]=l;});_db.ref("lancamentos").update(o);}
-function fbSaveMetas(){if(_db){const o={};metas.forEach(m=>{o[m.id]=m;});_db.ref("metas").set(o);}}
-function fbSaveOrc(){if(_db)_db.ref("orcamentos").set(orcamentos);}
+function _fbErr(err){showToast("⚠️ Erro ao salvar: "+(err&&err.message||err),"err");}
+function fbSaveLanc(l){if(_db)_db.ref("lancamentos/"+l.id).set(l).catch(_fbErr);}
+function fbSaveLancBatch(arr){if(!_db||!arr.length)return;var o={};arr.forEach(function(l){o[l.id]=l;});_db.ref("lancamentos").update(o).catch(_fbErr);}
+function fbSaveMetas(){if(_db){const o={};metas.forEach(m=>{o[m.id]=m;});_db.ref("metas").set(o).catch(_fbErr);}}
+function fbSaveOrc(){if(_db)_db.ref("orcamentos").set(orcamentos).catch(_fbErr);}
 function fbSaveMP(){
   if(!_db)return;
   const o={};
   MP.forEach((m,i)=>{o[i]={realizado_ano:m.realizado_ano,realizado_mes:m.realizado_mes,mes_ref:m.mes_ref||mesAnoAtual()};});
-  _db.ref("metasPessoais").set(o);
+  _db.ref("metasPessoais").set(o).catch(_fbErr);
 }
 
 var _rtimer=null;
@@ -634,10 +635,7 @@ function initFirebase(){
     _db.ref("lancamentos").on("value",snap=>{
       const v=snap.val();
       if(v){
-        const m={...v};
-        _DADOS_INICIAIS.forEach(l=>{if(!m[l.id])m[l.id]=l;});
-        if(Object.keys(m).length>Object.keys(v).length)_db.ref("lancamentos").set(m);
-        lancamentos=Object.values(m).sort((a,b)=>b.id-a.id);
+        lancamentos=Object.values(v).sort((a,b)=>b.id-a.id);
       }else{
         const o={};_DADOS_INICIAIS.forEach(l=>{o[l.id]=l;});
         _db.ref("lancamentos").set(o);
@@ -2050,6 +2048,11 @@ function confirmImport(){
 // ATALHO CTRL+D = nova despesa
 document.addEventListener("keydown",function(e){
   if(e.ctrlKey&&e.key==="d"){e.preventDefault();closeFab();openLancModal("despesa");}
+});
+
+// ERROS VISIVEIS
+window.addEventListener("error",function(e){
+  try{showToast("⚠️ Erro: "+(e.message||"desconhecido"),"err");}catch(_){}
 });
 
 // INIT
