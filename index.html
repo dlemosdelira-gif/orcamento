@@ -1892,21 +1892,41 @@ function resetImport(){
   var fi=document.getElementById("import-file-inp");if(fi)fi.value="";
   setImportMode("fatura");
 }
+function _loadScript(src,cb){
+  if(window._ldsc&&window._ldsc[src]){cb();return;}
+  var s=document.createElement("script");s.src=src;
+  s.onload=function(){(window._ldsc=window._ldsc||{})[src]=1;cb();};
+  s.onerror=function(){showToast("Erro ao baixar biblioteca — verifique a conexao","err");};
+  document.head.appendChild(s);
+}
 function handleImportFile(inp){
   var f=inp.files[0];if(!f)return;
-  var tryParse=function(enc){
-    var r=new FileReader();
-    r.onload=function(e){
-      var text=e.target.result;
-      _importEntries=parseCSVExtrato(text);
-      if(!_importEntries.length&&enc==="UTF-8"){tryParse("ISO-8859-1");return;}
-      if(!_importEntries.length){showToast("Nenhuma entrada encontrada. Verifique o formato.","err");return;}
-      renderImportPreview(_importEntries);
+  var ext=(f.name.split(".").pop()||"").toLowerCase();
+  if(ext==="xlsx"||ext==="xls"){
+    showToast("⏳ Lendo planilha...");
+    _loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",function(){
+      var r=new FileReader();
+      r.onload=function(e){try{var en=parseXLSXExtrato(e.target.result);if(!en.length){showToast("Nenhuma transação encontrada no XLSX","err");return;}_importEntries=en;renderImportPreview(en);}catch(err){showToast("Erro XLSX: "+(err.message||err),"err");}};
+      r.onerror=function(){showToast("Erro ao ler arquivo","err");};
+      r.readAsArrayBuffer(f);
+    });
+  }else if(ext==="pdf"){
+    showToast("⏳ Analisando PDF...");
+    _loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",function(){
+      var r=new FileReader();
+      r.onload=function(e){parsePDFExtrato(e.target.result).then(function(en){if(!en.length){showToast("Nenhuma transação encontrada no PDF — tente exportar como CSV","err");return;}_importEntries=en;renderImportPreview(en);}).catch(function(er){showToast("Erro PDF: "+(er.message||er),"err");});};
+      r.onerror=function(){showToast("Erro ao ler arquivo","err");};
+      r.readAsArrayBuffer(f);
+    });
+  }else{
+    var tryParse=function(enc){
+      var r=new FileReader();
+      r.onload=function(e){var text=e.target.result;_importEntries=parseCSVExtrato(text);if(!_importEntries.length&&enc==="UTF-8"){tryParse("ISO-8859-1");return;}if(!_importEntries.length){showToast("Nenhuma entrada encontrada. Verifique o formato.","err");return;}renderImportPreview(_importEntries);};
+      r.onerror=function(){showToast("Erro ao ler o arquivo","err");};
+      r.readAsText(f,enc);
     };
-    r.onerror=function(){showToast("Erro ao ler o arquivo","err");};
-    r.readAsText(f,enc);
-  };
-  tryParse("UTF-8");
+    tryParse("UTF-8");
+  }
 }
 function _parseLine(line,sep){
   var res=[],cur="",inQ=false;
@@ -1998,6 +2018,59 @@ function parseCSVExtrato(text){
   }
   return entries;
 }
+function parseXLSXExtrato(arrayBuffer){
+  var wb=XLSX.read(new Uint8Array(arrayBuffer),{type:"array",cellDates:true,dateNF:"DD/MM/YYYY"});
+  var ws=wb.Sheets[wb.SheetNames[0]];
+  var rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:"DD/MM/YYYY"});
+  if(!rows||rows.length<2)return[];
+  var lines=rows.map(function(row){
+    return(row||[]).map(function(cell){
+      var s=(cell===null||cell===undefined)?"":String(cell).trim();
+      return(s.includes(",")||s.includes(";"))?'"'+s.replace(/"/g,'""')+'"':s;
+    }).join(",");
+  });
+  return parseCSVExtrato(lines.join("\n"));
+}
+async function parsePDFExtrato(arrayBuffer){
+  if(typeof pdfjsLib==="undefined")throw new Error("PDF.js nao carregado");
+  pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  var pdf=await pdfjsLib.getDocument({data:new Uint8Array(arrayBuffer)}).promise;
+  var textLines=[];
+  for(var p=1;p<=pdf.numPages;p++){
+    var page=await pdf.getPage(p);
+    var vp=page.getViewport({scale:1});
+    var tc=await page.getTextContent();
+    var byY={};
+    tc.items.forEach(function(it){
+      if(!it.str.trim())return;
+      var y=Math.round(vp.height-it.transform[5]);
+      (byY[y]=byY[y]||[]).push({str:it.str,x:it.transform[4]});
+    });
+    Object.keys(byY).sort(function(a,b){return a-b;}).forEach(function(y){
+      byY[y].sort(function(a,b){return a.x-b.x;});
+      textLines.push(byY[y].map(function(i){return i.str;}).join(" ").trim());
+    });
+  }
+  var entries=[];
+  var dateRe=/^(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})\s+/;
+  var valRe=/(\-?\s*R?\$?\s*\d[\d.]*,\d{2})\s*$/;
+  textLines.forEach(function(line){
+    var dm=line.match(dateRe);if(!dm)return;
+    var dateStr=_parseDateBR(dm[1]);if(!dateStr)return;
+    var rest=line.slice(dm[0].length);
+    var vm=rest.match(valRe);if(!vm)return;
+    var valorRaw=vm[1];
+    var valor=_parseBRNum(valorRaw);if(!valor)return;
+    var desc=rest.slice(0,rest.lastIndexOf(vm[0])).replace(/[\s\-\.]+$/,"").trim();
+    if(!desc||desc.length<2)return;
+    var neg=valorRaw.replace(/\s/g,"").charAt(0)==="-";
+    var tipo=_importMode==="extrato"?(neg?"despesa":"receita"):(neg?"receita":"despesa");
+    valor=Math.abs(valor);if(!valor)return;
+    var dup=lancamentos.some(function(l){return l.data===dateStr&&Math.abs(l.valor-valor)<0.01;});
+    entries.push({data:dateStr,desc:desc,valor:valor,tipo:tipo,cat:autoCategoria(desc,tipo),pgto:"PIX/boleto",dup:dup});
+  });
+  return entries;
+}
 function renderImportPreview(entries){
   document.getElementById("import-s1").style.display="none";
   document.getElementById("import-s2").style.display="block";
@@ -2085,7 +2158,7 @@ initFirebase();
       <span onclick="closeModal('modal-import')" style="font-size:12px;color:var(--muted);cursor:pointer">&#10005; Fechar</span>
     </div>
     <div id="import-s1">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6">Selecione um arquivo CSV exportado do seu banco. Duplicatas (mesmo dia + valor) sao detectadas automaticamente.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6">Selecione CSV, XLSX ou PDF exportado do seu banco. Duplicatas (mesmo dia + valor) sao detectadas automaticamente.</p>
       <div style="margin-bottom:14px">
         <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:8px">Tipo de arquivo</div>
         <div style="display:flex;gap:8px">
@@ -2104,14 +2177,14 @@ initFirebase();
       <label style="display:block;padding:24px;border:2px dashed var(--border);border-radius:14px;text-align:center;cursor:pointer;background:var(--surface2);margin-bottom:14px" for="import-file-inp">
         <div style="font-size:36px;margin-bottom:8px">&#128196;</div>
         <div style="font-weight:700;font-size:14px;margin-bottom:4px">Toque para selecionar</div>
-        <div style="font-size:11px;color:var(--muted)">CSV com campos: data, descricao, valor</div>
-        <input type="file" accept=".csv,.txt" id="import-file-inp" style="display:none" onchange="handleImportFile(this)">
+        <div style="font-size:11px;color:var(--muted)">CSV, XLSX ou PDF do banco</div>
+        <input type="file" accept=".csv,.txt,.xlsx,.xls,.pdf" id="import-file-inp" style="display:none" onchange="handleImportFile(this)">
       </label>
       <div style="font-size:10px;color:var(--muted);padding:10px 12px;background:var(--surface2);border-radius:10px;line-height:1.9">
         <strong>Formatos suportados:</strong><br>
-        &#8226; Nubank: Data;Descricao;Valor<br>
-        &#8226; Itau/Bradesco: Data;Historico;Credito;Debito<br>
-        &#8226; Inter e outros: detectado automaticamente
+        &#8226; <strong>CSV/TXT:</strong> Nubank, Itau, Bradesco, Inter (deteccao automatica)<br>
+        &#8226; <strong>XLSX:</strong> Excel exportado do internet banking<br>
+        &#8226; <strong>PDF:</strong> extrato ou fatura (experimental — prefira CSV/XLSX)
       </div>
     </div>
     <div id="import-s2" style="display:none">
