@@ -1984,7 +1984,7 @@ function parseCSVExtrato(text){
   var lines=text.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
   if(lines.length<2)return[];
   var headerIdx=0;
-  for(var i=0;i<Math.min(lines.length,8);i++){
+  for(var i=0;i<Math.min(lines.length,20);i++){
     var ll=lines[i].toLowerCase();
     if(ll.includes("data")||ll.includes("lancamento")||ll.includes("historico")||ll.includes("lançamento")||ll.includes("histórico")){headerIdx=i;break;}
   }
@@ -2019,17 +2019,58 @@ function parseCSVExtrato(text){
   return entries;
 }
 function parseXLSXExtrato(arrayBuffer){
-  var wb=XLSX.read(new Uint8Array(arrayBuffer),{type:"array",cellDates:true,dateNF:"DD/MM/YYYY"});
+  var wb=XLSX.read(new Uint8Array(arrayBuffer),{type:"array",cellDates:true});
   var ws=wb.Sheets[wb.SheetNames[0]];
-  var rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:"DD/MM/YYYY"});
+  var rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});
   if(!rows||rows.length<2)return[];
-  var lines=rows.map(function(row){
-    return(row||[]).map(function(cell){
-      var s=(cell===null||cell===undefined)?"":String(cell).trim();
+  var norm=function(s){return String(s===null||s===undefined?"":s).toLowerCase().replace(/[^a-z0-9]/g,"");};
+  var headerIdx=-1,iData=-1,iDesc=-1,iValor=-1,iCred=-1,iDeb=-1;
+  for(var i=0;i<rows.length&&headerIdx===-1;i++){
+    var r=rows[i];if(!r)continue;
+    var lc=r.map(norm);
+    var di=lc.findIndex(function(c){return c==="data";});
+    var vi=lc.findIndex(function(c){return c==="valor"||c==="value"||c==="amount";});
+    var dei=lc.findIndex(function(c){return c.includes("lancamento")||c.includes("historico")||c.includes("descricao")||c.includes("memo")||c.includes("titulo")||c.includes("narrativa");});
+    if(di>=0&&(vi>=0||dei>=0)){
+      headerIdx=i;iData=di;iValor=vi;iDesc=dei>=0?dei:di+1;
+      lc.forEach(function(c,j){
+        if(c.includes("credito")||c.includes("entrada"))iCred=j;
+        else if(c.includes("debito")||c.includes("saida"))iDeb=j;
+      });
+    }
+  }
+  if(headerIdx===-1){
+    var lines=rows.map(function(row){return(row||[]).map(function(c){
+      var s=c instanceof Date?String(c.getDate()).padStart(2,"0")+"/"+(c.getMonth()+1).toString().padStart(2,"0")+"/"+c.getFullYear():c===null||c===undefined?"":String(c);
       return(s.includes(",")||s.includes(";"))?'"'+s.replace(/"/g,'""')+'"':s;
-    }).join(",");
-  });
-  return parseCSVExtrato(lines.join("\n"));
+    }).join(",");}).join("\n");
+    return parseCSVExtrato(lines);
+  }
+  var entries=[];
+  for(var i=headerIdx+1;i<rows.length;i++){
+    var r=rows[i];if(!r||r.every(function(c){return c===null||c===undefined;}))continue;
+    var dateRaw=r[iData],dateStr=null;
+    if(dateRaw instanceof Date&&!isNaN(dateRaw.getTime())){
+      dateStr=dateRaw.getFullYear()+"-"+String(dateRaw.getMonth()+1).padStart(2,"0")+"-"+String(dateRaw.getDate()).padStart(2,"0");
+    }else if(dateRaw){dateStr=_parseDateBR(String(dateRaw));}
+    if(!dateStr)continue;
+    var desc=r[iDesc]!==null&&r[iDesc]!==undefined?String(r[iDesc]).trim():"";
+    if(!desc||desc.length<2)continue;
+    var valor=0,tipo="despesa";
+    if(iValor>=0&&r[iValor]!==null&&r[iValor]!==undefined){
+      var v=typeof r[iValor]==="number"?r[iValor]:_parseBRNum(String(r[iValor]));
+      if(_importMode==="extrato"){tipo=v>=0?"receita":"despesa";}else{tipo=v<0?"receita":"despesa";}
+      valor=Math.abs(v);
+    }else if((iCred>=0&&r[iCred])||(iDeb>=0&&r[iDeb])){
+      var cv=iCred>=0&&r[iCred]?Math.abs(typeof r[iCred]==="number"?r[iCred]:_parseBRNum(String(r[iCred]))):0;
+      var dv=iDeb>=0&&r[iDeb]?Math.abs(typeof r[iDeb]==="number"?r[iDeb]:_parseBRNum(String(r[iDeb]))):0;
+      if(cv>0){valor=cv;tipo="receita";}else if(dv>0){valor=dv;tipo="despesa";}else continue;
+    }else continue;
+    if(!valor||valor<=0)continue;
+    var dup=lancamentos.some(function(l){return l.data===dateStr&&Math.abs(l.valor-valor)<0.01;});
+    entries.push({data:dateStr,desc:desc,valor:valor,tipo:tipo,cat:autoCategoria(desc,tipo),pgto:_importMode==="fatura"?"Cartão":"PIX/boleto",dup:dup});
+  }
+  return entries;
 }
 async function parsePDFExtrato(arrayBuffer){
   if(typeof pdfjsLib==="undefined")throw new Error("PDF.js nao carregado");
