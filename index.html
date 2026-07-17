@@ -107,6 +107,20 @@ body{font-family:'Calibri','Trebuchet MS','Gill Sans',sans-serif;background:var(
 .alert-over{background:#f8717120;color:var(--red);border:1px solid #f8717140}
 .alert-warn{background:#fbbf2420;color:var(--yellow);border:1px solid #fbbf2440}
 .alert-ok{background:#34d39920;color:var(--green);border:1px solid #34d39940}
+.an-card{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:14px}
+.an-head{display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:8px}
+.an-title{font-family:'Calibri','Trebuchet MS',sans-serif;font-weight:700;font-size:13px}
+.an-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.an-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;background:#f8717120;color:var(--red);border:1px solid #f8717140;flex-shrink:0}
+.an-item{border-top:1px solid var(--border);padding:12px 0}
+.an-item:last-child{padding-bottom:2px}
+.an-bars{display:flex;align-items:flex-end;gap:3px;height:38px;position:relative;margin:8px 0 2px}
+.an-bar{flex:1;border-radius:3px 3px 0 0;min-height:2px}
+.an-orcline{position:absolute;left:0;right:0;border-top:1.5px dashed var(--muted);pointer-events:none}
+.an-mlbls{display:flex;gap:3px;font-size:8px;color:var(--muted);text-align:center;margin-bottom:4px}
+.an-mlbls span{flex:1}
+.an-sug{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;background:var(--surface3);border-radius:10px;padding:8px 10px;font-size:11px;line-height:1.4}
+.an-apply{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;-webkit-appearance:none}
 .chart-legend{display:flex;gap:14px;margin-bottom:14px;font-size:10px;color:var(--muted);padding-left:128px}
 .legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
 .chart-bars{display:flex;flex-direction:column;gap:13px;margin-bottom:6px}
@@ -344,6 +358,7 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
     <div class="per-btn" onclick="perPrx()">&#8250;</div>
   </div>
   <div id="orc-total-summary"></div>
+  <div id="orc-analise"></div>
   <div id="orc-alerts"></div>
   <div class="slbl" style="margin-bottom:14px">Gasto vs Orcamento</div>
   <div id="chart-area"></div>
@@ -1113,6 +1128,123 @@ function renderOrc(){
     const badge=over?`<div class="alert-badge alert-over">🚨 Estourou ${fmtH(gasto-orc)}</div>`:warn?`<div class="alert-badge alert-warn">⚠️ ${pct}%</div>`:`<div class="alert-badge alert-ok">✅ ${pct}%</div>`;
     return`<div class="orc-card" onclick="goToLancCat('${_catEsc}')" style="cursor:pointer"><div class="orc-hdr"><span class="orc-emoji">${c.emoji}</span><div class="orc-info"><div class="orc-name">${c.label}</div><div class="orc-sub">Orcamento: ${fmtH(orc)}</div></div><div class="orc-right"><div class="orc-pct-val" style="color:${color}">${pct}%</div></div></div><div class="prog-bg"><div class="prog-fill" style="width:${Math.min(pct,100)}%;background:${color}"></div></div><div class="orc-vals"><span style="color:var(--muted)">Gasto: ${fmtH(gasto)}</span><span>Restante: <span style="color:${over?"var(--red)":"var(--green)"}">${fmtH(orc-gasto)}</span></span></div>${badge}</div>`;
   }).join("");
+  renderOrcAnalise();
+}
+
+// ANALISE DE ESTOUROS (ultimos meses fechados)
+let _anOpen=false,_orcSug={};
+function _mediana(a){if(!a.length)return 0;var s=a.slice().sort(function(x,y){return x-y;});var m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function _round50(v){return Math.ceil(v/50)*50;}
+function _analiseData(){
+  var win=[],y=hoje.getFullYear(),m=hoje.getMonth();
+  for(var i=6;i>=1;i--){var mm=m-i,yy=y;while(mm<0){mm+=12;yy--;}win.push({y:yy,m:mm,k:yy+"-"+mm});}
+  var ativo={},gm={};
+  lancamentos.forEach(function(l){
+    if(!l.data)return;
+    var p=String(l.data).split("-");var k=(+p[0])+"-"+((+p[1])-1);
+    ativo[k]=1;
+    if(l.tipo!=="despesa")return;
+    (gm[k]=gm[k]||{})[l.cat]=(gm[k][l.cat]||0)+l.valor;
+  });
+  return{meses:win.filter(function(mo){return ativo[mo.k];}),gm:gm};
+}
+function _anChart(vals,orc,meses){
+  var mx=Math.max.apply(null,vals.concat([orc||0]))*1.05;if(!mx||mx<=0)mx=1;
+  var bars=vals.map(function(v){
+    var h=Math.max(2,Math.round(v/mx*38));
+    return'<div class="an-bar" style="height:'+h+'px;background:'+(orc&&v>orc?"var(--red)":"var(--accent)")+'"></div>';
+  }).join("");
+  var line=orc?'<div class="an-orcline" style="bottom:'+Math.min(38,Math.round(orc/mx*38))+'px"></div>':"";
+  var lbls=meses.map(function(mo){return"<span>"+MESES[mo.m].slice(0,3)+"</span>";}).join("");
+  return'<div class="an-bars">'+bars+line+'</div><div class="an-mlbls">'+lbls+'</div>';
+}
+function renderOrcAnalise(){
+  var el=document.getElementById("orc-analise");if(!el)return;
+  var d=_analiseData(),meses=d.meses,gm=d.gm,n=meses.length;
+  if(n<2){el.innerHTML="";return;}
+  var estouros=[],folgas=[],novas=[];
+  _orcSug={};
+  CATS.forEach(function(c){
+    var orc=orcamentos[c.label];
+    var vals=meses.map(function(mo){return(gm[mo.k]&&gm[mo.k][c.label])||0;});
+    var med=_mediana(vals);
+    if(orc){
+      var overCount=vals.filter(function(v){return v>orc;}).length;
+      var totalOver=vals.reduce(function(a,v){return a+Math.max(0,v-orc);},0);
+      if(overCount>=2){
+        var sug=_round50(med);
+        estouros.push({c:c,orc:orc,vals:vals,med:med,overCount:overCount,avgOver:totalOver/overCount,totalOver:totalOver,sug:sug>orc?sug:0});
+        if(sug>orc)_orcSug[c.label]=sug;
+      }else if(overCount===0&&med<orc*0.6){
+        var sug2=med>0?_round50(med):0;
+        if(sug2<orc){folgas.push({c:c,orc:orc,med:med,sug:sug2});_orcSug[c.label]=sug2;}
+      }
+    }else{
+      var mCom=vals.filter(function(v){return v>0;}).length;
+      if(mCom>=Math.ceil(n/2)&&med>=50)novas.push({c:c,med:med,sug:_round50(med)});
+    }
+  });
+  estouros.sort(function(a,b){return b.totalOver-a.totalOver;});
+  folgas.sort(function(a,b){return(b.orc-b.med)-(a.orc-a.med);});
+  var y0=meses[0].y,y1=meses[n-1].y;
+  var perLbl=MESES[meses[0].m].slice(0,3)+(y0!==y1?"/"+String(y0).slice(2):"")+" a "+MESES[meses[n-1].m].slice(0,3)+(y0!==y1?"/"+String(y1).slice(2):"")+" · "+n+" meses fechados";
+  var head='<div class="an-head" onclick="toggleAnaliseOrc()"><div><div class="an-title">🔍 Análise de estouros</div><div class="an-sub">'+perLbl+'</div></div><div style="display:flex;align-items:center;gap:8px">'+(estouros.length?'<span class="an-badge">'+estouros.length+' p/ ajustar</span>':'<span class="alert-badge alert-ok" style="margin:0">✅ ok</span>')+'<span style="color:var(--muted);font-size:12px">'+(_anOpen?"▲":"▼")+'</span></div></div>';
+  if(!_anOpen){el.innerHTML='<div class="an-card">'+head+'</div>';return;}
+  var body="";
+  if(!estouros.length&&!folgas.length&&!novas.length){
+    body='<div class="an-item" style="font-size:12px;color:var(--muted)">Nenhum estouro recorrente nem folga relevante no período. Orçamentos bem calibrados! 🎉</div>';
+  }
+  estouros.forEach(function(e){
+    var esc=e.c.label.replace(/'/g,"\\'");
+    var sugHtml;
+    if(e.sug){
+      var pct=Math.round((e.sug-e.orc)/e.orc*100);
+      sugHtml='<div class="an-sug"><span>Atual '+fmtSH(e.orc)+' → <strong>'+fmtSH(e.sug)+'</strong> <span style="color:var(--red)">(+'+pct+'%)</span></span><button class="an-apply" onclick="aplicarSugestaoOrc(\''+esc+'\','+e.sug+')">Aplicar</button></div>';
+    }else{
+      sugHtml='<div class="an-sug" style="color:var(--muted)">Estouros pontuais — gasto típico ('+fmtSH(e.med)+') cabe no orçamento atual</div>';
+    }
+    body+='<div class="an-item"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-size:13px;font-weight:600">'+e.c.emoji+' '+e.c.label+'</span><span style="font-size:10px;color:var(--red);font-weight:700">estourou '+e.overCount+' de '+n+'</span></div>'
+      +_anChart(e.vals,e.orc,meses)
+      +'<div style="font-size:10px;color:var(--muted)">Gasto típico (mediana): '+fmtSH(e.med)+' · Estouro médio: '+fmtSH(e.avgOver)+'</div>'
+      +sugHtml+'</div>';
+  });
+  if(folgas.length){
+    body+='<div class="an-item"><div class="slbl" style="margin-bottom:8px">Orçamento com folga</div>'+folgas.map(function(f){
+      var esc=f.c.label.replace(/'/g,"\\'");
+      var uso=Math.round(f.med/f.orc*100);
+      var lbl=f.sug>0?'Atual '+fmtSH(f.orc)+' → <strong>'+fmtSH(f.sug)+'</strong> <span style="color:var(--green)">('+Math.round((f.sug-f.orc)/f.orc*100)+'%)</span>':'Sem gastos no período — remover?';
+      return'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;font-size:11px"><span>'+f.c.emoji+' '+f.c.label+' <span style="color:var(--muted)">(usa '+uso+'%)</span></span><span style="display:flex;align-items:center;gap:8px">'+lbl+'<button class="an-apply" onclick="aplicarSugestaoOrc(\''+esc+'\','+f.sug+')">'+(f.sug>0?"Aplicar":"Remover")+'</button></span></div>';
+    }).join("")+'</div>';
+  }
+  if(novas.length){
+    body+='<div class="an-item"><div class="slbl" style="margin-bottom:8px">Gasto recorrente sem orçamento</div>'+novas.map(function(nv){
+      var esc=nv.c.label.replace(/'/g,"\\'");
+      return'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;font-size:11px"><span>'+nv.c.emoji+' '+nv.c.label+' <span style="color:var(--muted)">mediana '+fmtSH(nv.med)+'</span></span><button class="an-apply" onclick="aplicarSugestaoOrc(\''+esc+'\','+nv.sug+')">Criar '+fmtSH(nv.sug)+'</button></div>';
+    }).join("")+'</div>';
+  }
+  var ks=Object.keys(_orcSug);
+  if(ks.length){
+    var totAtual=Object.values(orcamentos).reduce(function(a,b){return a+b;},0);
+    var totNovo=totAtual;
+    ks.forEach(function(cat){totNovo+=(_orcSug[cat]||0)-(orcamentos[cat]||0);});
+    var dif=totNovo-totAtual;
+    body+='<div class="an-item"><div style="font-size:11px;color:var(--muted);margin-bottom:8px">Aplicando tudo: total mensal '+fmtSH(totAtual)+' → <strong style="color:var(--text)">'+fmtSH(totNovo)+'</strong> ('+(dif>=0?"+":"−")+fmtSH(Math.abs(dif))+')</div><button class="an-apply" style="width:100%;padding:10px" onclick="aplicarTodasSugestoes()">Aplicar todas as sugestões ('+ks.length+')</button></div>';
+  }
+  el.innerHTML='<div class="an-card">'+head+body+'</div>';
+}
+function toggleAnaliseOrc(){_anOpen=!_anOpen;renderOrcAnalise();}
+function aplicarSugestaoOrc(cat,val){
+  if(val>0)orcamentos[cat]=val;else delete orcamentos[cat];
+  fbSaveOrc();
+  showToast(val>0?"✅ "+cat+": orçamento ajustado para "+fmtSH(val):"✅ "+cat+": orçamento removido");
+  renderOrc();
+}
+function aplicarTodasSugestoes(){
+  var ks=Object.keys(_orcSug);if(!ks.length)return;
+  ks.forEach(function(cat){var v=_orcSug[cat];if(v>0)orcamentos[cat]=v;else delete orcamentos[cat];});
+  fbSaveOrc();
+  showToast("✅ "+ks.length+" orçamentos ajustados ao gasto real");
+  renderOrc();
 }
 
 // RENDER METAS
