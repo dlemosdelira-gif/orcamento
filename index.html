@@ -640,6 +640,34 @@ function fbSaveMP(){
 }
 
 var _rtimer=null;
+function _inboxNum(v){
+  if(typeof v==="number")return Math.abs(v);
+  var s=String(v==null?"":v).replace(/[^\d.,\-]/g,"");
+  if(!s)return 0;
+  if(s.includes(",")&&s.includes("."))return Math.abs(parseFloat(s.replace(/\./g,"").replace(",",".")));
+  if(s.includes(","))return Math.abs(parseFloat(s.replace(",",".")));
+  return Math.abs(parseFloat(s));
+}
+function _processInbox(snap){
+  var v=snap.val();
+  if(!v||typeof v!=="object"){snap.ref.remove();return;}
+  var valor=_inboxNum(v.valor);
+  if(!(valor>0)){snap.ref.remove();return;}
+  var desc=String(v.desc||"").trim().slice(0,80)||"Pagamento";
+  var data;
+  if(typeof v.data==="string"&&/^\d{4}-\d{2}-\d{2}/.test(v.data)){data=v.data.slice(0,10);}
+  else{var dn=new Date();data=dn.getFullYear()+"-"+String(dn.getMonth()+1).padStart(2,"0")+"-"+String(dn.getDate()).padStart(2,"0");}
+  var id=parseInt(v.ts,10)||Date.now();
+  if(id<1e11)id*=1000; // ts enviado em segundos -> ms
+  if(!lancamentos.some(function(x){return String(x.id)===String(id);})){
+    var l={id:id,tipo:"despesa",desc:desc,valor:valor,cat:autoCategoria(desc,"despesa"),pgto:v.pgto||"Apple Pay",data:data,auto:true};
+    lancamentos.unshift(l);lancamentos.sort(function(a,b){return b.id-a.id;});
+    _db.ref("lancamentos/"+id).set(l).catch(_fbErr);
+    showToast("🤖 Lançado: "+desc+" · "+fmtSH(valor));
+    clearTimeout(_rtimer);_rtimer=setTimeout(renderAll,150);
+  }
+  snap.ref.remove();
+}
 function initFirebase(){
   renderAll();
   try{
@@ -661,6 +689,7 @@ function initFirebase(){
     },err=>{setStatus("❌ "+err.message,"#f87171");lancamentos=[..._DADOS_INICIAIS].sort((a,b)=>b.id-a.id);renderAll();});
     _db.ref("metas").on("value",snap=>{metas=snap.val()?Object.values(snap.val()):[];if(document.querySelector(".screen.active")?.id==="s-metas")renderMetas();});
     _db.ref("orcamentos").on("value",snap=>{orcamentos=snap.val()||{};if(document.querySelector(".screen.active")?.id==="s-orc")renderOrc();});
+    _db.ref("inbox").on("child_added",_processInbox);
     _db.ref("metasPessoais").on("value",snap=>{
       const v=snap.val();
       if(v){
@@ -951,7 +980,7 @@ function txHTML(l,compact){
   return "<div class=\"tx\">"+
     "<div class=\"tx-ico\" style=\"background:"+bg+"\">"+ico+"</div>"+
     "<div class=\"tx-info\">"+
-      "<div class=\"tx-name\">"+l.desc+"</div>"+
+      "<div class=\"tx-name\">"+l.desc+(l.auto?" <span title=\"Lancado automaticamente\">🤖</span>":"")+"</div>"+
       "<div class=\"tx-sub\">"+cat+" · "+dataFmt+tagSpan+"</div>"+
     "</div>"+
     "<div class=\"tx-right\">"+
