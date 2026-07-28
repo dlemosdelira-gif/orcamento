@@ -248,17 +248,17 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
 <body>
 <div style="position:fixed;top:0;left:0;right:0;z-index:500;background:#16161d;border-bottom:1px solid #2a2a38;padding:6px 16px;display:flex;justify-content:space-between;align-items:center;font-size:10px">
   <span style="color:#7c6af7;font-weight:700">&#128156; Família Delira</span>
-  <span id="sync-status" style="color:#60a5fa">&#128260; Iniciando...</span>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="sync-status" style="color:#60a5fa">&#128260; Iniciando...</span>
+    <span id="hide-btn" onclick="toggleHide()" style="cursor:pointer;font-size:15px;padding:2px 3px;line-height:1">🙈</span>
+  </div>
 </div>
 <div style="height:30px"></div>
 
 <div class="screen active" id="s-home">
   <div class="hdr">
     <div><div class="hdr-title">Olá! &#128075;</div><div class="hdr-sub" id="hdr-hoje">...</div></div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <div id="hide-btn" onclick="toggleHide()" style="width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px">🙈</div>
-      <div class="avatar">D</div>
-    </div>
+    <div class="avatar">D</div>
   </div>
   <div class="mode-toggle" id="home-mode-toggle">
     <div class="mode-btn on" onclick="setModo('cal',this)">&#128197; Mes</div>
@@ -636,7 +636,12 @@ function _fbErr(err){showToast("⚠️ Erro ao salvar: "+(err&&err.message||err)
 function fbSaveLanc(l){if(_db)_db.ref("lancamentos/"+l.id).set(l).catch(_fbErr);}
 function fbSaveLancBatch(arr){if(!_db||!arr.length)return;var o={};arr.forEach(function(l){o[l.id]=l;});_db.ref("lancamentos").update(o).catch(_fbErr);}
 function fbSaveMetas(){if(_db){const o={};metas.forEach(m=>{o[m.id]=m;});_db.ref("metas").set(o).catch(_fbErr);}}
-function fbSaveOrc(){if(_db)_db.ref("orcamentos").set(orcamentos).catch(_fbErr);}
+function _orcKey(label){return String(label).replace(/[.#$\[\]\/]/g,"_");}
+function fbSaveOrc(){
+  if(!_db)return;
+  var safe={};Object.keys(orcamentos).forEach(function(k){safe[_orcKey(k)]=orcamentos[k];});
+  _db.ref("orcamentos").set(safe).catch(_fbErr);
+}
 function fbSaveMP(){
   if(!_db)return;
   const o={};
@@ -693,7 +698,13 @@ function initFirebase(){
       clearTimeout(_rtimer);_rtimer=setTimeout(renderAll,150);
     },err=>{setStatus("❌ "+err.message,"#f87171");lancamentos=[..._DADOS_INICIAIS].sort((a,b)=>b.id-a.id);renderAll();});
     _db.ref("metas").on("value",snap=>{metas=snap.val()?Object.values(snap.val()):[];if(document.querySelector(".screen.active")?.id==="s-metas")renderMetas();});
-    _db.ref("orcamentos").on("value",snap=>{orcamentos=snap.val()||{};if(document.querySelector(".screen.active")?.id==="s-orc")renderOrc();});
+    _db.ref("orcamentos").on("value",snap=>{
+      var raw=snap.val()||{};
+      var o={};
+      CATS.forEach(function(c){var v=raw[_orcKey(c.label)];if(v!==undefined&&v!==null)o[c.label]=v;});
+      orcamentos=o;
+      if(document.querySelector(".screen.active")?.id==="s-orc")renderOrc();
+    });
     _db.ref("inbox").on("child_added",_processInbox);
     _db.ref("metasPessoais").on("value",snap=>{
       const v=snap.val();
