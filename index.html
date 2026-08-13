@@ -46,10 +46,11 @@ body{font-family:'Calibri','Trebuchet MS','Gill Sans',sans-serif;background:var(
 .bal-lbl{font-size:10px;color:#a5b4fc;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px}
 .bal-val{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:37px;font-weight:800;letter-spacing:-1px;color:#fff!important;-webkit-text-fill-color:#fff!important}
 .bal-val.neg{color:var(--red)!important;-webkit-text-fill-color:var(--red)!important}
-.bal-row{display:flex;gap:10px;margin-top:14px}
-.bal-mini{flex:1;background:#ffffff0d;border-radius:12px;padding:10px 12px}
-.bal-mini-lbl{font-size:10px;color:#a5b4fc;margin-bottom:2px}
-.bal-mini-val{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:15px;font-weight:700}
+.bal-row{display:flex;gap:8px;margin-top:14px}
+.bal-mini{flex:1;min-width:0;background:#ffffff0d;border-radius:12px;padding:9px 10px}
+.bal-mini-lbl{font-size:10px;color:#a5b4fc;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bal-mini-val{font-family:'Calibri','Trebuchet MS',sans-serif;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bal-tip{display:none;background:#1a1a1a;color:#fff;border-radius:10px;padding:10px 14px;font-size:11px;margin-top:8px;line-height:1.8}
 .g{color:var(--green)!important;-webkit-text-fill-color:var(--green)!important}
 .r{color:var(--red)!important;-webkit-text-fill-color:var(--red)!important}
 .b{color:var(--blue)!important;-webkit-text-fill-color:var(--blue)!important}
@@ -275,10 +276,8 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
     <div class="bal-card">
       <div class="bal-lbl">Saldo do periodo</div>
       <div class="bal-val" id="h-saldo">R$ 0,00</div>
-      <div class="bal-row">
-        <div class="bal-mini"><div class="bal-mini-lbl">Receitas</div><div class="bal-mini-val g" id="h-rec">R$ 0</div></div>
-        <div class="bal-mini"><div class="bal-mini-lbl">Despesas</div><div class="bal-mini-val r" id="h-desp">R$ 0</div></div>
-      </div>
+      <div class="bal-row" id="home-bal-row"></div>
+      <div class="bal-tip"></div>
     </div>
   </div>
   <div id="home-cc-area" style="display:none">
@@ -1006,12 +1005,63 @@ function txHTML(l,compact){
   "</div>";
 }
 
+// GASTO/DIA (mediana real vs media orcada)
+function _periodoDiario(){
+  if(modoAtual==="cal")return{start:new Date(anoAtual,mesAtual,1),end:new Date(anoAtual,mesAtual+1,0)};
+  if(modoAtual==="cc"){const g=getCicloAtual(cicloOffset);return{start:g.inicioDate,end:g.fechaDate};}
+  return null; // YTD/MAT fora de escopo
+}
+function _diasEntre(a,b){return Math.round((b-a)/86400000)+1;}
+function computeGastoDia(){
+  const per=_periodoDiario();
+  const totalOrc=Object.values(orcamentos).reduce((a,b)=>a+b,0);
+  if(!per||!(totalOrc>0))return null;
+  const hojeZero=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate());
+  const elapsedEnd=hojeZero<per.start?null:(hojeZero<per.end?hojeZero:per.end);
+  if(!elapsedEnd)return null;
+  const totalDiasPeriodo=_diasEntre(per.start,per.end);
+  const iniT=per.start.getTime(),fimT=elapsedEnd.getTime();
+  const porDia={};
+  lancamentos.forEach(l=>{
+    if(l.tipo!=="despesa"||!l.data)return;
+    const t=new Date(l.data+"T00:00:00").getTime();
+    if(t<iniT||t>fimT)return;
+    porDia[t]=(porDia[t]||0)+l.valor;
+  });
+  const serie=[];
+  for(let d=new Date(per.start);d<=elapsedEnd;d.setDate(d.getDate()+1))serie.push(porDia[d.getTime()]||0);
+  const dias=serie.length;
+  const mediana=_mediana(serie);
+  const media=totalOrc/totalDiasPeriodo;
+  const pct=media>0?mediana/media*100:0;
+  const cls=pct>=100?"r":pct>=80?"y":"g";
+  return{mediana,media,dias,pct:Math.round(pct),cls};
+}
+function _balRowHTML(rec,desp,gd){
+  let html='<div class="bal-mini"><div class="bal-mini-lbl">Receitas</div><div class="bal-mini-val g">'+fmtSH(rec)+'</div></div>'
+    +'<div class="bal-mini"><div class="bal-mini-lbl">Despesas</div><div class="bal-mini-val r">'+fmtSH(desp)+'</div></div>';
+  if(gd)html+='<div class="bal-mini" style="cursor:pointer" onclick="toggleGastoDiaTip(this,'+gd.mediana+','+gd.media+','+gd.dias+','+gd.pct+')"><div class="bal-mini-lbl">Gasto/dia &#9432;</div><div class="bal-mini-val '+gd.cls+'">'+fmtSH(gd.mediana)+'</div></div>';
+  return html;
+}
+function toggleGastoDiaTip(el,mediana,media,dias,pct){
+  const tip=el.closest(".bal-card").querySelector(".bal-tip");
+  if(!tip)return;
+  const isOpen=tip.style.display==="block"&&tip.dataset.dias===String(dias)&&tip.dataset.pct===String(pct);
+  if(isOpen){tip.style.display="none";return;}
+  tip.dataset.dias=String(dias);tip.dataset.pct=String(pct);
+  tip.innerHTML="📊 Mediana real: <strong>"+fmtSH(mediana)+"</strong>/dia (últimos "+dias+" dia"+(dias===1?"":"s")+")<br>"
+    +"🎯 Orcado: <strong>"+fmtSH(media)+"</strong>/dia (media do orcamento mensal)<br>"
+    +"<span style='color:"+(pct>=100?"#f87171":pct>=80?"#fbbf24":"#34d399")+"'>Ritmo: "+pct+"% do orcamento diario</span>";
+  tip.style.display="block";
+}
+
 // RENDER HOME
 function renderHome(){
   const lm=getLancPeriodo();
   const rec=lm.filter(l=>l.tipo==="receita").reduce((a,b)=>a+b.valor,0);
   const desp=lm.filter(l=>l.tipo==="despesa").reduce((a,b)=>a+b.valor,0);
   const s=rec-desp;
+  const gd=computeGastoDia();
   const lbl=getPeriodoLabel(),sub=getPeriodoSub();
   document.getElementById("per-home-lbl").innerHTML=lbl+(sub?`<span class="per-sub">${sub}</span>`:"");
   document.getElementById("home-cal-area").style.display=modoAtual==="cc"?"none":"block";
@@ -1021,14 +1071,13 @@ function renderHome(){
     const ccBalEl=document.getElementById("home-cc-balance");
     if(ccBalEl){
       ccBalEl.style.display="block";
-      ccBalEl.innerHTML=`<div class="bal-card"><div class="bal-lbl">Receitas vs Despesas do ciclo</div><div class="bal-val${s<0?" neg":""}" style="margin:6px 0">${fmtH(s)}</div><div class="bal-row"><div class="bal-mini"><div class="bal-mini-lbl">Receitas</div><div class="bal-mini-val g">${fmtSH(rec)}</div></div><div class="bal-mini"><div class="bal-mini-lbl">Despesas</div><div class="bal-mini-val r">${fmtSH(desp)}</div></div></div></div>`;
+      ccBalEl.innerHTML=`<div class="bal-card"><div class="bal-lbl">Receitas vs Despesas do ciclo</div><div class="bal-val${s<0?" neg":""}" style="margin:6px 0">${fmtH(s)}</div><div class="bal-row">${_balRowHTML(rec,desp,gd)}</div><div class="bal-tip"></div></div>`;
     }
   }else{
     const ccBalEl=document.getElementById("home-cc-balance");
     if(ccBalEl)ccBalEl.style.display="none";
     const sv=document.getElementById("h-saldo");sv.textContent=fmtH(s);sv.className="bal-val"+(s<0?" neg":"");
-    document.getElementById("h-rec").textContent=fmtSH(rec);
-    document.getElementById("h-desp").textContent=fmtSH(desp);
+    document.getElementById("home-bal-row").innerHTML=_balRowHTML(rec,desp,gd);
   }
   const ul=lm.slice(0,5);
   document.getElementById("h-recentes").innerHTML=ul.length===0?'<div class="empty"><div class="ei">📋</div><div class="et">Nenhum lancamento neste periodo</div></div>':ul.map(l=>txHTML(l,true)).join("");
