@@ -244,6 +244,13 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
 .imp-val{font-size:13px;font-weight:700;flex-shrink:0;margin-top:2px}
 .imp-dup-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;background:#fbbf2422;color:#d97706;border:1px solid #fbbf2444;margin-left:5px}
 .imp-cat-sel{width:100%;background:var(--surface2)!important;border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:11px;color:var(--text)!important;-webkit-text-fill-color:var(--text)!important;font-family:'Calibri','Trebuchet MS',sans-serif;outline:none;-webkit-appearance:none;appearance:none;margin-top:5px}
+.imp-desc-inp{font-size:13px;font-weight:500;border:none;border-bottom:1px dashed transparent;background:transparent;color:var(--text)!important;-webkit-text-fill-color:var(--text)!important;width:100%;padding:0 0 1px;font-family:'Calibri','Trebuchet MS',sans-serif;outline:none}
+.imp-desc-inp:focus{border-bottom:1px dashed var(--accent)}
+.imp-date-inp{font-size:10px;color:var(--muted)!important;-webkit-text-fill-color:var(--muted)!important;border:none;background:transparent;font-family:'Calibri','Trebuchet MS',sans-serif;outline:none;padding:0;-webkit-appearance:none}
+.imp-tipo-tog{cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px}
+.imp-val-wrap{display:flex;align-items:baseline;flex-shrink:0;margin-top:2px;gap:1px}
+.imp-val-inp{font-size:13px;font-weight:700;border:none;border-bottom:1px dashed transparent;background:transparent;text-align:right;width:62px;outline:none;font-family:'Calibri','Trebuchet MS',sans-serif;padding:0 0 1px}
+.imp-val-inp:focus{border-bottom:1px dashed var(--accent)}
 </style>
 </head>
 <body>
@@ -2172,6 +2179,7 @@ function _parseDateBR(s){
   if(m2)return m2[3]+"-"+m2[2]+"-"+m2[1];
   return null;
 }
+function _escAttr(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function _parseBRNum(s){
   if(!s)return 0;s=String(s).trim().replace(/R\$\s*/i,"").replace(/\s/g,"");
   var neg=s.charAt(0)==="-";s=s.replace(/^-/,"");
@@ -2351,17 +2359,42 @@ function renderImportPreview(entries){
   document.getElementById("import-preview-list").innerHTML=entries.map(function(e,i){
     var chk=e.dup?"":" checked";
     var selCat=catOpts.replace('value="'+e.cat+'"','value="'+e.cat+'" selected');
+    var isDesp=e.tipo==="despesa";
     return '<div class="imp-row">'+
       '<input type="checkbox"'+chk+' class="imp-chk" id="imp-chk-'+i+'" onchange="updateImportBtn()">'+
       '<div class="imp-info">'+
-        '<div class="imp-desc">'+e.desc+(e.dup?'<span class="imp-dup-badge">&#9888; duplicata?</span>':'')+'</div>'+
-        '<div class="imp-meta">'+e.data.split("-").reverse().join("/")+(e.tipo==="despesa"?" · &#128184; Despesa":" · &#128176; Receita")+'</div>'+
-        (e.tipo==="despesa"?'<select class="imp-cat-sel" id="imp-cat-'+i+'">'+selCat+'</select>':'')+
+        '<div style="display:flex;align-items:center;gap:0">'+
+          '<input type="text" class="imp-desc-inp" id="imp-desc-'+i+'" value="'+_escAttr(e.desc)+'" style="flex:1;min-width:0" oninput="_importEntries['+i+'].desc=this.value">'+
+          (e.dup?'<span class="imp-dup-badge">&#9888; duplicata?</span>':'')+
+        '</div>'+
+        '<div class="imp-meta"><input type="date" class="imp-date-inp" id="imp-date-'+i+'" value="'+e.data+'" onchange="_importEntries['+i+'].data=this.value"> &#183; <span class="imp-tipo-tog" id="imp-tipo-'+i+'" onclick="toggleImportTipo('+i+')">'+(isDesp?"&#128184; Despesa":"&#128176; Receita")+'</span></div>'+
+        '<div id="imp-catwrap-'+i+'" style="display:'+(isDesp?"block":"none")+'"><select class="imp-cat-sel" id="imp-cat-'+i+'">'+selCat+'</select></div>'+
       '</div>'+
-      '<div class="imp-val '+(e.tipo==="receita"?"g":"r")+'">'+(e.tipo==="receita"?"+":"-")+fmt(e.valor)+'</div>'+
+      '<div class="imp-val-wrap">'+
+        '<span class="imp-val '+(isDesp?"r":"g")+'" id="imp-sign-'+i+'">'+(isDesp?"-":"+")+'</span>'+
+        '<input type="text" inputmode="decimal" class="imp-val-inp '+(isDesp?"r":"g")+'" id="imp-val-'+i+'" value="'+String(e.valor).replace(".",",")+'" onblur="syncImportValor('+i+',this)">'+
+      '</div>'+
     '</div>';
   }).join("");
   updateImportBtn();
+}
+function toggleImportTipo(i){
+  var e=_importEntries[i];if(!e)return;
+  e.tipo=e.tipo==="despesa"?"receita":"despesa";
+  var isDesp=e.tipo==="despesa";
+  var tipoEl=document.getElementById("imp-tipo-"+i);if(tipoEl)tipoEl.innerHTML=isDesp?"&#128184; Despesa":"&#128176; Receita";
+  var catWrap=document.getElementById("imp-catwrap-"+i);if(catWrap)catWrap.style.display=isDesp?"block":"none";
+  var signEl=document.getElementById("imp-sign-"+i);
+  if(signEl){signEl.textContent=isDesp?"-":"+";signEl.classList.remove("r","g");signEl.classList.add(isDesp?"r":"g");}
+  var valEl=document.getElementById("imp-val-"+i);
+  if(valEl){valEl.classList.remove("r","g");valEl.classList.add(isDesp?"r":"g");}
+}
+function syncImportValor(i,el){
+  var e=_importEntries[i];if(!e)return;
+  var v=Math.abs(_parseBRNum(el.value));
+  if(!v){showToast("Valor invalido","err");v=e.valor;}
+  e.valor=v;
+  el.value=String(v).replace(".",",");
 }
 function updateImportBtn(){
   var n=document.querySelectorAll(".imp-chk:checked").length;
