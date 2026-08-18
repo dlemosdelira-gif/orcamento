@@ -444,6 +444,7 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
       <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:11px;color:#a5b4fc;margin-bottom:6px"><span>Objetivo</span><b id="patr-objetivo-val" style="color:#fff;font-size:12px">R$ 0,00</b></div>
       <div class="prog-bg" style="background:#ffffff1a"><div class="prog-fill" id="patr-objetivo-fill" style="width:0%"></div></div>
       <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10.5px;color:#a5b4fc"><span id="patr-objetivo-pct"></span><span id="patr-objetivo-falta" style="color:var(--yellow);font-weight:700"></span></div>
+      <div id="patr-projecao" style="margin-top:6px;font-size:10.5px;color:#a5b4fc"></div>
     </div>
   </div>
 
@@ -718,7 +719,7 @@ const _PATRIMONIO_INICIAL={
       p16:{id:"p16",nome:"Gastos mensais",valor:5000.00,obs:""}
     },
     longoPrazo:{
-      p17:{id:"p17",nome:"Financiamento da casa",valor:153765.18,data:"2025-09-29",obs:""},
+      p17:{id:"p17",nome:"Financiamento da casa",valor:153765.18,data:"2025-09-29",obs:"",financiamentoImobiliario:true},
       p18:{id:"p18",nome:"PRONAMPE",valor:25293.76,data:"2025-08-21",obs:""}
     }
   },
@@ -2589,15 +2590,25 @@ function patrLiquido(){return patrAtivoTotal()-patrPassivoTotal();}
 // Gastos mensais medios: reaproveita os lancamentos reais dos ultimos 12 meses
 // (mesma janela MAT ja usada no Relatorio) em vez de um campo separado.
 function patrGastosMensais(){const desp=getLancMAT().filter(l=>l.tipo==="despesa").reduce((a,b)=>a+b.valor,0);return desp/12;}
+// Prefere a flag explicita financiamentoImobiliario (marcada no formulario do
+// passivo); so cai para o casamento por nome se nenhum item estiver marcado,
+// como compatibilidade com itens salvos antes dessa flag existir.
 function patrFinanciamentoCasa(){
-  var total=0;
+  var total=0,flagged=false;
+  ["circulante","longoPrazo"].forEach(function(sub){
+    Object.values((patrimonio.passivos&&patrimonio.passivos[sub])||{}).forEach(function(it){
+      if(it.financiamentoImobiliario){total+=parseFloat(it.valor)||0;flagged=true;}
+    });
+  });
+  if(flagged)return total;
+  var fallback=0;
   ["circulante","longoPrazo"].forEach(function(sub){
     Object.values((patrimonio.passivos&&patrimonio.passivos[sub])||{}).forEach(function(it){
       var n=(it.nome||"").toLowerCase();
-      if(n.indexOf("financiamento")>=0&&n.indexOf("casa")>=0)total+=parseFloat(it.valor)||0;
+      if(n.indexOf("financiamento")>=0&&n.indexOf("casa")>=0)fallback+=parseFloat(it.valor)||0;
     });
   });
-  return total;
+  return fallback;
 }
 function patrMaiorAtivo(){
   var max=0;
@@ -2623,7 +2634,7 @@ const PATR_INDIC=[
     formula:"Ativo Circulante &divide; Total do Ativo"},
   {key:"divimob",title:"Divida imobiliaria / patrimonio",fmt:"pct",
     calc:function(){var pl=patrLiquido();var fin=patrFinanciamentoCasa();return pl>0?fin/pl:0;},ok:function(v){return v<0.30;},
-    explain:"Quanto do seu <b>Patrimonio Liquido</b> ainda esta comprometido pelo financiamento da casa (busca um item de passivo chamado \"Financiamento da casa\"). Cai naturalmente conforme voce amortiza o financiamento.",
+    explain:"Quanto do seu <b>Patrimonio Liquido</b> ainda esta comprometido pelo financiamento da casa (soma os passivos marcados como \"financiamento imobiliario\" no formulario). Cai naturalmente conforme voce amortiza o financiamento.",
     formula:"Saldo do Financiamento da Casa &divide; Patrimonio Liquido"},
   {key:"diversif",title:"Diversificacao de ativos (ideal &gt; 50%)",fmt:"pct",
     calc:function(){var at=patrAtivoTotal();if(at<=0)return 0;return 1-(patrMaiorAtivo()/at);},ok:function(v){return v>0.50;},
@@ -2631,6 +2642,26 @@ const PATR_INDIC=[
     formula:"1 &minus; (maior ativo individual &divide; Total do Ativo)"}
 ];
 function patrFmtIndic(v,fmt){return fmt==="x"?v.toFixed(1).replace(".",",")+"x":(v*100).toFixed(1).replace(".",",")+"%";}
+
+// Extrapola o ritmo de crescimento (R$/dia) entre o primeiro e o ultimo
+// snapshot do historico e estima quando o patrimonio liquido atinge o
+// objetivo. Retorna null se nao ha historico suficiente (menos de 2 pontos)
+// ou se a meta ja foi atingida; retorna {ok:false} se o ritmo atual e <= 0
+// (patrimonio estagnado ou caindo, entao a meta nunca seria atingida assim).
+function patrProjecaoObjetivo(){
+  var pontos=Object.values(patrimonio.historico||{}).sort(function(a,b){return new Date(a.data)-new Date(b.data);});
+  if(pontos.length<2)return null;
+  var first=pontos[0],last=pontos[pontos.length-1];
+  var dias=(new Date(last.data)-new Date(first.data))/86400000;
+  if(dias<=0)return null;
+  var rate=(parseFloat(last.valorLiquido)-parseFloat(first.valorLiquido))/dias;
+  if(rate<=0)return{ok:false};
+  var objetivo=parseFloat(patrimonio.metas.objetivoPatrimonioLiquido)||0;
+  var atual=patrLiquido();
+  if(objetivo<=0||atual>=objetivo)return null;
+  var diasRestantes=(objetivo-atual)/rate;
+  return{ok:true,rate:rate,diasRestantes:diasRestantes,dataEstimada:new Date(Date.now()+diasRestantes*86400000)};
+}
 
 function renderPatr(){
   var ativoTotal=patrAtivoTotal(),passivoTotal=patrPassivoTotal(),liquido=patrLiquido();
@@ -2646,6 +2677,17 @@ function renderPatr(){
   var elFill=document.getElementById("patr-objetivo-fill");if(elFill)elFill.style.width=pct+"%";
   var elPct=document.getElementById("patr-objetivo-pct");if(elPct)elPct.textContent=pct+"% da meta";
   var elFalta=document.getElementById("patr-objetivo-falta");if(elFalta)elFalta.textContent=falta>0?"Falta "+fmtH(falta):"Meta atingida! 🎉";
+  var elProj=document.getElementById("patr-projecao");
+  if(elProj){
+    var proj=falta>0?patrProjecaoObjetivo():null;
+    if(!proj)elProj.textContent="";
+    else if(!proj.ok)elProj.innerHTML='&#9888;&#65039; No ritmo atual, o patrimonio nao esta crescendo — a meta nao sera atingida sem mudar o ritmo.';
+    else{
+      var meses=Math.max(1,Math.round(proj.diasRestantes/30));
+      var mesAno=proj.dataEstimada.toLocaleDateString("pt-BR",{month:"short",year:"numeric"});
+      elProj.innerHTML='&#128200; No ritmo atual ('+fmtSH(proj.rate*30)+'/mes), previsao de atingir em ~'+meses+' meses ('+mesAno+')';
+    }
+  }
 
   var elAt=document.getElementById("patr-ativo-total");if(elAt)elAt.textContent=fmtH(ativoTotal);
   var elPs=document.getElementById("patr-passivo-total");if(elPs)elPs.textContent=fmtH(passivoTotal);
@@ -2676,9 +2718,10 @@ function renderPatrLista(grupo,sub,listId,totalId,corClasse){
     var pctItem=total>0?Math.round(v/total*100):0;
     var dataFmt=it.data?new Date(it.data+"T00:00:00").toLocaleDateString("pt-BR"):"—";
     var obsHtml=it.obs?' &middot; <span style="font-style:italic">'+it.obs+'</span>':"";
+    var finTag=it.financiamentoImobiliario?' <span class="tag" style="background:#60a5fa18;color:var(--blue);border-color:#60a5fa33">&#127968; financiamento</span>':"";
     return '<div class="tx">'+
       '<div class="tx-info">'+
-        '<div class="tx-name">'+it.nome+'</div>'+
+        '<div class="tx-name">'+it.nome+finTag+'</div>'+
         '<div class="tx-sub">'+dataFmt+obsHtml+'</div>'+
       '</div>'+
       '<div class="tx-right">'+
@@ -2726,6 +2769,17 @@ function renderPatrEvo(){
   var dataFmt=p.data?new Date(p.data+"T00:00:00").toLocaleDateString("pt-BR"):"—";
   var dotsRow=coords.map(function(c,i){return '<i class="'+(i===patrHistIdx?"on":"")+'" onclick="patrSetStep('+i+')" style="cursor:pointer"></i>';}).join("");
 
+  var origemHtml="";
+  if(prev&&diffVal!=null){
+    var poupanca=patrPoupancaPeriodo(prev.data,p.data);
+    var valorizacao=diffVal-poupanca;
+    origemHtml='<div class="pd-full"><div class="pd-lbl">De onde veio a variacao</div>'+
+      '<div style="font-size:12px;line-height:1.7;margin-top:2px">'+
+      '&#128176; Poupanca (receitas &minus; despesas no periodo): <b>'+fmtH(poupanca)+'</b><br>'+
+      '&#128200; Valorizacao / outros: <b>'+fmtH(valorizacao)+'</b>'+
+      '</div></div>';
+  }
+
   wrap.innerHTML=
     '<div class="patr-evo-head"><span class="patr-evo-cur">'+fmtH(p.valorLiquido)+'</span>'+deltaHtml+'</div>'+
     '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:90px;display:block" preserveAspectRatio="none">'+
@@ -2745,7 +2799,20 @@ function renderPatrEvo(){
       '<div><div class="pd-lbl">Variacao anterior</div><div class="pd-val">'+(diffVal==null?"—":(diffVal>=0?"+":"")+fmtH(diffVal))+'</div></div>'+
       '<div><div class="pd-lbl">% no periodo</div><div class="pd-val">'+(diffPct==null?"—":diffPct.toFixed(1).replace(".",",")+"%")+'</div></div>'+
       (p.obs?'<div class="pd-full"><div class="pd-lbl">Leitura</div><div style="font-size:11.5px;color:var(--text)">'+p.obs+'</div></div>':"")+
+      origemHtml+
     '</div>';
+}
+// Soma (receita - despesa) dos lancamentos reais entre duas datas de snapshot
+// (exclusive no inicio, inclusive no fim) — usado para decompor a variacao do
+// patrimonio em "quanto veio de poupanca" vs "quanto veio de valorizacao".
+function patrPoupancaPeriodo(dataInicio,dataFim){
+  var di=new Date(dataInicio+"T00:00:00"),df=new Date(dataFim+"T23:59:59");
+  var soma=0;
+  lancamentos.forEach(function(l){
+    var d=new Date(l.data+"T00:00:00");
+    if(d>di&&d<=df)soma+=(l.tipo==="receita"?l.valor:-l.valor);
+  });
+  return soma;
 }
 function patrSetStep(i){patrHistIdx=i;renderPatrEvo();}
 function patrStep(delta){
@@ -2808,6 +2875,8 @@ function openPatrItemModal(grupo,sub,id){
   document.getElementById("pi-valor").value=existing?String(existing.valor).replace(".",","):"";
   document.getElementById("pi-data").value=existing?(existing.data||""):"";
   document.getElementById("pi-obs").value=existing?(existing.obs||""):"";
+  var finWrap=document.getElementById("pi-fin-wrap");if(finWrap)finWrap.style.display=grupo==="passivos"?"block":"none";
+  document.getElementById("pi-fin").checked=!!(existing&&existing.financiamentoImobiliario);
   document.getElementById("patr-item-del-btn").style.display=existing?"block":"none";
   document.getElementById("modal-patr-item").classList.add("open");
 }
@@ -2824,9 +2893,11 @@ function savePatrItem(){
   var id=patrEditCtx.id||("i"+Date.now());
   var item={id:id,nome:nome,valor:valor,obs:obs};
   if(!(grupo==="passivos"&&sub==="circulante"))item.data=data;
+  if(grupo==="passivos")item.financiamentoImobiliario=document.getElementById("pi-fin").checked;
   if(!patrimonio[grupo][sub])patrimonio[grupo][sub]={};
   patrimonio[grupo][sub][id]=item;
   if(_db)_db.ref("patrimonio/"+grupo+"/"+sub+"/"+id).set(item).catch(_fbErr);
+  patrAutoSnapshot();
   closeModal("modal-patr-item");
   showToast("💾 Salvo!");
   renderPatr();
@@ -2836,9 +2907,28 @@ function delPatrItemFromModal(){
   var grupo=patrEditCtx.grupo,sub=patrEditCtx.sub,id=patrEditCtx.id;
   if(patrimonio[grupo][sub])delete patrimonio[grupo][sub][id];
   if(_db)_db.ref("patrimonio/"+grupo+"/"+sub+"/"+id).remove().catch(_fbErr);
+  patrAutoSnapshot();
   closeModal("modal-patr-item");
   showToast("🗑 Excluido");
   renderPatr();
+}
+// Snapshot automatico de "hoje" sempre que ativos/passivos mudam — no maximo
+// 1 ponto por dia: se ja existir um snapshot com a data de hoje (manual ou
+// automatico), so atualiza o valor dele (preserva a nota, se houver);
+// senao cria um novo. Deixa o stepper do grafico apontando pro ponto de hoje.
+function patrAutoSnapshot(){
+  var hj=new Date();
+  var hojeStr=hj.getFullYear()+"-"+String(hj.getMonth()+1).padStart(2,"0")+"-"+String(hj.getDate()).padStart(2,"0");
+  if(!patrimonio.historico)patrimonio.historico={};
+  var existingId=null;
+  Object.keys(patrimonio.historico).forEach(function(hid){
+    if(patrimonio.historico[hid].data===hojeStr)existingId=hid;
+  });
+  var id=existingId||("auto"+Date.now());
+  var h={id:id,data:hojeStr,valorLiquido:patrLiquido(),obs:(existingId&&patrimonio.historico[existingId].obs)||""};
+  patrimonio.historico[id]=h;
+  if(_db)_db.ref("patrimonio/historico/"+id).set(h).catch(_fbErr);
+  patrHistIdx=-1;
 }
 
 // CRUD: objetivo de patrimonio liquido
@@ -2926,6 +3016,7 @@ initFirebase();
     <div class="fg"><label class="flbl">Valor (R$)</label><input class="finp" type="text" inputmode="decimal" placeholder="0,00" id="pi-valor" autocomplete="off"></div>
     <div class="fg" id="pi-data-wrap"><label class="flbl">Data</label><input class="finp" type="date" id="pi-data"></div>
     <div class="fg"><label class="flbl">Observacao (opcional)</label><input class="finp" type="text" placeholder="Ex: cancelado, em analise..." id="pi-obs"></div>
+    <div class="fg" id="pi-fin-wrap" style="display:none"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pi-fin" style="width:18px;height:18px;accent-color:var(--accent)"><span style="font-size:13px;font-weight:600">&#127968; E o financiamento imobiliario?</span></label><div style="font-size:10px;color:var(--muted);margin-top:4px;margin-left:26px">Usado no indicador "Divida imobiliaria / patrimonio"</div></div>
     <button class="btn-p" onclick="savePatrItem()">Salvar</button>
     <button class="btn-p" id="patr-item-del-btn" onclick="delPatrItemFromModal()" style="display:none;margin-top:8px;background:none!important;color:var(--red)!important;-webkit-text-fill-color:var(--red)!important;border:1px solid var(--red)">Excluir</button>
   </div>
