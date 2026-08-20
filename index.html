@@ -414,6 +414,11 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
   </div>
   <div id="orc-total-summary"></div>
   <div id="orc-analise"></div>
+  <div class="slbl">&#129302; Insights de orcamento (IA)</div>
+  <div class="card" id="ia-orc-card">
+    <button class="btn-sec" style="margin-top:0" id="ia-orc-btn" onclick="gerarInsightsOrcamento()">Analisar meu orcamento</button>
+    <div id="ia-orc-out" style="display:none;font-size:13px;line-height:1.6;color:var(--text)!important;margin-top:12px;white-space:pre-wrap"></div>
+  </div>
   <div id="orc-alerts"></div>
   <div class="slbl" style="margin-bottom:14px">Gasto vs Orcamento</div>
   <div id="chart-area"></div>
@@ -1630,6 +1635,48 @@ function aplicarTodasSugestoes(){
   fbSaveOrc();
   showToast("✅ "+ks.length+" orçamentos ajustados ao gasto real");
   renderOrc();
+}
+
+// INSIGHTS DE ORCAMENTO (IA) — ritmo, o que impacta o estouro, onde cortar
+function buildInsightsOrcamentoPrompt(){
+  const lm=getLancPeriodo();
+  const gastos={};lm.filter(l=>l.tipo==="despesa").forEach(l=>{gastos[l.cat]=(gastos[l.cat]||0)+l.valor;});
+  const totalOrc=Object.values(orcamentos).reduce((a,b)=>a+b,0);
+  const totalGasto=Object.values(gastos).reduce((a,b)=>a+b,0);
+  const gd=computeGastoDia();
+  const d=_analiseData(),meses=d.meses,gm=d.gm,n=meses.length;
+  const catLines=CATS.filter(c=>orcamentos[c.label]).map(c=>{
+    const orc=orcamentos[c.label],gasto=gastos[c.label]||0;
+    const vals=n>=2?meses.map(mo=>(gm[mo.k]&&gm[mo.k][c.label])||0):[];
+    const med=vals.length?_mediana(vals):null;
+    const overCount=vals.length?vals.filter(v=>v>orc).length:null;
+    let line="- "+c.label+": orcado R$"+orc.toFixed(2)+", gasto no periodo R$"+gasto.toFixed(2)+" ("+(orc>0?Math.round(gasto/orc*100):0)+"% do orcado)";
+    if(med!==null)line+=", mediana dos ultimos "+n+" meses R$"+med.toFixed(2)+", estourou em "+overCount+" desses "+n+" meses";
+    return line;
+  }).join("\n");
+  let prompt="Voce e um assistente financeiro pessoal, direto e pratico, respondendo em portugues do Brasil.\n"
+    +"Baseado nos dados abaixo do periodo '"+getPeriodoLabel()+"', escreva uma analise curta (4 a 6 frases corridas, sem markdown, sem titulos, sem listas) respondendo: o que mais esta impactando o estouro do orcamento (se houver), se e algo pontual ou recorrente nos ultimos meses, e ate 2 sugestoes concretas e realistas de onde cortar gasto — priorizando categorias com estouro recorrente ou bem acima do gasto tipico. Seja especifico usando os numeros abaixo, nao invente dados que nao foram informados.\n\n"
+    +"Total orcado: R$"+totalOrc.toFixed(2)+" · Total gasto no periodo: R$"+totalGasto.toFixed(2)+"\n";
+  if(gd)prompt+="Ritmo diario: mediana real R$"+gd.mediana.toFixed(2)+"/dia vs. equivalente orcado R$"+gd.media.toFixed(2)+"/dia ("+gd.pct+"% do ritmo ideal)\n";
+  prompt+="\nPor categoria:\n"+(catLines||"(nenhum orcamento definido)");
+  return prompt;
+}
+async function gerarInsightsOrcamento(){
+  const btn=document.getElementById("ia-orc-btn");
+  const out=document.getElementById("ia-orc-out");
+  const cfg=getIAConfig();
+  if(!cfg.key){showToast("Configure sua chave de IA primeiro","err");openIAConfig();return;}
+  btn.disabled=true;btn.textContent="Analisando...";
+  out.style.display="none";
+  try{
+    const texto=await callGemini(buildInsightsOrcamentoPrompt());
+    out.textContent=texto;
+    out.style.display="block";
+  }catch(err){
+    showToast("Erro na IA: "+(err.message||"falha desconhecida"),"err");
+  }finally{
+    btn.disabled=false;btn.textContent="Analisar meu orcamento";
+  }
 }
 
 // RENDER METAS
