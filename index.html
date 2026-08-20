@@ -129,6 +129,9 @@ body{font-family:'Calibri','Trebuchet MS','Gill Sans',sans-serif;background:var(
 #s-milhas .break-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--gold-deep),var(--gold))}
 #s-milhas .break-labels{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-faint);margin-top:6px}
 #s-milhas .list-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+#s-milhas .ml-info-btn{cursor:pointer;color:var(--text-faint);font-size:12px;margin-left:5px}
+#s-milhas .ml-tip{display:none;background:var(--navy-deep);border-radius:10px;padding:10px 12px;font-size:11px;line-height:1.7;color:var(--text-dim);margin-top:12px}
+#s-milhas .ml-tip b{color:var(--text)}
 #s-milhas .ml-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
 #s-milhas .ml-item:last-child{border-bottom:none}
 #s-milhas .ml-item .left{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -711,7 +714,7 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
 
   <div class="section">
     <div class="hero">
-      <div class="hero-label">&#9992;&#65039; Saldo de milhas</div>
+      <div class="hero-label">&#9992;&#65039; Saldo de milhas <span class="ml-info-btn" onclick="toggleMlTip('ml-saldo-tip')">&#9432;</span></div>
       <div class="hero-value" id="ml-saldo-val">0<span class="unit">pts</span></div>
       <div class="hero-sub" id="ml-saldo-sub">...</div>
       <div class="hero-range">
@@ -719,11 +722,12 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
         <div class="rg mid"><span class="lbl">Medio</span><span class="val" id="ml-med-val">R$ 0</span></div>
         <div class="rg"><span class="lbl" id="ml-max-lbl">Max</span><span class="val" id="ml-max-val">R$ 0</span></div>
       </div>
+      <div class="ml-tip" id="ml-saldo-tip"></div>
     </div>
   </div>
 
   <div class="section">
-    <div class="section-title">Fatura do ciclo &times; pontos gerados</div>
+    <div class="section-title">Fatura do ciclo &times; pontos gerados <span class="ml-info-btn" onclick="toggleMlTip('ml-fatura-tip')">&#9432;</span></div>
     <div class="cross-card">
       <div class="cross-flow">
         <div class="cross-box imported"><div class="cb-lbl">&#128193; Fatura</div><div class="cb-val" id="ml-fatura-val">R$ 0,00</div></div>
@@ -732,21 +736,32 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
       </div>
       <div class="cross-formula" id="ml-formula">...</div>
       <div class="import-pill">&#128193; Somado automaticamente dos lancamentos no Cartao deste ciclo</div>
+      <div class="ml-tip" id="ml-fatura-tip"></div>
     </div>
   </div>
 
   <div class="section">
-    <div class="section-title">Retorno efetivo do ciclo</div>
+    <div class="section-title">Retorno efetivo do ciclo <span class="ml-info-btn" onclick="toggleMlTip('ml-retorno-tip')">&#9432;</span></div>
     <div class="yield-card">
       <div class="yield-top"><span class="big" id="ml-retorno-pct">0%</span><span class="goal">equivalente a cashback</span></div>
       <div class="yield-track"><div class="yield-fill" id="ml-yield-fill" style="width:0%"></div><div class="yield-marker" style="left:66.7%"></div></div>
       <div class="yield-legend"><span>0%</span><span>meta 2,0% &uarr;</span><span>3%</span></div>
       <div class="yield-note" id="ml-yield-note">...</div>
+      <div class="ml-tip" id="ml-retorno-tip"></div>
     </div>
   </div>
 
   <div class="section">
-    <div class="section-title">Anuidade do cartao <span class="ml-tag" id="ml-anuidade-lbl">R$ 0,00/mes</span></div>
+    <div class="section-title">Ritmo de gasto no ciclo <span class="ml-info-btn" onclick="toggleMlTip('ml-ritmo-tip')">&#9432;</span></div>
+    <div class="yield-card">
+      <div class="yield-top"><span class="big" id="ml-ritmo-val">R$ 0/dia</span><span class="goal" id="ml-ritmo-meta">meta R$ 0/dia</span></div>
+      <div class="yield-track"><div class="yield-fill" id="ml-ritmo-fill" style="width:0%"></div></div>
+      <div class="ml-tip" id="ml-ritmo-tip"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Anuidade do cartao <span class="ml-tag" id="ml-anuidade-lbl">R$ 0,00/mes</span> <span class="ml-info-btn" onclick="toggleMlTip('ml-break-tip')">&#9432;</span></div>
     <div class="break-card">
       <div class="break-status">
         <div class="break-badge" id="ml-break-badge">&#9989;</div>
@@ -756,6 +771,7 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
         <div class="break-track"><div class="break-fill" id="ml-break-fill" style="width:0%"></div></div>
         <div class="break-labels"><span>R$ 0</span><span id="ml-break-mid">Breakeven: R$ 0</span><span id="ml-break-fatura">Fatura: R$ 0</span></div>
       </div>
+      <div class="ml-tip" id="ml-break-tip"></div>
     </div>
   </div>
 
@@ -1356,6 +1372,28 @@ function renderCCCard(){
 
 // EFICIENCIA DE MILHAS
 function _milhasFaturaCiclo(offset){return lancDoCiclo(offset).filter(l=>l.pgto==="Cartão"&&l.tipo==="despesa").reduce((a,b)=>a+b.valor,0);}
+function toggleMlTip(id){const el=document.getElementById(id);if(el)el.style.display=el.style.display==="block"?"none":"block";}
+function computeGastoDiaCartao(breakevenFatura){
+  const g=getCicloAtual(0);
+  const start=g.inicioDate,end=g.fechaDate;
+  const hojeZero=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate());
+  const elapsedEnd=hojeZero<start?start:(hojeZero<end?hojeZero:end);
+  const totalDiasCiclo=Math.max(1,Math.round((end-start)/86400000)+1);
+  const iniT=start.getTime(),fimT=elapsedEnd.getTime();
+  const porDia={};
+  lancamentos.forEach(l=>{
+    if(l.tipo!=="despesa"||l.pgto!=="Cartão"||!l.data)return;
+    const t=new Date(l.data+"T00:00:00").getTime();
+    if(t<iniT||t>fimT)return;
+    porDia[t]=(porDia[t]||0)+l.valor;
+  });
+  const serie=[];
+  for(let d=new Date(start);d<=elapsedEnd;d.setDate(d.getDate()+1))serie.push(porDia[d.getTime()]||0);
+  const mediana=_mediana(serie);
+  const media=breakevenFatura/totalDiasCiclo;
+  const pct=media>0?mediana/media*100:0;
+  return{mediana,media,dias:serie.length,totalDiasCiclo,pct:Math.round(pct),cls:pct>=100?"r":pct>=80?"y":"g"};
+}
 function renderMilhas(){
   const fatura=_milhasFaturaCiclo(0);
   const pontos=Math.round(fatura*milhas.ptsPorReal);
@@ -1376,11 +1414,18 @@ function renderMilhas(){
   document.getElementById("ml-min-val").textContent=fmt0(saldoMin);
   document.getElementById("ml-med-val").textContent=fmt0(saldoMed);
   document.getElementById("ml-max-val").textContent=fmt0(saldoMax);
+  document.getElementById("ml-saldo-tip").innerHTML="<b>"+Math.round(milhas.saldo).toLocaleString("pt-BR")+" pts</b> x valor do ponto no mercado secundario:<br>"
+    +"Minimo: x R$"+milhas.valorMin.toFixed(3).replace(".",",")+" = "+fmt0(saldoMin)+"<br>"
+    +"Medio: x R$"+valMedioPt.toFixed(3).replace(".",",")+" = "+fmt0(saldoMed)+"<br>"
+    +"Maximo: x R$"+milhas.valorMax.toFixed(3).replace(".",",")+" = "+fmt0(saldoMax)+"<br>"
+    +"Saldo e valores do ponto sao os que voce configurou em Parametros, abaixo.";
 
   // Fatura x pontos gerados
   document.getElementById("ml-fatura-val").textContent=fmt(fatura);
   document.getElementById("ml-pontos-val").textContent="+"+pontos.toLocaleString("pt-BR")+" pts";
   document.getElementById("ml-formula").textContent=fmt(fatura)+" x "+milhas.ptsPorReal.toFixed(2).replace(".",",")+" pt/R$ = "+pontos.toLocaleString("pt-BR")+" pts";
+  document.getElementById("ml-fatura-tip").innerHTML="<b>Fatura</b>: soma de todo lancamento com forma de pagamento \"Cartao\" dentro do ciclo atual — o mesmo total que ja aparece no card \"Fatura do ciclo\" na Inicio.<br>"
+    +"<b>Pontos</b>: fatura x pontos por real configurado em Parametros.";
 
   // Retorno efetivo (escala do gauge: 0 a 3%, meta 2% marcada em 66,7%)
   document.getElementById("ml-retorno-pct").textContent=retornoPct.toFixed(2).replace(".",",")+"%";
@@ -1388,6 +1433,22 @@ function renderMilhas(){
   document.getElementById("ml-yield-note").innerHTML=fatura>0
     ?"Faixa de valor gerado: <b>"+fmt(valGeradoMin)+" a "+fmt(valGeradoMax)+"</b> em milhas, sobre uma fatura de "+fmt(fatura)+"."+(retornoPct<2?" Ainda abaixo da meta de 2,0%.":" Acima da meta de 2,0%! \u{1F389}")
     :"Sem gastos no Cartao neste ciclo ainda.";
+  document.getElementById("ml-retorno-tip").innerHTML=fatura>0
+    ?"Valor gerado (pontos x valor medio do ponto) dividido pela fatura:<br>"+fmt(valGeradoMed)+" / "+fmt(fatura)+" = <b>"+retornoPct.toFixed(2).replace(".",",")+"%</b><br>A faixa min-max usa o valor minimo e maximo do ponto, pro mesmo numero de pontos."
+    :"Sem fatura no ciclo ainda, retorno fica em 0%.";
+
+  // Ritmo de gasto no ciclo (mediana real no Cartao vs. media necessaria pra atingir o breakeven ate o fim do ciclo)
+  const ritmo=computeGastoDiaCartao(breakevenFatura);
+  const ritmoCor=ritmo.cls==="r"?"var(--red)":ritmo.cls==="y"?"var(--amber)":"var(--green)";
+  const ritmoVal=document.getElementById("ml-ritmo-val");
+  ritmoVal.textContent=fmt(ritmo.mediana)+"/dia";
+  ritmoVal.style.color=ritmoCor;
+  document.getElementById("ml-ritmo-meta").textContent="meta "+fmt(ritmo.media)+"/dia";
+  document.getElementById("ml-ritmo-fill").style.width=Math.min(100,ritmo.pct)+"%";
+  document.getElementById("ml-ritmo-fill").style.background=ritmoCor;
+  document.getElementById("ml-ritmo-tip").innerHTML="Mediana do gasto diario real no Cartao neste ciclo (ultimos "+ritmo.dias+" dia"+(ritmo.dias===1?"":"s")+") comparada com o ritmo necessario pra fatura do ciclo atingir o breakeven da anuidade:<br>"
+    +"Meta = breakeven / dias do ciclo = "+fmt(breakevenFatura)+" / "+ritmo.totalDiasCiclo+" = <b>"+fmt(ritmo.media)+"/dia</b><br>"
+    +"Ritmo atual: <b>"+ritmo.pct+"%</b> dessa meta.";
 
   // Breakeven da anuidade
   document.getElementById("ml-anuidade-lbl").textContent=fmt(milhas.anuidade)+"/mes";
@@ -1402,6 +1463,9 @@ function renderMilhas(){
   document.getElementById("ml-break-fill").style.width=(breakevenFatura>0?Math.min(100,fatura/breakevenFatura*100):(fatura>0?100:0))+"%";
   document.getElementById("ml-break-mid").textContent="Breakeven: "+fmt(breakevenFatura);
   document.getElementById("ml-break-fatura").textContent="Fatura: "+fmt(fatura);
+  document.getElementById("ml-break-tip").innerHTML="Breakeven = anuidade dividida pelo retorno por real gasto:<br>"
+    +fmt(milhas.anuidade)+" / ("+milhas.ptsPorReal.toFixed(2).replace(".",",")+" x R$"+valMedioPt.toFixed(3).replace(".",",")+") = <b>"+fmt(breakevenFatura)+"</b><br>"
+    +"E a fatura minima nesse ritmo pra as milhas geradas cobrirem a anuidade. Nao depende do ciclo — so muda se voce editar os parametros.";
 
   // Ultimos ciclos fechados com gasto no Cartao
   // Nota: retorno % usa a taxa/valor ATUAIS aplicados retroativamente (o app nao guarda taxas
