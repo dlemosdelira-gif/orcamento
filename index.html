@@ -297,6 +297,7 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
   <div style="display:flex;align-items:center;gap:10px">
     <span id="sync-status" style="color:#60a5fa">&#128260; Iniciando...</span>
     <span id="hide-btn" onclick="toggleHide()" style="cursor:pointer;font-size:15px;padding:2px 3px;line-height:1">🙈</span>
+    <span id="ia-btn" onclick="openIAConfig()" style="cursor:pointer;font-size:15px;padding:2px 3px;line-height:1">⚙️</span>
   </div>
 </div>
 <div style="height:30px"></div>
@@ -350,6 +351,11 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
     <div class="qbtn" onclick="openLancModal('receita')"><span class="qi">&#128176;</span><span>Receita</span></div>
     <div class="qbtn" onclick="openMetaModal()"><span class="qi">&#127919;</span><span>Meta</span></div>
     <div class="qbtn" onclick="exportCSV()"><span class="qi">&#128228;</span><span>Exportar</span></div>
+  </div>
+  <div class="slbl">&#129302; Resumo do mes (IA)</div>
+  <div class="card" id="ia-resumo-card">
+    <button class="btn-sec" style="margin-top:0" id="ia-resumo-btn" onclick="gerarResumoMensal()">Analisar meu mes</button>
+    <div id="ia-resumo-out" style="display:none;font-size:13px;line-height:1.6;color:var(--text)!important;margin-top:12px;white-space:pre-wrap"></div>
   </div>
   <div class="slbl">Ultimos lancamentos</div>
   <div class="card" id="h-recentes"></div>
@@ -678,6 +684,20 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
     <div id="orc-edit-list"></div>
     <button class="btn-p" onclick="saveOrc()">Salvar orcamentos</button>
     <button class="btn-sec" onclick="closeModal('modal-orc')">Cancelar</button>
+  </div>
+</div>
+
+<div class="overlay" id="modal-ia" onclick="if(event.target===this)closeModal('modal-ia')">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="sheet-title">&#9881;&#65039; Configuracao de IA</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5">Adicione uma chave gratuita do Gemini para habilitar o resumo mensal e outras analises com IA. A chave fica salva somente neste navegador — nunca e sincronizada nem enviada ao Firebase. <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--accent)">Pegar chave gratis &#8599;</a></p>
+    <div class="fg"><label class="flbl">Chave da API (Gemini)</label><input class="finp" type="password" placeholder="AIza..." id="ia-key-inp" autocomplete="off"></div>
+    <div class="fg"><label class="flbl">Modelo</label><input class="finp" type="text" placeholder="gemini-3.6-flash" id="ia-model-inp" autocomplete="off"></div>
+    <div id="ia-test-msg" style="font-size:12px;margin-bottom:10px;display:none"></div>
+    <button class="btn-p" onclick="saveIAConfig()">Salvar</button>
+    <button class="btn-sec" onclick="testIAConfig()">Testar conexao</button>
+    <button class="btn-sec" style="color:var(--red)!important;-webkit-text-fill-color:var(--red)!important" onclick="removeIAConfig()">Remover chave</button>
   </div>
 </div>
 
@@ -1044,7 +1064,7 @@ function openEditOrc(){
   document.getElementById("modal-orc").classList.add("open");
 }
 function closeModal(id){document.getElementById(id).classList.remove("open");}
-["modal-lanc","modal-meta","modal-orc","modal-lote","modal-import"].forEach(id=>{var el=document.getElementById(id);if(el)el.addEventListener("click",function(e){if(e.target.id===id)closeModal(id);});});
+["modal-lanc","modal-meta","modal-orc","modal-lote","modal-import","modal-ia"].forEach(id=>{var el=document.getElementById(id);if(el)el.addEventListener("click",function(e){if(e.target.id===id)closeModal(id);});});
 
 // TIPO/CAT
 function setTipo(t){
@@ -1222,6 +1242,108 @@ function toggleGastoDiaTip(el,mediana,media,dias,pct){
     +"🎯 Orcado: <strong>"+fmtSH(media)+"</strong>/dia (media do orcamento mensal)<br>"
     +"<span style='color:"+(pct>=100?"#f87171":pct>=80?"#fbbf24":"#34d399")+"'>Ritmo: "+pct+"% do orcamento diario</span>";
   tip.style.display="block";
+}
+
+// IA (GEMINI) — chave e modelo ficam so no localStorage, nunca vao pro Firebase
+function getIAConfig(){
+  return{key:localStorage.getItem("iaGeminiKey")||"",model:localStorage.getItem("iaGeminiModel")||"gemini-3.6-flash"};
+}
+function openIAConfig(){
+  const cfg=getIAConfig();
+  document.getElementById("ia-key-inp").value=cfg.key;
+  document.getElementById("ia-model-inp").value=cfg.model;
+  const msg=document.getElementById("ia-test-msg");msg.style.display="none";msg.textContent="";
+  document.getElementById("modal-ia").classList.add("open");
+}
+function saveIAConfig(){
+  const key=document.getElementById("ia-key-inp").value.trim();
+  const model=document.getElementById("ia-model-inp").value.trim()||"gemini-3.6-flash";
+  if(!key){showToast("Informe uma chave, ou use Remover chave para limpar","err");return;}
+  localStorage.setItem("iaGeminiKey",key);
+  localStorage.setItem("iaGeminiModel",model);
+  closeModal("modal-ia");
+  showToast("⚙️ Configuracao de IA salva!");
+}
+function removeIAConfig(){
+  localStorage.removeItem("iaGeminiKey");localStorage.removeItem("iaGeminiModel");
+  document.getElementById("ia-key-inp").value="";document.getElementById("ia-model-inp").value="";
+  showToast("Chave de IA removida");
+}
+async function testIAConfig(){
+  const key=document.getElementById("ia-key-inp").value.trim();
+  const model=document.getElementById("ia-model-inp").value.trim()||"gemini-3.6-flash";
+  const msg=document.getElementById("ia-test-msg");
+  if(!key){msg.style.display="block";msg.style.color="var(--red)";msg.textContent="Informe uma chave antes de testar.";return;}
+  msg.style.display="block";msg.style.color="var(--muted)";msg.textContent="Testando...";
+  try{
+    await callGemini("Responda apenas: ok",{key,model});
+    msg.style.color="var(--green)";msg.textContent="✅ Conexao funcionando!";
+  }catch(err){
+    msg.style.color="var(--red)";msg.textContent="❌ "+(err.message||"Falha na conexao");
+  }
+}
+async function callGemini(promptText,cfgOverride){
+  const cfg=cfgOverride||getIAConfig();
+  if(!cfg.key)throw new Error("Configure sua chave de IA em ⚙️ para usar este recurso.");
+  const model=cfg.model||"gemini-3.6-flash";
+  const url="https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(model)+":generateContent?key="+encodeURIComponent(cfg.key);
+  const res=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:promptText}]}]})});
+  const data=await res.json().catch(()=>null);
+  if(!res.ok){
+    const msg=data&&data.error&&data.error.message?data.error.message:("HTTP "+res.status);
+    throw new Error(msg);
+  }
+  const txt=data&&data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text;
+  if(!txt)throw new Error("Resposta vazia do Gemini.");
+  return txt.trim();
+}
+
+// RESUMO MENSAL (IA)
+function _mesAnteriorInfo(){let m=mesAtual-1,a=anoAtual;if(m<0){m=11;a--;}return{m,a};}
+function _lancDoMesEspecifico(m,a){return lancamentos.filter(l=>{const d=new Date(l.data+"T00:00:00");return d.getMonth()===m&&d.getFullYear()===a;});}
+function buildResumoMensalPrompt(){
+  const lm=lancDoMes();
+  const desp=lm.filter(l=>l.tipo==="despesa");
+  const rec=lm.filter(l=>l.tipo==="receita");
+  const totalDesp=desp.reduce((a,b)=>a+b.valor,0);
+  const totalRec=rec.reduce((a,b)=>a+b.valor,0);
+  const porCat={};
+  desp.forEach(l=>{porCat[l.cat]=(porCat[l.cat]||0)+l.valor;});
+  const catLines=CATS.map(c=>{
+    const g=porCat[c.label]||0,o=orcamentos[c.label]||0;
+    if(!g&&!o)return null;
+    return "- "+c.label+": gasto R$"+g.toFixed(2)+(o?" / orcado R$"+o.toFixed(2):" (sem orcamento definido)");
+  }).filter(Boolean).join("\n");
+  const top5=desp.slice().sort((a,b)=>b.valor-a.valor).slice(0,5)
+    .map(l=>"- "+l.desc+": R$"+l.valor.toFixed(2)+" ("+l.cat+", "+l.data.split("-").reverse().join("/")+")").join("\n");
+  const prev=_mesAnteriorInfo();
+  const despPrev=_lancDoMesEspecifico(prev.m,prev.a).filter(l=>l.tipo==="despesa").reduce((a,b)=>a+b.valor,0);
+  const mesNome=new Date(anoAtual,mesAtual,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+  return "Voce e um assistente financeiro pessoal, direto e amigavel, respondendo em portugues do Brasil.\n"
+    +"Analise o mes de "+mesNome+" desta familia e escreva um resumo curto (4 a 6 frases corridas, sem markdown, sem titulos, sem listas) explicando como foi o mes: se o saldo ficou positivo ou negativo, quais categorias mais pesaram, se alguma categoria estourou o orcamento e por que (cite os maiores lancamentos quando fizer sentido), e como ficou em relacao ao mes anterior. Seja especifico usando os numeros abaixo, nao invente dados que nao foram informados.\n\n"
+    +"Receitas do mes: R$"+totalRec.toFixed(2)+"\n"
+    +"Despesas do mes: R$"+totalDesp.toFixed(2)+"\n"
+    +"Saldo: R$"+(totalRec-totalDesp).toFixed(2)+"\n"
+    +"Despesas do mes anterior (para comparacao): R$"+despPrev.toFixed(2)+"\n\n"
+    +"Gasto por categoria (gasto vs orcado):\n"+(catLines||"(nenhum gasto categorizado)")+"\n\n"
+    +"Maiores lancamentos do mes:\n"+(top5||"(nenhum lancamento)");
+}
+async function gerarResumoMensal(){
+  const btn=document.getElementById("ia-resumo-btn");
+  const out=document.getElementById("ia-resumo-out");
+  const cfg=getIAConfig();
+  if(!cfg.key){showToast("Configure sua chave de IA primeiro","err");openIAConfig();return;}
+  btn.disabled=true;btn.textContent="Analisando...";
+  out.style.display="none";
+  try{
+    const texto=await callGemini(buildResumoMensalPrompt());
+    out.textContent=texto;
+    out.style.display="block";
+  }catch(err){
+    showToast("Erro na IA: "+(err.message||"falha desconhecida"),"err");
+  }finally{
+    btn.disabled=false;btn.textContent="Analisar meu mes";
+  }
 }
 
 // RENDER HOME
