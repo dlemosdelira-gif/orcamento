@@ -2786,9 +2786,14 @@ function renderGInsights(d,td,tr,ts,nm){
 
 // FAB
 function toggleFab(){
-  var opts=document.getElementById("fab-opts"),main=document.getElementById("fab-main"),bd=document.getElementById("fab-backdrop");
-  if(opts.classList.contains("show")){closeFab();}
-  else{opts.classList.add("show");main.classList.add("open");bd.classList.add("show");}
+  var active=document.querySelector(".screen.active");
+  if(active&&(active.id==="s-lanc"||active.id==="s-orc")){
+    var opts=document.getElementById("fab-opts"),main=document.getElementById("fab-main"),bd=document.getElementById("fab-backdrop");
+    if(opts.classList.contains("show")){closeFab();}
+    else{opts.classList.add("show");main.classList.add("open");bd.classList.add("show");}
+  }else{
+    openLancModal("despesa");
+  }
 }
 function closeFab(){
   var opts=document.getElementById("fab-opts"),main=document.getElementById("fab-main"),bd=document.getElementById("fab-backdrop");
