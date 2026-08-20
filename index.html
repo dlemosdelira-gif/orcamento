@@ -297,6 +297,7 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
   <div style="display:flex;align-items:center;gap:10px">
     <span id="sync-status" style="color:#60a5fa">&#128260; Iniciando...</span>
     <span id="hide-btn" onclick="toggleHide()" style="cursor:pointer;font-size:15px;padding:2px 3px;line-height:1">🙈</span>
+    <span id="ia-ask-top-btn" onclick="openIAAsk()" style="cursor:pointer;font-size:15px;padding:2px 3px;line-height:1">💬</span>
     <span id="ia-btn" onclick="openIAConfig()" style="cursor:pointer;font-size:15px;padding:2px 3px;line-height:1">⚙️</span>
   </div>
 </div>
@@ -706,6 +707,21 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
   </div>
 </div>
 
+<div class="overlay" id="modal-ia-ask" onclick="if(event.target===this)closeModal('modal-ia-ask')">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="sheet-title">&#128172; Pergunte sobre seus gastos</div>
+    <div class="fg"><input class="finp" type="text" id="ia-ask-input" placeholder="Ex: quanto gastei com mercado em julho?" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();perguntarSobreGastos();}"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin:-6px 0 16px">
+      <span class="tag" style="cursor:pointer;padding:5px 10px" onclick="_iaAskChip('Quanto gastei esse mes?')">Quanto gastei esse mês?</span>
+      <span class="tag" style="cursor:pointer;padding:5px 10px" onclick="_iaAskChip('Qual categoria mais cresceu esse ano?')">Categoria que mais cresceu</span>
+      <span class="tag" style="cursor:pointer;padding:5px 10px" onclick="_iaAskChip('Quanto gastei com transporte no mes passado?')">Transporte mês passado</span>
+    </div>
+    <button class="btn-p" id="ia-ask-btn" onclick="perguntarSobreGastos()">Perguntar</button>
+    <div id="ia-ask-out" style="display:none;font-size:13px;line-height:1.6;color:var(--text)!important;margin-top:14px;white-space:pre-wrap;background:var(--surface2);border-radius:12px;padding:12px"></div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -1069,7 +1085,7 @@ function openEditOrc(){
   document.getElementById("modal-orc").classList.add("open");
 }
 function closeModal(id){document.getElementById(id).classList.remove("open");}
-["modal-lanc","modal-meta","modal-orc","modal-lote","modal-import","modal-ia"].forEach(id=>{var el=document.getElementById(id);if(el)el.addEventListener("click",function(e){if(e.target.id===id)closeModal(id);});});
+["modal-lanc","modal-meta","modal-orc","modal-lote","modal-import","modal-ia","modal-ia-ask"].forEach(id=>{var el=document.getElementById(id);if(el)el.addEventListener("click",function(e){if(e.target.id===id)closeModal(id);});});
 
 // TIPO/CAT
 function setTipo(t){
@@ -1677,6 +1693,120 @@ async function gerarInsightsOrcamento(){
     showToast("Erro na IA: "+(err.message||"falha desconhecida"),"err");
   }finally{
     btn.disabled=false;btn.textContent="Analisar meu orcamento";
+  }
+}
+
+// PERGUNTE SOBRE SEUS GASTOS (IA) — 1 chamada: agregado mensal completo + pre-filtro local por palavra-chave/categoria/periodo
+const _IA_STOPWORDS=["quanto","quantos","quantas","gastei","gasto","gastos","como","esse","essa","este","esta","isso","ano","anos","mes","meses","qual","quais","quando","onde","tive","teve","tinha","minha","minhas","meu","meus","que","para","pra","por","mais","menos","tudo","total","valor","dinheiro","comparado","comparar","sobre","fiquei","ficou"];
+function _normalizar(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");}
+function _extrairPalavrasChave(pergunta){
+  const norm=_normalizar(pergunta).replace(/[^a-z0-9\s]/g," ");
+  const vistas={};
+  return norm.split(/\s+/).filter(w=>w.length>=4&&_IA_STOPWORDS.indexOf(w)===-1&&!vistas[w]&&(vistas[w]=1));
+}
+function _categoriasMencionadas(pergunta){
+  const norm=_normalizar(pergunta);
+  return CATS.filter(c=>{
+    if(c.label==="Outro")return false;
+    const palavrasLabel=_normalizar(c.label).split(/[^a-z0-9]+/).filter(w=>w.length>=4);
+    return palavrasLabel.length>0&&palavrasLabel.every(w=>new RegExp("\\b"+w+"\\b").test(norm));
+  }).map(c=>c.label);
+}
+const _MESES_NORM=["janeiro","fevereiro","marco","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+function _detectarPeriodoPergunta(pergunta){
+  const norm=_normalizar(pergunta);
+  const agora=new Date();
+  const anoMatch=norm.match(/\b(20\d{2})\b/);
+  const anoDetectado=anoMatch?parseInt(anoMatch[1],10):null;
+  for(let i=0;i<12;i++){
+    if(norm.includes(_MESES_NORM[i])){
+      const ano=anoDetectado||agora.getFullYear();
+      return{ini:new Date(ano,i,1),fim:new Date(ano,i+1,0)};
+    }
+  }
+  if(norm.includes("mes passado")){
+    let mm=agora.getMonth()-1,yy=agora.getFullYear();if(mm<0){mm=11;yy--;}
+    return{ini:new Date(yy,mm,1),fim:new Date(yy,mm+1,0)};
+  }
+  if(norm.includes("ano passado")){
+    const ap=agora.getFullYear()-1;
+    return{ini:new Date(ap,0,1),fim:new Date(ap,11,31)};
+  }
+  if(norm.includes("este ano")||norm.includes("esse ano")){
+    return{ini:new Date(agora.getFullYear(),0,1),fim:new Date(agora.getFullYear(),11,31)};
+  }
+  if(anoDetectado)return{ini:new Date(anoDetectado,0,1),fim:new Date(anoDetectado,11,31)};
+  return null;
+}
+function _filtrarLancamentosPorPergunta(pergunta){
+  const palavras=_extrairPalavrasChave(pergunta);
+  const cats=_categoriasMencionadas(pergunta);
+  const periodo=_detectarPeriodoPergunta(pergunta);
+  const iniT=periodo?periodo.ini.getTime():null,fimT=periodo?periodo.fim.getTime():null;
+  const semFiltroTexto=palavras.length===0&&cats.length===0;
+  const res=lancamentos.filter(l=>{
+    if(!l.data)return false;
+    if(periodo){const t=new Date(l.data+"T00:00:00").getTime();if(t<iniT||t>fimT)return false;}
+    if(semFiltroTexto)return true;
+    const descNorm=_normalizar(l.desc);
+    return palavras.some(p=>descNorm.includes(p))||cats.indexOf(l.cat)!==-1;
+  });
+  res.sort((a,b)=>new Date(b.data)-new Date(a.data));
+  return res;
+}
+function _aggMensalTudo(){
+  const gm={},totRec={};
+  lancamentos.forEach(l=>{
+    if(!l.data)return;
+    const p=String(l.data).split("-"),y=+p[0],m=(+p[1])-1,k=y+"-"+m;
+    if(l.tipo==="despesa")(gm[k]=gm[k]||{})[l.cat]=(gm[k][l.cat]||0)+l.valor;
+    else if(l.tipo==="receita")totRec[k]=(totRec[k]||0)+l.valor;
+  });
+  const uniq={};Object.keys(gm).forEach(k=>uniq[k]=1);Object.keys(totRec).forEach(k=>uniq[k]=1);
+  const ks=Object.keys(uniq).map(k=>{const p=k.split("-");return{k,y:+p[0],m:+p[1]};}).sort((a,b)=>(a.y*12+a.m)-(b.y*12+b.m));
+  return ks.map(o=>{
+    const cats=gm[o.k]||{};
+    const despTot=Object.values(cats).reduce((a,b)=>a+b,0);
+    const catStr=Object.keys(cats).map(c=>c+" R$"+cats[c].toFixed(2)).join(", ");
+    return MESES[o.m]+"/"+o.y+" — receitas R$"+(totRec[o.k]||0).toFixed(2)+", despesas R$"+despTot.toFixed(2)+(catStr?" ("+catStr+")":"");
+  }).join("\n");
+}
+function buildPerguntaPrompt(pergunta){
+  const encontrados=_filtrarLancamentosPorPergunta(pergunta);
+  const totalDesp=encontrados.filter(l=>l.tipo==="despesa").reduce((a,b)=>a+b.valor,0);
+  const totalRec=encontrados.filter(l=>l.tipo==="receita").reduce((a,b)=>a+b.valor,0);
+  const amostra=encontrados.slice(0,25).map(l=>"- "+l.data.split("-").reverse().join("/")+" · "+l.desc+" · "+(l.tipo==="despesa"?"-":"+")+"R$"+l.valor.toFixed(2)+(l.cat?" ("+l.cat+")":"")).join("\n");
+  const agg=_aggMensalTudo();
+  return "Voce e um assistente financeiro pessoal respondendo em portugues do Brasil, direto e especifico.\n"
+    +"Responda a pergunta do usuario usando SOMENTE os dados abaixo. Se os dados nao permitirem responder com certeza, diga isso claramente em vez de inventar. Resposta curta (2 a 4 frases corridas), sem markdown, sem listas.\n\n"
+    +"PERGUNTA: "+pergunta+"\n\n"
+    +"Resumo mensal (todos os meses com dados):\n"+(agg||"(nenhum dado)")+"\n\n"
+    +"Lancamentos relacionados a pergunta encontrados: "+encontrados.length+" (total despesas: R$"+totalDesp.toFixed(2)+", total receitas: R$"+totalRec.toFixed(2)+")\n"
+    +(amostra?"Amostra desses lancamentos (mais recentes primeiro, ate 25):\n"+amostra:"Nenhum lancamento especifico bateu com os termos da pergunta — considere so o resumo mensal acima.");
+}
+function _iaAskChip(txt){document.getElementById("ia-ask-input").value=txt;perguntarSobreGastos();}
+function openIAAsk(){
+  document.getElementById("modal-ia-ask").classList.add("open");
+  setTimeout(()=>{const i=document.getElementById("ia-ask-input");if(i)i.focus();},50);
+}
+async function perguntarSobreGastos(){
+  const input=document.getElementById("ia-ask-input");
+  const pergunta=input.value.trim();
+  const out=document.getElementById("ia-ask-out");
+  const btn=document.getElementById("ia-ask-btn");
+  if(!pergunta){showToast("Digite uma pergunta","err");return;}
+  const cfg=getIAConfig();
+  if(!cfg.key){showToast("Configure sua chave de IA primeiro","err");openIAConfig();return;}
+  btn.disabled=true;btn.textContent="Perguntando...";
+  out.style.display="none";
+  try{
+    const texto=await callGemini(buildPerguntaPrompt(pergunta));
+    out.textContent=texto;
+    out.style.display="block";
+  }catch(err){
+    showToast("Erro na IA: "+(err.message||"falha desconhecida"),"err");
+  }finally{
+    btn.disabled=false;btn.textContent="Perguntar";
   }
 }
 
