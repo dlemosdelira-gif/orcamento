@@ -432,12 +432,6 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
       </div>
     </div>
   </div>
-  <div class="quick">
-    <div class="qbtn" onclick="openLancModal('despesa')"><span class="qi">💸</span><span>Despesa</span></div>
-    <div class="qbtn" onclick="openLancModal('receita')"><span class="qi">&#128176;</span><span>Receita</span></div>
-    <div class="qbtn" onclick="openMetaModal()"><span class="qi">&#127919;</span><span>Meta</span></div>
-    <div class="qbtn" onclick="exportCSV()"><span class="qi">&#128228;</span><span>Exportar</span></div>
-  </div>
   <div class="slbl">&#129302; Resumo do mes (IA)</div>
   <div class="card" id="ia-resumo-card">
     <button class="btn-sec" style="margin-top:0" id="ia-resumo-btn" onclick="gerarResumoMensal()">Analisar meu mes</button>
@@ -2792,14 +2786,9 @@ function renderGInsights(d,td,tr,ts,nm){
 
 // FAB
 function toggleFab(){
-  var active=document.querySelector(".screen.active");
-  if(active&&active.id==="s-lanc"){
-    var opts=document.getElementById("fab-opts"),main=document.getElementById("fab-main"),bd=document.getElementById("fab-backdrop");
-    if(opts.classList.contains("show")){closeFab();}
-    else{opts.classList.add("show");main.classList.add("open");bd.classList.add("show");}
-  }else{
-    openLancModal("despesa");
-  }
+  var opts=document.getElementById("fab-opts"),main=document.getElementById("fab-main"),bd=document.getElementById("fab-backdrop");
+  if(opts.classList.contains("show")){closeFab();}
+  else{opts.classList.add("show");main.classList.add("open");bd.classList.add("show");}
 }
 function closeFab(){
   var opts=document.getElementById("fab-opts"),main=document.getElementById("fab-main"),bd=document.getElementById("fab-backdrop");
@@ -3743,6 +3732,14 @@ initFirebase();
 <div class="fab-backdrop" id="fab-backdrop" onclick="closeFab()"></div>
 <div class="fab" id="fab">
   <div class="fab-opts" id="fab-opts">
+    <div class="fab-opt" onclick="closeFab();exportCSV()">
+      <span class="fab-opt-lbl">Exportar</span>
+      <button class="fab-opt-btn" style="background:#14b8a6;color:#fff">&#128228;</button>
+    </div>
+    <div class="fab-opt" onclick="closeFab();openMetaModal()">
+      <span class="fab-opt-lbl">Meta</span>
+      <button class="fab-opt-btn" style="background:var(--yellow);color:#fff">&#127919;</button>
+    </div>
     <div class="fab-opt" onclick="closeFab();openImportModal()">
       <span class="fab-opt-lbl">Importar Extrato</span>
       <button class="fab-opt-btn" style="background:#60a5fa;color:#fff">&#128194;</button>
