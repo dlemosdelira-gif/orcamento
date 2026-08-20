@@ -414,7 +414,10 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
     <div class="card-cc">
       <div class="cc-row1">
         <div class="cc-title">&#128179; Fatura do ciclo</div>
-        <div class="cc-chip" id="cc-status-chip">...</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <div class="cc-chip" id="cc-status-chip">...</div>
+          <div class="cc-chip" onclick="abrirMilhas()" style="cursor:pointer;background:#fbbf2418;border-color:#fbbf2444;color:#fbbf24">&#9992;&#65039; Milhas</div>
+        </div>
       </div>
       <div class="cc-fatura-lbl">Total da fatura</div>
       <div class="cc-fatura-val" id="cc-fatura-val">R$ 0,00</div>
@@ -426,9 +429,6 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
       <div class="cc-prog-wrap">
         <div class="cc-prog-lbl"><span>Progresso do ciclo</span><span id="cc-prog-pct">0%</span></div>
         <div class="cc-prog-bg"><div class="cc-prog-fill" id="cc-prog-fill" style="width:0%"></div></div>
-      </div>
-      <div style="margin-top:12px;display:flex;justify-content:flex-end">
-        <div class="cc-chip" onclick="abrirMilhas()" style="cursor:pointer;background:#fbbf2418;border-color:#fbbf2444;color:#fbbf24">&#9992;&#65039; Milhas</div>
       </div>
     </div>
   </div>
