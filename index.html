@@ -69,6 +69,85 @@ body{font-family:'Calibri','Trebuchet MS','Gill Sans',sans-serif;background:var(
 .cc-prog-lbl{display:flex;justify-content:space-between;font-size:10px;color:#93c5fd;margin-bottom:5px}
 .cc-prog-bg{height:6px;background:#ffffff15;border-radius:99px;overflow:hidden}
 .cc-prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#60a5fa,#818cf8);transition:width .6s}
+
+/* EFICIENCIA DE MILHAS — paleta e classes escopadas em #s-milhas, nao vazam pro resto do app */
+#s-milhas{
+  --navy-deep:#12102B;--indigo-1:#1E1B4B;--indigo-2:#4C1D95;--gold:#E9C46A;--gold-deep:#C9962F;
+  --card:#242154;--line:rgba(255,255,255,0.08);
+  --text:#F2F1FA;--text-dim:#B9B4E0;--text-faint:#8983B8;
+  --green:#5FD3A0;--red:#F0708A;--amber:#F0C05A;--blue:#7DB6F0;--radius:18px;
+  padding:0!important;
+  background:radial-gradient(120% 60% at 50% -10%,rgba(233,196,106,.10),transparent 60%),linear-gradient(180deg,var(--navy-deep) 0%,var(--indigo-1) 45%,#17143A 100%)!important;
+}
+#s-milhas .topbar{padding:22px 18px 6px;display:flex;align-items:center;justify-content:space-between}
+#s-milhas .topbar h1{margin:0;font-size:20px;font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:8px;color:var(--text)}
+#s-milhas .back,#s-milhas .gear{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--text-dim);cursor:pointer}
+#s-milhas .section{padding:0 18px;margin-top:20px}
+#s-milhas .section-title{font-size:12.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--text-faint);font-weight:700;margin:0 0 10px 2px;display:flex;align-items:center;justify-content:space-between}
+#s-milhas .section-title .ml-tag{text-transform:none;letter-spacing:0;font-size:11.5px;color:var(--text-dim);font-weight:600}
+#s-milhas .hero{background:linear-gradient(155deg,var(--indigo-2) 0%,#331769 55%,var(--indigo-1) 100%);border-radius:22px;padding:20px 20px 18px;position:relative;overflow:hidden;box-shadow:0 12px 30px -10px rgba(76,29,149,.55);border:1px solid rgba(255,255,255,.06)}
+#s-milhas .hero::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(233,196,106,.20),transparent 70%)}
+#s-milhas .hero-label{font-size:12.5px;color:var(--text-dim);font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+#s-milhas .hero-value{font-size:30px;font-weight:800;letter-spacing:-.3px;color:var(--text)}
+#s-milhas .hero-value .unit{font-size:14px;font-weight:700;color:var(--gold);margin-left:4px}
+#s-milhas .hero-sub{font-size:12px;color:var(--text-dim);margin-top:4px}
+#s-milhas .hero-sub b{color:var(--text);font-weight:700}
+#s-milhas .hero-range{display:flex;justify-content:space-between;margin-top:14px;background:rgba(255,255,255,.06);border-radius:12px;padding:10px 12px}
+#s-milhas .hero-range .rg{display:flex;flex-direction:column;gap:2px}
+#s-milhas .hero-range .rg .lbl{font-size:10.5px;color:var(--text-faint);font-weight:600}
+#s-milhas .hero-range .rg .val{font-size:14px;font-weight:800;color:var(--text)}
+#s-milhas .hero-range .rg.mid .val{color:var(--gold)}
+#s-milhas .cross-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 16px 14px}
+#s-milhas .cross-flow{display:flex;align-items:center;gap:10px}
+#s-milhas .cross-box{flex:1;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:12px;min-width:0}
+#s-milhas .cross-box .cb-lbl{font-size:10.5px;color:var(--text-faint);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+#s-milhas .cross-box .cb-val{font-size:16px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#s-milhas .cross-box.imported{border-color:rgba(125,182,240,.35);background:rgba(125,182,240,.06)}
+#s-milhas .cross-box.imported .cb-lbl{color:var(--blue)}
+#s-milhas .cross-arrow{font-size:16px;color:var(--text-faint);flex-shrink:0}
+#s-milhas .cross-box.result{border-color:rgba(233,196,106,.4);background:rgba(233,196,106,.07)}
+#s-milhas .cross-box.result .cb-lbl{color:var(--gold)}
+#s-milhas .cross-formula{margin-top:12px;font-size:11px;color:var(--text-faint);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:rgba(255,255,255,.03);border-radius:10px;padding:8px 10px}
+#s-milhas .import-pill{display:inline-flex;align-items:center;gap:5px;margin-top:12px;font-size:11px;font-weight:700;color:var(--blue);background:rgba(125,182,240,.12);padding:5px 10px;border-radius:999px}
+#s-milhas .yield-card,#s-milhas .break-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+#s-milhas .yield-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+#s-milhas .yield-top .big{font-size:24px;font-weight:800;color:var(--green)}
+#s-milhas .yield-top .goal{font-size:11px;color:var(--text-faint);font-weight:600}
+#s-milhas .yield-track{height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;position:relative}
+#s-milhas .yield-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#3FBE8C,var(--green))}
+#s-milhas .yield-marker{position:absolute;top:-4px;width:2px;height:18px;background:var(--text-dim)}
+#s-milhas .yield-legend{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-faint);margin-top:6px}
+#s-milhas .yield-note{font-size:11.5px;color:var(--text-dim);margin-top:12px;line-height:1.5;padding-top:12px;border-top:1px solid var(--line)}
+#s-milhas .yield-note b{color:var(--text)}
+#s-milhas .break-status{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+#s-milhas .break-badge{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;background:rgba(95,211,160,.15)}
+#s-milhas .break-badge.warn{background:rgba(240,192,90,.15)}
+#s-milhas .break-status .bt{font-size:14px;font-weight:800;color:var(--green)}
+#s-milhas .break-status .bt.warn{color:var(--amber)}
+#s-milhas .break-status .bs{font-size:11px;color:var(--text-dim)}
+#s-milhas .break-track{height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+#s-milhas .break-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--gold-deep),var(--gold))}
+#s-milhas .break-labels{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-faint);margin-top:6px}
+#s-milhas .list-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+#s-milhas .ml-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
+#s-milhas .ml-item:last-child{border-bottom:none}
+#s-milhas .ml-item .left{display:flex;flex-direction:column;gap:2px;min-width:0}
+#s-milhas .ml-item .name{font-size:13px;font-weight:700;color:var(--text)}
+#s-milhas .ml-item .sub{font-size:11px;color:var(--text-faint)}
+#s-milhas .ml-item .right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;padding-left:10px}
+#s-milhas .ml-item .amount{font-size:13px;font-weight:700;color:var(--gold)}
+#s-milhas .ml-item .pct{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px}
+#s-milhas .pct.good{color:var(--green);background:rgba(95,211,160,.12)}
+#s-milhas .pct.low{color:var(--amber);background:rgba(240,192,90,.12)}
+#s-milhas .empty-ciclos{padding:16px;text-align:center;font-size:12px;color:var(--text-faint)}
+#s-milhas .config-note{margin:22px 18px 0;padding:12px 14px;background:rgba(233,196,106,.08);border:1px dashed rgba(233,196,106,.35);border-radius:12px;font-size:11.5px;color:var(--text-dim);line-height:1.5}
+#s-milhas .config-note b{color:var(--gold)}
+#s-milhas .config-sheet{margin:0;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px 6px}
+#s-milhas .cfg-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);gap:10px}
+#s-milhas .cfg-row:last-child{border-bottom:none}
+#s-milhas .cfg-row .cfg-lbl{font-size:12.5px;font-weight:600;color:var(--text)}
+#s-milhas .cfg-row .cfg-hint{font-size:10.5px;color:var(--text-faint);margin-top:2px}
+#s-milhas .cfg-input{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:var(--text);width:92px;text-align:right;outline:none;-webkit-appearance:none;font-family:inherit;flex-shrink:0}
 .quick{display:flex;gap:8px;margin-bottom:18px}
 .qbtn{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:13px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;transition:all .12s}
 .qbtn:active{transform:scale(.95)}
@@ -345,6 +424,7 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
         <div class="cc-prog-lbl"><span>Progresso do ciclo</span><span id="cc-prog-pct">0%</span></div>
         <div class="cc-prog-bg"><div class="cc-prog-fill" id="cc-prog-fill" style="width:0%"></div></div>
       </div>
+      <div class="cc-mini" onclick="abrirMilhas()" style="margin-top:10px;text-align:center;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">&#127942; Eficiencia de Milhas</div>
     </div>
   </div>
   <div class="quick">
@@ -622,6 +702,82 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
   </div>
 </div>
 
+<div class="screen" id="s-milhas">
+  <div class="topbar">
+    <div class="back" onclick="navTo('home',document.querySelectorAll('.bot-nav .nav-it')[0])">&#8249;</div>
+    <h1>&#127942; Eficiencia de Milhas</h1>
+    <div class="gear" onclick="document.getElementById('ml-config-section').scrollIntoView({behavior:'smooth'})">&#9881;&#65039;</div>
+  </div>
+
+  <div class="section">
+    <div class="hero">
+      <div class="hero-label">&#9992;&#65039; Saldo de milhas</div>
+      <div class="hero-value" id="ml-saldo-val">0<span class="unit">pts</span></div>
+      <div class="hero-sub" id="ml-saldo-sub">...</div>
+      <div class="hero-range">
+        <div class="rg"><span class="lbl" id="ml-min-lbl">Min</span><span class="val" id="ml-min-val">R$ 0</span></div>
+        <div class="rg mid"><span class="lbl">Medio</span><span class="val" id="ml-med-val">R$ 0</span></div>
+        <div class="rg"><span class="lbl" id="ml-max-lbl">Max</span><span class="val" id="ml-max-val">R$ 0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Fatura do ciclo &times; pontos gerados</div>
+    <div class="cross-card">
+      <div class="cross-flow">
+        <div class="cross-box imported"><div class="cb-lbl">&#128193; Fatura</div><div class="cb-val" id="ml-fatura-val">R$ 0,00</div></div>
+        <div class="cross-arrow">&rarr;</div>
+        <div class="cross-box result"><div class="cb-lbl">&#9992;&#65039; Pontos</div><div class="cb-val" id="ml-pontos-val">+0 pts</div></div>
+      </div>
+      <div class="cross-formula" id="ml-formula">...</div>
+      <div class="import-pill">&#128193; Somado automaticamente dos lancamentos no Cartao deste ciclo</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Retorno efetivo do ciclo</div>
+    <div class="yield-card">
+      <div class="yield-top"><span class="big" id="ml-retorno-pct">0%</span><span class="goal">equivalente a cashback</span></div>
+      <div class="yield-track"><div class="yield-fill" id="ml-yield-fill" style="width:0%"></div><div class="yield-marker" style="left:66.7%"></div></div>
+      <div class="yield-legend"><span>0%</span><span>meta 2,0% &uarr;</span><span>3%</span></div>
+      <div class="yield-note" id="ml-yield-note">...</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Anuidade do cartao <span class="ml-tag" id="ml-anuidade-lbl">R$ 0,00/mes</span></div>
+    <div class="break-card">
+      <div class="break-status">
+        <div class="break-badge" id="ml-break-badge">&#9989;</div>
+        <div><div class="bt" id="ml-break-title">...</div><div class="bs" id="ml-break-sub">...</div></div>
+      </div>
+      <div class="break-bar-row">
+        <div class="break-track"><div class="break-fill" id="ml-break-fill" style="width:0%"></div></div>
+        <div class="break-labels"><span>R$ 0</span><span id="ml-break-mid">Breakeven: R$ 0</span><span id="ml-break-fatura">Fatura: R$ 0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Ultimos ciclos fechados</div>
+    <div class="list-card" id="ml-historico"></div>
+  </div>
+
+  <div class="section" id="ml-config-section">
+    <div class="section-title">Parametros usados no calculo</div>
+    <div class="config-sheet">
+      <div class="cfg-row"><div><div class="cfg-lbl">Saldo atual</div><div class="cfg-hint">confira no app da companhia aerea</div></div><input class="cfg-input" type="text" inputmode="decimal" id="ml-cfg-saldo" onchange="salvarMilhasConfig()"></div>
+      <div class="cfg-row"><div><div class="cfg-lbl">Pontos por real gasto</div><div class="cfg-hint">ajusta se ativar clube/campanha</div></div><input class="cfg-input" type="text" inputmode="decimal" id="ml-cfg-pts" onchange="salvarMilhasConfig()"></div>
+      <div class="cfg-row"><div><div class="cfg-lbl">Valor minimo do ponto</div><div class="cfg-hint">mercado secundario</div></div><input class="cfg-input" type="text" inputmode="decimal" id="ml-cfg-min" onchange="salvarMilhasConfig()"></div>
+      <div class="cfg-row"><div><div class="cfg-lbl">Valor maximo do ponto</div><div class="cfg-hint">mercado secundario</div></div><input class="cfg-input" type="text" inputmode="decimal" id="ml-cfg-max" onchange="salvarMilhasConfig()"></div>
+      <div class="cfg-row"><div><div class="cfg-lbl">Anuidade mensal</div><div class="cfg-hint">taxa fixa do cartao</div></div><input class="cfg-input" type="text" inputmode="decimal" id="ml-cfg-anuidade" onchange="salvarMilhasConfig()"></div>
+    </div>
+  </div>
+
+  <div class="config-note">&#128161; <b>Como funciona:</b> a fatura do ciclo atual (mesmo total que aparece no Cartao da Inicio) e multiplicada pelos pontos por real configurados acima — sem lancar nada manualmente. O saldo e os parametros sao editaveis por voce; ajuste o saldo sempre que resgatar milhas.</div>
+</div>
+
 <nav class="bot-nav">
   <div class="nav-it on" onclick="navTo('home',this)"><span class="nav-ico">&#127968;</span><span class="nav-lbl">Inicio</span></div>
   <div class="nav-it"    onclick="navTo('lanc',this)"><span class="nav-ico">&#128203;</span><span class="nav-lbl">Lancamentos</span></div>
@@ -798,6 +954,7 @@ const mesAnoAtual=()=>hoje.getFullYear()+"-"+String(hoje.getMonth()+1).padStart(
 
 // STATE
 let lancamentos=[..._DADOS_INICIAIS].sort(function(a,b){return b.id-a.id;}),metas=[],orcamentos={};
+let milhas={saldo:0,ptsPorReal:0.85,valorMin:0.013,valorMax:0.017,anuidade:50};
 let patrimonio={ativos:{circulante:{},permanente:{}},passivos:{circulante:{},longoPrazo:{}},historico:{},metas:{objetivoPatrimonioLiquido:0,proximosObjetivos:{}}};
 let patrHistIdx=-1,patrIndicOpen={},patrEditCtx=null;
 let tipoAtual="despesa",catAtual="",emojiAtual="🎯";
@@ -835,6 +992,7 @@ function fbSaveOrc(){
   var safe={};Object.keys(orcamentos).forEach(function(k){safe[_orcKey(k)]=orcamentos[k];});
   _db.ref("orcamentos").set(safe).catch(_fbErr);
 }
+function fbSaveMilhas(){if(_db)_db.ref("milhas").set(milhas).catch(_fbErr);}
 function fbSaveMP(){
   if(!_db)return;
   const o={};
@@ -891,6 +1049,11 @@ function initFirebase(){
       clearTimeout(_rtimer);_rtimer=setTimeout(renderAll,150);
     },err=>{setStatus("❌ "+err.message,"#f87171");lancamentos=[..._DADOS_INICIAIS].sort((a,b)=>b.id-a.id);renderAll();});
     _db.ref("metas").on("value",snap=>{metas=snap.val()?Object.values(snap.val()):[];if(document.querySelector(".screen.active")?.id==="s-metas")renderMetas();});
+    _db.ref("milhas").on("value",snap=>{
+      const v=snap.val(),def={saldo:0,ptsPorReal:0.85,valorMin:0.013,valorMax:0.017,anuidade:50};
+      milhas=v?Object.assign({},def,v):def;
+      if(document.querySelector(".screen.active")?.id==="s-milhas")renderMilhas();
+    });
     _db.ref("orcamentos").on("value",snap=>{
       var raw=snap.val()||{};
       var o={};
@@ -987,7 +1150,9 @@ function navTo(id,el){
   else if(id==="metas")renderMetas();
   else if(id==="patrimonio")renderPatr();
   else if(id==="rel")renderRel();
+  else if(id==="milhas")renderMilhas();
 }
+function abrirMilhas(){navTo("milhas");}
 
 // MODO
 function setModo(modo,el){
@@ -1187,6 +1352,96 @@ function renderCCCard(){
   document.getElementById("cc-status-chip").textContent=jaFechou?"Fechado":"Fecha em "+diasFecha+"d";
   document.getElementById("cc-prog-pct").textContent=prog+"%";
   document.getElementById("cc-prog-fill").style.width=prog+"%";
+}
+
+// EFICIENCIA DE MILHAS
+function _milhasFaturaCiclo(offset){return lancDoCiclo(offset).filter(l=>l.pgto==="Cartão"&&l.tipo==="despesa").reduce((a,b)=>a+b.valor,0);}
+function renderMilhas(){
+  const fatura=_milhasFaturaCiclo(0);
+  const pontos=Math.round(fatura*milhas.ptsPorReal);
+  const valMedioPt=(milhas.valorMin+milhas.valorMax)/2;
+  const valGeradoMin=pontos*milhas.valorMin,valGeradoMax=pontos*milhas.valorMax,valGeradoMed=pontos*valMedioPt;
+  const retornoPct=fatura>0?(valGeradoMed/fatura*100):0;
+  const breakevenFatura=(milhas.ptsPorReal>0&&valMedioPt>0)?milhas.anuidade/(milhas.ptsPorReal*valMedioPt):0;
+  const coberta=valGeradoMed>=milhas.anuidade;
+  const sobra=valGeradoMed-milhas.anuidade;
+  const fmt0=v=>"R$ "+Math.round(v).toLocaleString("pt-BR");
+
+  // Hero: saldo de milhas
+  document.getElementById("ml-saldo-val").innerHTML=Math.round(milhas.saldo).toLocaleString("pt-BR")+'<span class="unit">pts</span>';
+  const saldoMin=milhas.saldo*milhas.valorMin,saldoMax=milhas.saldo*milhas.valorMax,saldoMed=milhas.saldo*valMedioPt;
+  document.getElementById("ml-saldo-sub").innerHTML="Valor estimado ao cambio secundario atual &middot; <b>"+fmt0(saldoMin)+" a "+fmt0(saldoMax)+"</b>";
+  document.getElementById("ml-min-lbl").textContent="Min (R$"+milhas.valorMin.toFixed(3).replace(".",",")+"/pt)";
+  document.getElementById("ml-max-lbl").textContent="Max (R$"+milhas.valorMax.toFixed(3).replace(".",",")+"/pt)";
+  document.getElementById("ml-min-val").textContent=fmt0(saldoMin);
+  document.getElementById("ml-med-val").textContent=fmt0(saldoMed);
+  document.getElementById("ml-max-val").textContent=fmt0(saldoMax);
+
+  // Fatura x pontos gerados
+  document.getElementById("ml-fatura-val").textContent=fmt(fatura);
+  document.getElementById("ml-pontos-val").textContent="+"+pontos.toLocaleString("pt-BR")+" pts";
+  document.getElementById("ml-formula").textContent=fmt(fatura)+" x "+milhas.ptsPorReal.toFixed(2).replace(".",",")+" pt/R$ = "+pontos.toLocaleString("pt-BR")+" pts";
+
+  // Retorno efetivo (escala do gauge: 0 a 3%, meta 2% marcada em 66,7%)
+  document.getElementById("ml-retorno-pct").textContent=retornoPct.toFixed(2).replace(".",",")+"%";
+  document.getElementById("ml-yield-fill").style.width=Math.min(100,retornoPct/3*100)+"%";
+  document.getElementById("ml-yield-note").innerHTML=fatura>0
+    ?"Faixa de valor gerado: <b>"+fmt(valGeradoMin)+" a "+fmt(valGeradoMax)+"</b> em milhas, sobre uma fatura de "+fmt(fatura)+"."+(retornoPct<2?" Ainda abaixo da meta de 2,0%.":" Acima da meta de 2,0%! \u{1F389}")
+    :"Sem gastos no Cartao neste ciclo ainda.";
+
+  // Breakeven da anuidade
+  document.getElementById("ml-anuidade-lbl").textContent=fmt(milhas.anuidade)+"/mes";
+  const badge=document.getElementById("ml-break-badge"),bt=document.getElementById("ml-break-title");
+  badge.textContent=coberta?"✅":"⚠️";
+  badge.className="break-badge"+(coberta?"":" warn");
+  bt.textContent=coberta?"Anuidade coberta neste ciclo":"Anuidade ainda nao coberta";
+  bt.className="bt"+(coberta?"":" warn");
+  document.getElementById("ml-break-sub").textContent=coberta
+    ?"Sobra liquida de "+fmt(sobra)+" depois de pagar a taxa"
+    :"Faltam "+fmt(Math.abs(sobra))+" em milhas geradas pra cobrir";
+  document.getElementById("ml-break-fill").style.width=(breakevenFatura>0?Math.min(100,fatura/breakevenFatura*100):(fatura>0?100:0))+"%";
+  document.getElementById("ml-break-mid").textContent="Breakeven: "+fmt(breakevenFatura);
+  document.getElementById("ml-break-fatura").textContent="Fatura: "+fmt(fatura);
+
+  // Ultimos ciclos fechados com gasto no Cartao
+  // Nota: retorno % usa a taxa/valor ATUAIS aplicados retroativamente (o app nao guarda taxas
+  // historicas), entao dá sempre a mesma % pra qualquer fatura — por isso o selo aqui mostra
+  // se aquela fatura especifica cobriu a anuidade, que e o que realmente varia ciclo a ciclo.
+  const hist=[];
+  for(let off=-1;off>=-8&&hist.length<6;off--){
+    const fCiclo=_milhasFaturaCiclo(off);
+    if(fCiclo<=0)continue;
+    const g=getCicloAtual(off);
+    const pts=Math.round(fCiclo*milhas.ptsPorReal);
+    const valMed=pts*valMedioPt;
+    hist.push({fecha:g.fechaDate,fatura:fCiclo,pts,valMed});
+  }
+  document.getElementById("ml-historico").innerHTML=hist.length===0
+    ?'<div class="empty-ciclos">Nenhum ciclo fechado com gastos no Cartao ainda.</div>'
+    :hist.map(h=>{
+      const dataLbl=String(h.fecha.getDate()).padStart(2,"0")+"/"+String(h.fecha.getMonth()+1).padStart(2,"0");
+      const cobriu=h.valMed>=milhas.anuidade;
+      return '<div class="ml-item"><div class="left"><span class="name">Fatura '+dataLbl+'</span><span class="sub">'+fmt(h.fatura)+' &middot; +'+h.pts.toLocaleString("pt-BR")+' pts</span></div><div class="right"><span class="amount">'+fmt(h.valMed)+'</span><span class="pct '+(cobriu?"good":"low")+'">'+(cobriu?"cobriu anuidade":"nao cobriu")+'</span></div></div>';
+    }).join("");
+
+  // Campos de configuracao (nao sobrescreve o que o usuario esta digitando)
+  const cfgIds={"ml-cfg-saldo":milhas.saldo,"ml-cfg-pts":milhas.ptsPorReal,"ml-cfg-min":milhas.valorMin,"ml-cfg-max":milhas.valorMax,"ml-cfg-anuidade":milhas.anuidade};
+  Object.keys(cfgIds).forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&document.activeElement!==el)el.value=String(cfgIds[id]).replace(".",",");
+  });
+}
+function salvarMilhasConfig(){
+  milhas={
+    saldo:Math.max(0,_parseBRNum(document.getElementById("ml-cfg-saldo").value)),
+    ptsPorReal:Math.max(0,_parseBRNum(document.getElementById("ml-cfg-pts").value)),
+    valorMin:Math.max(0,_parseBRNum(document.getElementById("ml-cfg-min").value)),
+    valorMax:Math.max(0,_parseBRNum(document.getElementById("ml-cfg-max").value)),
+    anuidade:Math.max(0,_parseBRNum(document.getElementById("ml-cfg-anuidade").value))
+  };
+  fbSaveMilhas();
+  renderMilhas();
+  showToast("\u{1F4BE} Parametros salvos");
 }
 
 // TX HTML
@@ -1953,7 +2208,7 @@ function exportCSVTudo(){if(!lancamentos.length){showToast("Nenhum lancamento","
 function gerarCSV(lista,nome){var headers=["Data","Tipo","Descricao","Categoria","Valor (R$)","Pagamento"];var rows=lista.map(function(l){var desc='"' + (l.desc||"").replace(/"/g,'""')+'"';return[l.data.split("-").reverse().join("/"),l.tipo==="despesa"?"Despesa":"Receita",desc,l.cat||"",l.valor.toFixed(2).replace(".",","),l.pgto||""];});var bom="\uFEFF";var csv=[headers].concat(rows).map(function(x){return x.join(";");}).join("\n");var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([bom+csv],{type:"text/csv;charset=utf-8;"}));a.download=nome;a.click();showToast("📤 CSV exportado!");}
 
 // RENDER ALL
-function renderAll(){const a=document.querySelector(".screen.active")?.id;if(a==="s-home")renderHome();else if(a==="s-lanc")renderLanc();else if(a==="s-orc")renderOrc();else if(a==="s-metas")renderMetas();else if(a==="s-patrimonio")renderPatr();else if(a==="s-rel")renderRel();}
+function renderAll(){const a=document.querySelector(".screen.active")?.id;if(a==="s-home")renderHome();else if(a==="s-lanc")renderLanc();else if(a==="s-orc")renderOrc();else if(a==="s-metas")renderMetas();else if(a==="s-patrimonio")renderPatr();else if(a==="s-rel")renderRel();else if(a==="s-milhas")renderMilhas();}
 
 // ── GRÁFICOS & INSIGHTS ──
 var gPeriod='ano', gShowDesp=true, gShowRec=true, gShowSaldo=false;
