@@ -1526,7 +1526,8 @@ let _anOpen=false,_orcSug={};
 function _mediana(a){if(!a.length)return 0;var s=a.slice().sort(function(x,y){return x-y;});var m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
 function _round50(v){return Math.ceil(v/50)*50;}
 function _analiseData(){
-  var win=[],y=hoje.getFullYear(),m=hoje.getMonth();
+  var agora=new Date();// nao usar `hoje`: essa constante fixa no carregamento da pagina, e o PWA pode ficar aberto dias sem recarregar
+  var win=[],y=agora.getFullYear(),m=agora.getMonth();
   for(var i=6;i>=1;i--){var mm=m-i,yy=y;while(mm<0){mm+=12;yy--;}win.push({y:yy,m:mm,k:yy+"-"+mm});}
   var ativo={},gm={};
   lancamentos.forEach(function(l){
