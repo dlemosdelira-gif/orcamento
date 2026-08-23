@@ -378,7 +378,7 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
   <div class="sheet" style="width:100%;max-width:340px;border-radius:22px;animation:none;padding-bottom:20px">
     <div style="text-align:center;margin-bottom:22px">
       <div style="font-size:36px;margin-bottom:6px">&#128156;</div>
-      <div class="hdr-title">Família Delira</div>
+      <div class="hdr-title">Família Almeida Lira</div>
     </div>
     <div class="fg"><label class="flbl">Nome</label><input class="finp" type="text" id="login-nome" placeholder="Seu nome" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-senha').focus()"></div>
     <div class="fg"><label class="flbl">Senha</label><input class="finp" type="password" id="login-senha" placeholder="Sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLogin()"></div>
@@ -387,7 +387,7 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
   </div>
 </div>
 <div style="position:fixed;top:0;left:0;right:0;z-index:500;background:#16161d;border-bottom:1px solid #2a2a38;padding:6px 16px;display:flex;justify-content:space-between;align-items:center;font-size:10px">
-  <span style="color:#7c6af7;font-weight:700">&#128156; Família Delira</span>
+  <span style="color:#7c6af7;font-weight:700">&#128156; Família Almeida Lira</span>
   <div style="display:flex;align-items:center;gap:10px">
     <span id="sync-status" style="color:#60a5fa">&#128260; Iniciando...</span>
     <span id="hide-btn" onclick="toggleHide()" style="cursor:pointer;font-size:15px;padding:2px 3px;line-height:1">🙈</span>
@@ -1056,7 +1056,6 @@ function _processInbox(snap){
 }
 function _loginEmail(nome){
   return String(nome||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"")+"@familia-delira.app";
-  return String(nome||"").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]/g,"")+"@familia-delira.app";
 }
 async function fazerLogin(){
   const nome=document.getElementById("login-nome").value;
