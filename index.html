@@ -374,6 +374,18 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
 </style>
 </head>
 <body>
+<div id="login-gate" style="position:fixed;inset:0;z-index:9999;background:#0c0c10;display:flex;align-items:center;justify-content:center;padding:24px">
+  <div class="sheet" style="width:100%;max-width:340px;border-radius:22px;animation:none;padding-bottom:20px">
+    <div style="text-align:center;margin-bottom:22px">
+      <div style="font-size:36px;margin-bottom:6px">&#128156;</div>
+      <div class="hdr-title">Família Delira</div>
+    </div>
+    <div class="fg"><label class="flbl">Nome</label><input class="finp" type="text" id="login-nome" placeholder="Seu nome" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-senha').focus()"></div>
+    <div class="fg"><label class="flbl">Senha</label><input class="finp" type="password" id="login-senha" placeholder="Sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLogin()"></div>
+    <div id="login-erro" style="display:none;color:var(--red);font-size:12px;margin:-6px 0 14px;text-align:center"></div>
+    <button class="btn-p" id="login-btn" onclick="fazerLogin()">Entrar</button>
+  </div>
+</div>
 <div style="position:fixed;top:0;left:0;right:0;z-index:500;background:#16161d;border-bottom:1px solid #2a2a38;padding:6px 16px;display:flex;justify-content:space-between;align-items:center;font-size:10px">
   <span style="color:#7c6af7;font-weight:700">&#128156; Família Delira</span>
   <div style="display:flex;align-items:center;gap:10px">
@@ -381,6 +393,7 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
     <span id="hide-btn" onclick="toggleHide()" style="cursor:pointer;font-size:15px;padding:2px 3px;line-height:1">🙈</span>
     <span id="ia-ask-top-btn" onclick="openIAAsk()" style="cursor:pointer;font-size:15px;padding:2px 3px;line-height:1">💬</span>
     <span id="ia-btn" onclick="openIAConfig()" style="cursor:pointer;font-size:15px;padding:2px 3px;line-height:1">⚙️</span>
+    <span id="logout-btn" onclick="sair()" style="cursor:pointer;font-size:15px;padding:2px 3px;line-height:1">&#128682;</span>
   </div>
 </div>
 <div style="height:30px"></div>
@@ -1041,11 +1054,50 @@ function _processInbox(snap){
   }
   snap.ref.remove();
 }
+function _loginEmail(nome){
+  return String(nome||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"")+"@familia-delira.app";
+  return String(nome||"").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]/g,"")+"@familia-delira.app";
+}
+async function fazerLogin(){
+  const nome=document.getElementById("login-nome").value;
+  const senha=document.getElementById("login-senha").value;
+  const erroEl=document.getElementById("login-erro");
+  erroEl.style.display="none";
+  if(!nome.trim()||!senha){erroEl.textContent="Preencha nome e senha.";erroEl.style.display="block";return;}
+  const btn=document.getElementById("login-btn");
+  btn.disabled=true;btn.textContent="Entrando...";
+  try{
+    await firebase.auth().signInWithEmailAndPassword(_loginEmail(nome),senha);
+  }catch(err){
+    erroEl.textContent="Nome ou senha incorretos.";
+    erroEl.style.display="block";
+  }finally{
+    btn.disabled=false;btn.textContent="Entrar";
+  }
+}
+function sair(){
+  if(!confirm("Sair da sua conta?"))return;
+  firebase.auth().signOut();
+}
+var _dbListenersAttached=false;
 function initFirebase(){
   renderAll();
   try{
     firebase.initializeApp(FB);
-    firebase.auth().signInAnonymously().catch(err => console.warn('Auth error:', err));
+    firebase.auth().onAuthStateChanged(function(user){
+      var gate=document.getElementById("login-gate");
+      if(user){
+        gate.style.display="none";
+        if(!_dbListenersAttached){_dbListenersAttached=true;attachDbListeners();}
+      }else{
+        gate.style.display="flex";
+        var ne=document.getElementById("login-nome");if(ne)setTimeout(()=>ne.focus(),50);
+      }
+    });
+  }catch(e){setStatus("❌ "+e.message,"#f87171");lancamentos=[..._DADOS_INICIAIS].sort((a,b)=>b.id-a.id);renderAll();}
+}
+function attachDbListeners(){
+  try{
     _db=firebase.database();
     setStatus("🔄 Conectando...","#60a5fa");
     _db.ref("lancamentos").on("value",snap=>{
