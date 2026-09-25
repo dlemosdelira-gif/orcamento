@@ -1686,14 +1686,34 @@ async function callGemini(promptText,cfgOverride){
 }
 
 // RESUMO MENSAL (IA)
-function _mesAnteriorInfo(){let m=mesAtual-1,a=anoAtual;if(m<0){m=11;a--;}return{m,a};}
 function _lancDoMesEspecifico(m,a){return lancamentos.filter(l=>{const d=new Date(l.data+"T00:00:00");return d.getMonth()===m&&d.getFullYear()===a;});}
+function _parcelaInfo(desc){
+  const m=String(desc||"").match(/^(.*)\s(\d+)\/(\d+)$/);
+  if(!m)return null;
+  return{base:m[1],atual:parseInt(m[2],10),total:parseInt(m[3],10)};
+}
+function _fmtLancParcela(l){
+  let s="- "+l.desc+": R$"+l.valor.toFixed(2)+" ("+l.cat+", "+l.data.split("-").reverse().join("/")+")";
+  const p=_parcelaInfo(l.desc);
+  if(p&&p.total>p.atual)s+=" [parcela "+p.atual+"/"+p.total+" — recorrente, restam "+(p.total-p.atual)+" parcelas iguais]";
+  else if(p&&p.total===p.atual)s+=" [ultima parcela "+p.atual+"/"+p.total+" — some do orcamento a partir do proximo mes]";
+  return s;
+}
+function _reservaContexto(saldoPeriodo){
+  const reserva=(typeof patrTotalGrupo==="function")?patrTotalGrupo("ativos","circulante"):0;
+  if(!(reserva>0))return "";
+  if(saldoPeriodo>=0)return "Reserva liquida disponivel (ativos circulantes no Patrimonio): R$"+reserva.toFixed(2)+".\n";
+  const meses=reserva/Math.abs(saldoPeriodo);
+  return "Reserva liquida disponivel (ativos circulantes no Patrimonio): R$"+reserva.toFixed(2)+". Nesse ritmo de deficit, cobre aproximadamente "+meses.toFixed(1)+" meses antes de zerar.\n";
+}
+const _INSTRUCAO_ACAO="Estruture a resposta em texto simples (sem markdown, sem #, sem **) assim: primeiro um paragrafo curto de diagnostico (3-5 frases, direto ao ponto, citando numeros especificos); depois uma linha em branco; depois o cabecalho 'ACOES RECOMENDADAS:' seguido de 2 a 3 itens numerados (1., 2., 3.), cada um especifico e ligado a um numero ou prazo quando possivel. Se um gasto alto for pontual ou parcela que ja tem fim previsto, diga isso claramente como motivo para NAO agir naquele ponto, em vez de sugerir corte generico. Nao invente dados que nao foram informados abaixo.";
 function buildResumoMensalPrompt(){
   const lm=lancDoMes();
   const desp=lm.filter(l=>l.tipo==="despesa");
   const rec=lm.filter(l=>l.tipo==="receita");
   const totalDesp=desp.reduce((a,b)=>a+b.valor,0);
   const totalRec=rec.reduce((a,b)=>a+b.valor,0);
+  const saldo=totalRec-totalDesp;
   const porCat={};
   desp.forEach(l=>{porCat[l.cat]=(porCat[l.cat]||0)+l.valor;});
   const catLines=CATS.map(c=>{
@@ -1701,17 +1721,26 @@ function buildResumoMensalPrompt(){
     if(!g&&!o)return null;
     return "- "+c.label+": gasto R$"+g.toFixed(2)+(o?" / orcado R$"+o.toFixed(2):" (sem orcamento definido)");
   }).filter(Boolean).join("\n");
-  const top5=desp.slice().sort((a,b)=>b.valor-a.valor).slice(0,5)
-    .map(l=>"- "+l.desc+": R$"+l.valor.toFixed(2)+" ("+l.cat+", "+l.data.split("-").reverse().join("/")+")").join("\n");
-  const prev=_mesAnteriorInfo();
-  const despPrev=_lancDoMesEspecifico(prev.m,prev.a).filter(l=>l.tipo==="despesa").reduce((a,b)=>a+b.valor,0);
+  const top5=desp.slice().sort((a,b)=>b.valor-a.valor).slice(0,5).map(_fmtLancParcela).join("\n");
+  const agora=new Date();
+  const mesEhAtual=(anoAtual===agora.getFullYear()&&mesAtual===agora.getMonth());
+  const diasRestantes=mesEhAtual?new Date(anoAtual,mesAtual+1,0).getDate()-agora.getDate():0;
+  const statusMes=mesEhAtual?"Este mes AINDA NAO FECHOU — faltam "+diasRestantes+" dias corridos. Use linguagem como 'ate agora' em vez de 'o mes fechou'.":"Este mes ja fechou completamente.";
+  const tendencia=[2,1,0].map(i=>{
+    let m=mesAtual-i,a=anoAtual;while(m<0){m+=12;a--;}
+    const d=_lancDoMesEspecifico(m,a).filter(l=>l.tipo==="despesa").reduce((s,l)=>s+l.valor,0);
+    const nome=new Date(a,m,1).toLocaleDateString("pt-BR",{month:"short",year:"numeric"});
+    return nome+": R$"+d.toFixed(2);
+  }).join(" | ");
   const mesNome=new Date(anoAtual,mesAtual,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
-  return "Voce e um assistente financeiro pessoal, direto e amigavel, respondendo em portugues do Brasil.\n"
-    +"Analise o mes de "+mesNome+" desta familia e escreva um resumo curto (4 a 6 frases corridas, sem markdown, sem titulos, sem listas) explicando como foi o mes: se o saldo ficou positivo ou negativo, quais categorias mais pesaram, se alguma categoria estourou o orcamento e por que (cite os maiores lancamentos quando fizer sentido), e como ficou em relacao ao mes anterior. Seja especifico usando os numeros abaixo, nao invente dados que nao foram informados.\n\n"
-    +"Receitas do mes: R$"+totalRec.toFixed(2)+"\n"
-    +"Despesas do mes: R$"+totalDesp.toFixed(2)+"\n"
-    +"Saldo: R$"+(totalRec-totalDesp).toFixed(2)+"\n"
-    +"Despesas do mes anterior (para comparacao): R$"+despPrev.toFixed(2)+"\n\n"
+  return "Voce e um assistente financeiro pessoal, direto e pratico, respondendo em portugues do Brasil.\n"
+    +"Analise o mes de "+mesNome+" desta familia: como foi o saldo, quais categorias mais pesaram, se alguma estourou o orcamento e por que (cite os maiores lancamentos quando fizer sentido, diferenciando gasto pontual/parcela de gasto recorrente), a tendencia dos ultimos 3 meses, e o impacto na reserva se houver deficit. "+_INSTRUCAO_ACAO+"\n\n"
+    +statusMes+"\n\n"
+    +"Receitas ate agora: R$"+totalRec.toFixed(2)+"\n"
+    +"Despesas ate agora: R$"+totalDesp.toFixed(2)+"\n"
+    +"Saldo: R$"+saldo.toFixed(2)+"\n"
+    +"Tendencia de despesas nos ultimos 3 meses: "+tendencia+"\n"
+    +_reservaContexto(saldo)+"\n"
     +"Gasto por categoria (gasto vs orcado):\n"+(catLines||"(nenhum gasto categorizado)")+"\n\n"
     +"Maiores lancamentos do mes:\n"+(top5||"(nenhum lancamento)");
 }
@@ -2034,13 +2063,21 @@ function buildInsightsOrcamentoPrompt(){
     const med=vals.length?_mediana(vals):null;
     const overCount=vals.length?vals.filter(v=>v>orc).length:null;
     let line="- "+c.label+": orcado R$"+orc.toFixed(2)+", gasto no periodo R$"+gasto.toFixed(2)+" ("+(orc>0?Math.round(gasto/orc*100):0)+"% do orcado)";
-    if(med!==null)line+=", mediana dos ultimos "+n+" meses R$"+med.toFixed(2)+", estourou em "+overCount+" desses "+n+" meses";
+    if(med!==null){
+      line+=", mediana dos ultimos "+n+" meses R$"+med.toFixed(2)+", estourou em "+overCount+" desses "+n+" meses";
+      if(overCount>=2)line+=" [orcamento sugerido baseado no gasto real: R$"+_round50(med).toFixed(2)+"]";
+    }
+    if(gasto>orc){
+      const top2=lm.filter(l=>l.tipo==="despesa"&&l.cat===c.label).sort((a,b)=>b.valor-a.valor).slice(0,2).map(_fmtLancParcela).join("; ");
+      if(top2)line+="\n  Maiores gastos nessa categoria neste periodo: "+top2;
+    }
     return line;
   }).join("\n");
   let prompt="Voce e um assistente financeiro pessoal, direto e pratico, respondendo em portugues do Brasil.\n"
-    +"Baseado nos dados abaixo do periodo '"+getPeriodoLabel()+"', escreva uma analise curta (4 a 6 frases corridas, sem markdown, sem titulos, sem listas) respondendo: o que mais esta impactando o estouro do orcamento (se houver), se e algo pontual ou recorrente nos ultimos meses, e ate 2 sugestoes concretas e realistas de onde cortar gasto — priorizando categorias com estouro recorrente ou bem acima do gasto tipico. Seja especifico usando os numeros abaixo, nao invente dados que nao foram informados.\n\n"
+    +"Baseado nos dados abaixo do periodo '"+getPeriodoLabel()+"', explique o que mais esta impactando o estouro do orcamento (se houver), citando os lancamentos especificos por categoria, se e algo pontual/parcela com fim previsto ou recorrente nos ultimos meses, e o ritmo diario atual. "+_INSTRUCAO_ACAO+" Quando sugerir ajustar um orcamento, use o valor sugerido indicado entre colchetes quando houver, em vez de inventar outro numero.\n\n"
     +"Total orcado: R$"+totalOrc.toFixed(2)+" · Total gasto no periodo: R$"+totalGasto.toFixed(2)+"\n";
   if(gd)prompt+="Ritmo diario: mediana real R$"+gd.mediana.toFixed(2)+"/dia vs. equivalente orcado R$"+gd.media.toFixed(2)+"/dia ("+gd.pct+"% do ritmo ideal)\n";
+  prompt+=_reservaContexto(totalOrc-totalGasto);
   prompt+="\nPor categoria:\n"+(catLines||"(nenhum orcamento definido)");
   return prompt;
 }
