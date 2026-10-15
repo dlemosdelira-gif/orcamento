@@ -878,13 +878,9 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
   <div class="sheet">
     <div class="handle"></div>
     <div class="sheet-title">&#9881;&#65039; Configuracao de IA</div>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5">Adicione uma chave do Gemini ou da Anthropic (Claude) para habilitar o resumo mensal e outras analises com IA. A chave fica salva somente neste navegador — nunca e sincronizada nem enviada ao Firebase. <a id="ia-getkey-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--accent)">Pegar chave gratis &#8599;</a></p>
-    <div class="mode-toggle" style="margin-bottom:16px">
-      <div class="mode-btn on" id="ia-prov-gemini" onclick="setIAProvider('gemini')">Gemini</div>
-      <div class="mode-btn" id="ia-prov-claude" onclick="setIAProvider('claude')">Claude</div>
-    </div>
-    <div class="fg"><label class="flbl" id="ia-key-lbl">Chave da API (Gemini)</label><input class="finp" type="password" placeholder="AIza..." id="ia-key-inp" autocomplete="off"></div>
-    <div class="fg"><label class="flbl">Modelo</label><input class="finp" type="text" placeholder="gemini-3.6-flash" id="ia-model-inp" autocomplete="off"></div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5">Adicione sua chave da Anthropic (Claude) para habilitar o resumo mensal e outras analises com IA. A chave fica salva somente neste navegador — nunca e sincronizada nem enviada ao Firebase. <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:var(--accent)">Pegar chave &#8599;</a></p>
+    <div class="fg"><label class="flbl">Chave da API (Claude)</label><input class="finp" type="password" placeholder="sk-ant-..." id="ia-key-inp" autocomplete="off"></div>
+    <div class="fg"><label class="flbl">Modelo</label><input class="finp" type="text" placeholder="claude-sonnet-5" id="ia-model-inp" autocomplete="off"></div>
     <div id="ia-test-msg" style="font-size:12px;margin-bottom:10px;display:none"></div>
     <button class="btn-p" onclick="saveIAConfig()">Salvar</button>
     <button class="btn-sec" onclick="testIAConfig()">Testar conexao</button>
@@ -1635,63 +1631,39 @@ function toggleGastoDiaTip(el,mediana,media,dias,pct){
   tip.style.display="block";
 }
 
-// IA (GEMINI/CLAUDE) — chave e modelo ficam so no localStorage, nunca vao pro Firebase
-function _iaProviderDefaults(p){
-  return p==="claude"
-    ?{model:"claude-sonnet-5",placeholder:"sk-ant-...",label:"Chave da API (Claude)",link:"https://console.anthropic.com/settings/keys",linkTxt:"Pegar chave (Anthropic Console) &#8599;"}
-    :{model:"gemini-3.6-flash",placeholder:"AIza...",label:"Chave da API (Gemini)",link:"https://aistudio.google.com/apikey",linkTxt:"Pegar chave gratis &#8599;"};
-}
+// IA (CLAUDE) — chave e modelo ficam so no localStorage, nunca vao pro Firebase
 function getIAConfig(){
-  const provider=localStorage.getItem("iaProvider")||"gemini";
-  if(provider==="claude")return{provider:"claude",key:localStorage.getItem("iaClaudeKey")||"",model:localStorage.getItem("iaClaudeModel")||"claude-sonnet-5"};
-  return{provider:"gemini",key:localStorage.getItem("iaGeminiKey")||"",model:localStorage.getItem("iaGeminiModel")||"gemini-3.6-flash"};
-}
-function setIAProvider(provider){
-  localStorage.setItem("iaProvider",provider);
-  const btnG=document.getElementById("ia-prov-gemini"),btnC=document.getElementById("ia-prov-claude");
-  if(btnG)btnG.classList.toggle("on",provider==="gemini");
-  if(btnC)btnC.classList.toggle("on",provider==="claude");
-  const def=_iaProviderDefaults(provider);
-  const lbl=document.getElementById("ia-key-lbl");if(lbl)lbl.textContent=def.label;
-  const keyInp=document.getElementById("ia-key-inp");if(keyInp)keyInp.placeholder=def.placeholder;
-  const modelInp=document.getElementById("ia-model-inp");if(modelInp)modelInp.placeholder=def.model;
-  const link=document.getElementById("ia-getkey-link");if(link){link.href=def.link;link.innerHTML=def.linkTxt;}
-  const cfg=getIAConfig();
-  if(keyInp)keyInp.value=cfg.key;
-  if(modelInp)modelInp.value=cfg.model;
-  const msg=document.getElementById("ia-test-msg");if(msg)msg.style.display="none";
+  return{key:localStorage.getItem("iaClaudeKey")||"",model:localStorage.getItem("iaClaudeModel")||"claude-sonnet-5"};
 }
 function openIAConfig(){
-  setIAProvider(localStorage.getItem("iaProvider")||"gemini");
+  const cfg=getIAConfig();
+  document.getElementById("ia-key-inp").value=cfg.key;
+  document.getElementById("ia-model-inp").value=cfg.model;
+  const msg=document.getElementById("ia-test-msg");msg.style.display="none";msg.textContent="";
   document.getElementById("modal-ia").classList.add("open");
 }
 function saveIAConfig(){
-  const provider=localStorage.getItem("iaProvider")||"gemini";
-  const def=_iaProviderDefaults(provider);
   const key=document.getElementById("ia-key-inp").value.trim();
-  const model=document.getElementById("ia-model-inp").value.trim()||def.model;
+  const model=document.getElementById("ia-model-inp").value.trim()||"claude-sonnet-5";
   if(!key){showToast("Informe uma chave, ou use Remover chave para limpar","err");return;}
-  localStorage.setItem(provider==="claude"?"iaClaudeKey":"iaGeminiKey",key);
-  localStorage.setItem(provider==="claude"?"iaClaudeModel":"iaGeminiModel",model);
+  localStorage.setItem("iaClaudeKey",key);
+  localStorage.setItem("iaClaudeModel",model);
   closeModal("modal-ia");
-  showToast("⚙️ Configuracao de IA salva! ("+(provider==="claude"?"Claude":"Gemini")+")");
+  showToast("⚙️ Configuracao de IA salva!");
 }
 function removeIAConfig(){
-  const provider=localStorage.getItem("iaProvider")||"gemini";
-  localStorage.removeItem(provider==="claude"?"iaClaudeKey":"iaGeminiKey");
-  localStorage.removeItem(provider==="claude"?"iaClaudeModel":"iaGeminiModel");
+  localStorage.removeItem("iaClaudeKey");localStorage.removeItem("iaClaudeModel");
   document.getElementById("ia-key-inp").value="";document.getElementById("ia-model-inp").value="";
   showToast("Chave de IA removida");
 }
 async function testIAConfig(){
-  const provider=localStorage.getItem("iaProvider")||"gemini";
   const key=document.getElementById("ia-key-inp").value.trim();
-  const model=document.getElementById("ia-model-inp").value.trim()||_iaProviderDefaults(provider).model;
+  const model=document.getElementById("ia-model-inp").value.trim()||"claude-sonnet-5";
   const msg=document.getElementById("ia-test-msg");
   if(!key){msg.style.display="block";msg.style.color="var(--red)";msg.textContent="Informe uma chave antes de testar.";return;}
   msg.style.display="block";msg.style.color="var(--muted)";msg.textContent="Testando...";
   try{
-    await callIA("Responda apenas: ok",{provider,key,model});
+    await callIA("Responda apenas: ok",{key,model});
     msg.style.color="var(--green)";msg.textContent="✅ Conexao funcionando!";
   }catch(err){
     msg.style.color="var(--red)";msg.textContent="❌ "+(err.message||"Falha na conexao");
@@ -1700,9 +1672,6 @@ async function testIAConfig(){
 async function callIA(promptText,cfgOverride){
   const cfg=cfgOverride||getIAConfig();
   if(!cfg.key)throw new Error("Configure sua chave de IA em ⚙️ para usar este recurso.");
-  return cfg.provider==="claude"?callClaude(promptText,cfg):callGemini(promptText,cfg);
-}
-async function callClaude(promptText,cfg){
   const model=cfg.model||"claude-sonnet-5";
   const res=await fetch("https://api.anthropic.com/v1/messages",{
     method:"POST",
@@ -1721,21 +1690,6 @@ async function callClaude(promptText,cfg){
   }
   const txt=data&&data.content&&data.content[0]&&data.content[0].text;
   if(!txt)throw new Error("Resposta vazia do Claude.");
-  return txt.trim();
-}
-async function callGemini(promptText,cfgOverride){
-  const cfg=cfgOverride||getIAConfig();
-  if(!cfg.key)throw new Error("Configure sua chave de IA em ⚙️ para usar este recurso.");
-  const model=cfg.model||"gemini-3.6-flash";
-  const url="https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(model)+":generateContent?key="+encodeURIComponent(cfg.key);
-  const res=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:promptText}]}]})});
-  const data=await res.json().catch(()=>null);
-  if(!res.ok){
-    const msg=data&&data.error&&data.error.message?data.error.message:("HTTP "+res.status);
-    throw new Error(msg);
-  }
-  const txt=data&&data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text;
-  if(!txt)throw new Error("Resposta vazia do Gemini.");
   return txt.trim();
 }
 
