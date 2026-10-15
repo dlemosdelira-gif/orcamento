@@ -880,7 +880,7 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
     <div class="sheet-title">&#9881;&#65039; Configuracao de IA</div>
     <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5">Adicione sua chave da Anthropic (Claude) para habilitar o resumo mensal e outras analises com IA. A chave fica salva somente neste navegador — nunca e sincronizada nem enviada ao Firebase. <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:var(--accent)">Pegar chave &#8599;</a></p>
     <div class="fg"><label class="flbl">Chave da API (Claude)</label><input class="finp" type="password" placeholder="sk-ant-..." id="ia-key-inp" autocomplete="off"></div>
-    <div class="fg"><label class="flbl">Modelo</label><input class="finp" type="text" placeholder="claude-sonnet-5" id="ia-model-inp" autocomplete="off"></div>
+    <div class="fg"><label class="flbl">Modelo</label><input class="finp" type="text" placeholder="claude-haiku-4-5-20251001" id="ia-model-inp" autocomplete="off"></div>
     <div id="ia-test-msg" style="font-size:12px;margin-bottom:10px;display:none"></div>
     <button class="btn-p" onclick="saveIAConfig()">Salvar</button>
     <button class="btn-sec" onclick="testIAConfig()">Testar conexao</button>
@@ -1633,7 +1633,7 @@ function toggleGastoDiaTip(el,mediana,media,dias,pct){
 
 // IA (CLAUDE) — chave e modelo ficam so no localStorage, nunca vao pro Firebase
 function getIAConfig(){
-  return{key:localStorage.getItem("iaClaudeKey")||"",model:localStorage.getItem("iaClaudeModel")||"claude-sonnet-5"};
+  return{key:localStorage.getItem("iaClaudeKey")||"",model:localStorage.getItem("iaClaudeModel")||"claude-haiku-4-5-20251001"};
 }
 function openIAConfig(){
   const cfg=getIAConfig();
@@ -1644,7 +1644,7 @@ function openIAConfig(){
 }
 function saveIAConfig(){
   const key=document.getElementById("ia-key-inp").value.trim();
-  const model=document.getElementById("ia-model-inp").value.trim()||"claude-sonnet-5";
+  const model=document.getElementById("ia-model-inp").value.trim()||"claude-haiku-4-5-20251001";
   if(!key){showToast("Informe uma chave, ou use Remover chave para limpar","err");return;}
   localStorage.setItem("iaClaudeKey",key);
   localStorage.setItem("iaClaudeModel",model);
@@ -1658,7 +1658,7 @@ function removeIAConfig(){
 }
 async function testIAConfig(){
   const key=document.getElementById("ia-key-inp").value.trim();
-  const model=document.getElementById("ia-model-inp").value.trim()||"claude-sonnet-5";
+  const model=document.getElementById("ia-model-inp").value.trim()||"claude-haiku-4-5-20251001";
   const msg=document.getElementById("ia-test-msg");
   if(!key){msg.style.display="block";msg.style.color="var(--red)";msg.textContent="Informe uma chave antes de testar.";return;}
   msg.style.display="block";msg.style.color="var(--muted)";msg.textContent="Testando...";
@@ -1672,25 +1672,36 @@ async function testIAConfig(){
 async function callIA(promptText,cfgOverride){
   const cfg=cfgOverride||getIAConfig();
   if(!cfg.key)throw new Error("Configure sua chave de IA em ⚙️ para usar este recurso.");
-  const model=cfg.model||"claude-sonnet-5";
-  const res=await fetch("https://api.anthropic.com/v1/messages",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "x-api-key":cfg.key,
-      "anthropic-version":"2023-06-01",
-      "anthropic-dangerous-direct-browser-access":"true"
-    },
-    body:JSON.stringify({model,max_tokens:1024,messages:[{role:"user",content:promptText}]})
-  });
-  const data=await res.json().catch(()=>null);
-  if(!res.ok){
+  const model=cfg.model||"claude-haiku-4-5-20251001";
+  const RETRY_STATUS=[500,503,529];
+  const BACKOFFS_MS=[900,1800];
+  for(let attempt=0;;attempt++){
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "x-api-key":cfg.key,
+        "anthropic-version":"2023-06-01",
+        "anthropic-dangerous-direct-browser-access":"true"
+      },
+      body:JSON.stringify({model,max_tokens:4096,messages:[{role:"user",content:promptText}]})
+    });
+    const data=await res.json().catch(()=>null);
+    if(res.ok){
+      if(data&&data.stop_reason==="refusal")throw new Error("O Claude recusou esse pedido por seguranca (stop_reason: refusal).");
+      const blocks=(data&&data.content)||[];
+      const textBlock=blocks.find(b=>b&&b.type==="text");
+      const txt=textBlock&&textBlock.text;
+      if(!txt)throw new Error("Resposta vazia do Claude.");
+      return txt.trim();
+    }
     const msg=data&&data.error&&data.error.message?data.error.message:("HTTP "+res.status);
+    if(RETRY_STATUS.indexOf(res.status)!==-1&&attempt<BACKOFFS_MS.length){
+      await new Promise(r=>setTimeout(r,BACKOFFS_MS[attempt]));
+      continue;
+    }
     throw new Error(msg);
   }
-  const txt=data&&data.content&&data.content[0]&&data.content[0].text;
-  if(!txt)throw new Error("Resposta vazia do Claude.");
-  return txt.trim();
 }
 
 // RESUMO MENSAL (IA)
