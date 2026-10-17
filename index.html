@@ -2093,8 +2093,26 @@ function buildInsightsOrcamentoPrompt(){
     return line;
   }).join("\n");
   let prompt="Voce e um assistente financeiro pessoal, direto e pratico, respondendo em portugues do Brasil.\n"
-    +"Baseado nos dados abaixo do periodo '"+getPeriodoLabel()+"', explique o que mais esta impactando o estouro do orcamento (se houver), citando os lancamentos especificos por categoria, se e algo pontual/parcela com fim previsto ou recorrente nos ultimos meses, e o ritmo diario atual. "+_INSTRUCAO_ACAO+" Quando sugerir ajustar um orcamento, use o valor sugerido indicado entre colchetes quando houver, em vez de inventar outro numero.\n\n"
-    +"Total orcado: R$"+totalOrc.toFixed(2)+" · Total gasto no periodo: R$"+totalGasto.toFixed(2)+"\n";
+    +"Baseado nos dados abaixo do periodo '"+getPeriodoLabel()+"', explique o que mais esta impactando o estouro do orcamento (se houver, incluindo a projecao de fechamento se o periodo ainda nao terminou), citando os lancamentos especificos por categoria, se e algo pontual/parcela com fim previsto ou recorrente nos ultimos meses, e o ritmo diario atual. "+_INSTRUCAO_ACAO+" Quando sugerir ajustar um orcamento, use o valor sugerido indicado entre colchetes quando houver, em vez de inventar outro numero.\n\n";
+  const per=_periodoDiario();
+  const agora=new Date();
+  const periodoEmAndamento=!!(per&&agora<per.end);
+  let projecaoLinha="";
+  if(per&&periodoEmAndamento){
+    const diasTotais=_diasEntre(per.start,per.end);
+    const diasDecorridos=_diasEntre(per.start,agora<per.start?per.start:agora);
+    const diasRestantes=Math.max(0,diasTotais-diasDecorridos);
+    prompt+="Este periodo AINDA NAO TERMINOU — faltam "+diasRestantes+" dias corridos de "+diasTotais+" no total. Os valores abaixo sao parciais, 'ate agora'. Use linguagem como 'ate agora' e 'nesse ritmo'; NUNCA diga que o periodo 'fechou' ou 'estourou definitivamente', pois ainda pode mudar.\n";
+    if(gd&&diasRestantes>0){
+      const projecao=totalGasto+gd.mediana*diasRestantes;
+      const projecaoPct=totalOrc>0?Math.round(projecao/totalOrc*100):0;
+      projecaoLinha="Projecao de fechamento nesse ritmo (gasto ate agora + mediana diaria x dias restantes): R$"+projecao.toFixed(2)+(totalOrc>0?" ("+projecaoPct+"% do orcado)":"")+"\n";
+    }
+  }else if(per){
+    prompt+="Este periodo ja terminou completamente — os valores abaixo sao o total final.\n";
+  }
+  prompt+="Total orcado: R$"+totalOrc.toFixed(2)+" · Total gasto "+(periodoEmAndamento?"ate agora":"no periodo")+": R$"+totalGasto.toFixed(2)+"\n"
+    +projecaoLinha;
   if(gd)prompt+="Ritmo diario: mediana real R$"+gd.mediana.toFixed(2)+"/dia vs. equivalente orcado R$"+gd.media.toFixed(2)+"/dia ("+gd.pct+"% do ritmo ideal)\n";
   prompt+=_reservaContexto(totalOrc-totalGasto);
   prompt+="\nPor categoria:\n"+(catLines||"(nenhum orcamento definido)");
