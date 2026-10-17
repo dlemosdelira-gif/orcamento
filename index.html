@@ -450,6 +450,7 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
     <button class="btn-sec" style="margin-top:0" id="ia-resumo-btn" onclick="gerarResumoMensal()">Analisar meu mes</button>
     <div id="ia-resumo-out" style="display:none;font-size:13px;line-height:1.6;color:var(--text)!important;margin-top:12px;white-space:pre-wrap"></div>
   </div>
+  <div id="home-alerts"></div>
   <div class="slbl">Ultimos lancamentos</div>
   <div class="card" id="h-recentes"></div>
 </div>
@@ -1807,6 +1808,7 @@ function renderHome(){
   }
   const ul=lm.slice(0,5);
   document.getElementById("h-recentes").innerHTML=ul.length===0?'<div class="empty"><div class="ei">📋</div><div class="et">Nenhum lancamento neste periodo</div></div>':ul.map(l=>txHTML(l,true)).join("");
+  renderAlerts(lm,"home-alerts");
 }
 
 // FILTROS LANCAMENTOS
