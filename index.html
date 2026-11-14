@@ -445,11 +445,6 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
       </div>
     </div>
   </div>
-  <div class="slbl">&#129302; Resumo do mes (IA)</div>
-  <div class="card" id="ia-resumo-card">
-    <button class="btn-sec" style="margin-top:0" id="ia-resumo-btn" onclick="gerarResumoMensal()">Analisar meu mes</button>
-    <div id="ia-resumo-out" style="display:none;font-size:13px;line-height:1.6;color:var(--text)!important;margin-top:12px;white-space:pre-wrap"></div>
-  </div>
   <div id="home-alerts"></div>
   <div class="slbl">Ultimos lancamentos</div>
   <div class="card" id="h-recentes"></div>
@@ -508,11 +503,6 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
   </div>
   <div id="orc-total-summary"></div>
   <div id="orc-analise"></div>
-  <div class="slbl">&#129302; Insights de orcamento (IA)</div>
-  <div class="card" id="ia-orc-card">
-    <button class="btn-sec" style="margin-top:0" id="ia-orc-btn" onclick="gerarInsightsOrcamento()">Analisar meu orcamento</button>
-    <div id="ia-orc-out" style="display:none;font-size:13px;line-height:1.6;color:var(--text)!important;margin-top:12px;white-space:pre-wrap"></div>
-  </div>
   <div id="orc-alerts"></div>
   <div class="slbl" style="margin-bottom:14px">Gasto vs Orcamento</div>
   <div id="chart-area"></div>
@@ -522,20 +512,39 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
 </div>
 
 <div class="screen" id="s-metas">
-  <div class="hdr"><div><div class="hdr-title">Metas</div><div class="hdr-sub">Acompanhamento pessoal</div></div></div>
-  <div class="mode-toggle" id="metas-view-toggle" style="margin-bottom:16px">
-    <div class="mode-btn on" onclick="setMetasView('mes',this)">&#128197; Este mes</div>
-    <div class="mode-btn"    onclick="setMetasView('ano',this)">&#128467;&#65039; Este ano</div>
+  <div class="hdr"><div><div class="hdr-title">Compras &amp; Metas</div><div class="hdr-sub">Lista da familia e metas</div></div></div>
+  <div class="mode-toggle" id="metas-tab-toggle" style="margin-bottom:16px">
+    <div class="mode-btn on" onclick="setMetasTab('compras',this)">&#128722; Compras</div>
+    <div class="mode-btn"    onclick="setMetasTab('financeiras',this)">&#127919; Financeiras</div>
+    <div class="mode-btn"    onclick="setMetasTab('pessoais',this)">&#127939; Pessoais</div>
   </div>
-  <div class="per-nav">
-    <div class="per-btn" onclick="perAnt()">&#8249;</div>
-    <div class="per-txt" id="per-metas-lbl">...</div>
-    <div class="per-btn" onclick="perPrx()">&#8250;</div>
+
+  <div id="metas-sec-compras">
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <input class="finp" type="text" id="compra-novo-item" placeholder="Adicionar item (ex: Leite)" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();addCompra();}" style="flex:1">
+      <button class="btn-p" style="width:auto;padding:0 20px;margin:0" onclick="addCompra()">+</button>
+    </div>
+    <div class="card" id="compras-list" style="padding:6px 16px"></div>
+    <button class="btn-sec" id="compras-limpar-btn" style="display:none" onclick="limparCompradas()">&#129529; Limpar concluidos</button>
   </div>
-  <div id="metas-chart"></div>
-  <div class="divider"></div>
-  <div class="slbl" style="margin-bottom:8px">Metas financeiras</div>
-  <div id="metas-fin-list"></div>
+
+  <div id="metas-sec-financeiras" style="display:none">
+    <div class="slbl" style="margin-bottom:8px">Metas financeiras</div>
+    <div id="metas-fin-list"></div>
+  </div>
+
+  <div id="metas-sec-pessoais" style="display:none">
+    <div class="mode-toggle" id="metas-view-toggle" style="margin-bottom:16px">
+      <div class="mode-btn on" onclick="setMetasView('mes',this)">&#128197; Este mes</div>
+      <div class="mode-btn"    onclick="setMetasView('ano',this)">&#128467;&#65039; Este ano</div>
+    </div>
+    <div class="per-nav">
+      <div class="per-btn" onclick="perAnt()">&#8249;</div>
+      <div class="per-txt" id="per-metas-lbl">...</div>
+      <div class="per-btn" onclick="perPrx()">&#8250;</div>
+    </div>
+    <div id="metas-chart"></div>
+  </div>
 </div>
 
 <div class="screen" id="s-patrimonio">
@@ -808,7 +817,7 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
   <div class="nav-it on" onclick="navTo('home',this)"><span class="nav-ico">&#127968;</span><span class="nav-lbl">Inicio</span></div>
   <div class="nav-it"    onclick="navTo('lanc',this)"><span class="nav-ico">&#128203;</span><span class="nav-lbl">Lancamentos</span></div>
   <div class="nav-it"    onclick="navTo('orc',this)"><span class="nav-ico">&#128202;</span><span class="nav-lbl">Orcamento</span></div>
-  <div class="nav-it"    onclick="navTo('metas',this)"><span class="nav-ico">&#127919;</span><span class="nav-lbl">Metas</span></div>
+  <div class="nav-it"    onclick="navTo('metas',this)"><span class="nav-ico">&#128722;</span><span class="nav-lbl">Compras</span></div>
   <div class="nav-it"    onclick="navTo('patrimonio',this)"><span class="nav-ico">&#128142;</span><span class="nav-lbl">Patrim.</span></div>
   <div class="nav-it"    onclick="navTo('rel',this)"><span class="nav-ico">&#128200;</span><span class="nav-lbl">Relatorio</span></div>
 </nav>
@@ -848,6 +857,17 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
       </div>
     </div>
     <div class="fg"><label class="flbl">Data</label><input class="finp" type="date" id="f-data"></div>
+    <div class="fg" id="chat-lanc-collapsed">
+      <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;padding:6px 0" onclick="toggleChatLanc(true)">&#10024; Ou descreva em uma frase</span>
+    </div>
+    <div class="fg" id="chat-lanc-expanded" style="display:none">
+      <label class="flbl">Descreva (ex: "almoco 45 reais")</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input class="finp" type="text" id="chat-lanc-input" placeholder="Ex: mercado 120, uber 18,50..." autocomplete="off" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();parseLancChat();}">
+        <span onclick="parseLancChat()" id="chat-lanc-send" style="cursor:pointer;font-size:20px;padding:4px;flex-shrink:0">&#10148;</span>
+        <span onclick="toggleChatLanc(false)" style="cursor:pointer;font-size:18px;padding:4px;color:var(--muted);flex-shrink:0">&times;</span>
+      </div>
+    </div>
     <button class="btn-p" onclick="saveLanc()">Salvar lancamento</button>
   </div>
 </div>
@@ -895,6 +915,8 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
     <div class="sheet-title">&#128172; Pergunte sobre seus gastos</div>
     <div class="fg"><input class="finp" type="text" id="ia-ask-input" placeholder="Ex: quanto gastei com mercado em julho?" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();perguntarSobreGastos();}"></div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin:-6px 0 16px">
+      <span class="tag" style="cursor:pointer;padding:5px 10px;background:var(--accent);color:#fff;border-color:var(--accent)" onclick="iaAskResumoMensal()">&#128203; Resumo do mês</span>
+      <span class="tag" style="cursor:pointer;padding:5px 10px;background:var(--accent);color:#fff;border-color:var(--accent)" onclick="iaAskInsightsOrc()">&#128202; Como está meu orçamento</span>
       <span class="tag" style="cursor:pointer;padding:5px 10px" onclick="_iaAskChip('Quanto gastei esse mes?')">Quanto gastei esse mês?</span>
       <span class="tag" style="cursor:pointer;padding:5px 10px" onclick="_iaAskChip('Qual categoria mais cresceu esse ano?')">Categoria que mais cresceu</span>
       <span class="tag" style="cursor:pointer;padding:5px 10px" onclick="_iaAskChip('Quanto gastei com transporte no mes passado?')">Transporte mês passado</span>
@@ -979,14 +1001,14 @@ function toggleHide(){hideNums=!hideNums;var btn=document.getElementById("hide-b
 const mesAnoAtual=()=>hoje.getFullYear()+"-"+String(hoje.getMonth()+1).padStart(2,"0");
 
 // STATE
-let lancamentos=[..._DADOS_INICIAIS].sort(function(a,b){return b.id-a.id;}),metas=[],orcamentos={};
+let lancamentos=[..._DADOS_INICIAIS].sort(function(a,b){return b.id-a.id;}),metas=[],orcamentos={},compras=[];
 let milhas={saldo:0,ptsPorReal:0.85,valorMin:0.013,valorMax:0.017,anuidade:50};
 let patrimonio={ativos:{circulante:{},permanente:{}},passivos:{circulante:{},longoPrazo:{}},historico:{},metas:{objetivoPatrimonioLiquido:0,proximosObjetivos:{}}};
 let patrHistIdx=-1,patrIndicOpen={},patrEditCtx=null;
 let tipoAtual="despesa",catAtual="",emojiAtual="🎯";
-let filtroAtual="todos",catFiltroAtual="",ordemAtual="recente",editandoId=null;
+let filtroAtual="todos",catFiltroAtual="",ordemAtual="recente",editandoId=null,editandoMetaId=null;
 let modoAtual="cal",mesAtual=hoje.getMonth(),anoAtual=hoje.getFullYear(),cicloOffset=0,modoExt="";
-let metasView="mes";
+let metasView="mes",metasTab="compras";
 
 // METAS PESSOAIS
 let MP=[
@@ -1012,6 +1034,7 @@ function _fbErr(err){showToast("⚠️ Erro ao salvar: "+(err&&err.message||err)
 function fbSaveLanc(l){if(_db)_db.ref("lancamentos/"+l.id).set(l).catch(_fbErr);}
 function fbSaveLancBatch(arr){if(!_db||!arr.length)return;var o={};arr.forEach(function(l){o[l.id]=l;});_db.ref("lancamentos").update(o).catch(_fbErr);}
 function fbSaveMetas(){if(_db){const o={};metas.forEach(m=>{o[m.id]=m;});_db.ref("metas").set(o).catch(_fbErr);}}
+function fbSaveCompras(){if(_db){const o={};compras.forEach(c=>{o[c.id]=c;});_db.ref("compras").set(o).catch(_fbErr);}}
 function _orcKey(label){return String(label).replace(/[.#$\[\]\/]/g,"_");}
 function fbSaveOrc(){
   if(!_db)return;
@@ -1113,6 +1136,7 @@ function attachDbListeners(){
       clearTimeout(_rtimer);_rtimer=setTimeout(renderAll,150);
     },err=>{setStatus("❌ "+err.message,"#f87171");lancamentos=[..._DADOS_INICIAIS].sort((a,b)=>b.id-a.id);renderAll();});
     _db.ref("metas").on("value",snap=>{metas=snap.val()?Object.values(snap.val()):[];if(document.querySelector(".screen.active")?.id==="s-metas")renderMetas();});
+    _db.ref("compras").on("value",snap=>{compras=snap.val()?Object.values(snap.val()):[];if(document.querySelector(".screen.active")?.id==="s-metas")renderMetas();});
     _db.ref("milhas").on("value",snap=>{
       const v=snap.val(),def={saldo:0,ptsPorReal:0.85,valorMin:0.013,valorMax:0.017,anuidade:50};
       milhas=v?Object.assign({},def,v):def;
@@ -1284,6 +1308,7 @@ function editLanc(id){
   toggleParcelas(l.pgto||"PIX/boleto");
   var pWrap=document.getElementById("f-repetir-wrap");if(pWrap)pWrap.style.display="none";
   renderCatGrid();
+  toggleChatLanc(false);
   var title=document.querySelector("#modal-lanc .sheet-title");
   if(title)title.textContent="Editar Lancamento";
   document.getElementById("modal-lanc").classList.add("open");
@@ -1299,15 +1324,43 @@ function openLancModal(tipo){
   var pEl=document.getElementById("f-parcelas");if(pEl)pEl.value="1";
   toggleParcelas(pgtoDefault);
   renderCatGrid();
+  toggleChatLanc(false);
   var title=document.querySelector("#modal-lanc .sheet-title");
   if(title)title.textContent="Novo Lancamento";
   document.getElementById("modal-lanc").classList.add("open");
 }
 function openMetaModal(){
+  editandoMetaId=null;
   emojiAtual="🎯";
   ["m-nome","m-alvo","m-atual"].forEach(id=>document.getElementById(id).value="");
   renderMetaGrid();
+  var title=document.querySelector("#modal-meta .sheet-title");
+  if(title)title.textContent="Nova Meta Financeira";
   document.getElementById("modal-meta").classList.add("open");
+}
+function editMetaModal(id){
+  var m=metas.find(function(x){return String(x.id)===String(id);});
+  if(!m)return;
+  editandoMetaId=id;
+  emojiAtual=m.emoji||"🎯";
+  document.getElementById("m-nome").value=m.nome;
+  document.getElementById("m-alvo").value=String(m.alvo).replace(".",",");
+  document.getElementById("m-atual").value=String(m.atual).replace(".",",");
+  renderMetaGrid();
+  var title=document.querySelector("#modal-meta .sheet-title");
+  if(title)title.textContent="Editar Meta Financeira";
+  document.getElementById("modal-meta").classList.add("open");
+}
+function aporteMeta(id){
+  var m=metas.find(function(x){return String(x.id)===String(id);});
+  if(!m)return;
+  var txt=prompt("Quanto você guardou agora para \""+m.nome+"\"? (R$)\nValor atual: "+fmt(m.atual));
+  if(txt===null)return;
+  var valor=_parseBRNum(txt);
+  if(!valor){showToast("Valor invalido","err");return;}
+  m.atual=Math.max(0,m.atual+valor);
+  fbSaveMetas();renderMetas();
+  showToast(valor>0?"💰 Aporte registrado!":"💾 Meta atualizada!");
 }
 function openEditOrc(){
   document.getElementById("orc-edit-list").innerHTML=CATS.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:21px;width:28px">${c.emoji}</span><span style="flex:1;font-size:14px;font-weight:500">${c.label}</span><input class="orc-inp" type="number" inputmode="decimal" min="0" step="0.01" id="oi-${c.label.replace(/[\s.]/g,"_")}" value="${orcamentos[c.label]||""}" placeholder="—"></div>`).join("");
@@ -1332,7 +1385,7 @@ function pickEmoji(e,el){emojiAtual=e;document.querySelectorAll("#meta-emoji-gri
 
 // SAVE
 function saveLanc(){
-  const val=parseFloat(document.getElementById("f-val").value.replace(",","."));
+  const val=_parseBRNum(document.getElementById("f-val").value);
   const desc=document.getElementById("f-desc").value.trim();
   const data=document.getElementById("f-data").value;
   const pgto=document.getElementById("f-pgto").value;
@@ -1372,15 +1425,71 @@ function saveLanc(){
   }
   renderAll();
 }
+function toggleChatLanc(show){
+  var col=document.getElementById("chat-lanc-collapsed"),exp=document.getElementById("chat-lanc-expanded");
+  if(!col||!exp)return;
+  col.style.display=show?"none":"block";
+  exp.style.display=show?"block":"none";
+  var inp=document.getElementById("chat-lanc-input");
+  if(inp)inp.value="";
+  if(show&&inp)setTimeout(function(){inp.focus();},50);
+}
+function buildLancChatPrompt(texto){
+  var catsLbl=CATS.map(function(c){return c.label;}).join(", ");
+  return "Extraia os dados de um lancamento financeiro a partir do texto livre abaixo, em portugues do Brasil.\n"
+    +"Responda SOMENTE com um JSON valido, sem markdown, sem explicacao, no formato exato:\n"
+    +'{"valor":NUMERO,"descricao":"TEXTO CURTO","categoria":"UMA DESTAS: '+catsLbl+'","tipo":"despesa ou receita"}\n\n'
+    +"Regras: valor e sempre positivo (numero, use ponto decimal, nunca virgula). Se o texto nao indicar claramente uma receita (salario, pagamento recebido, deposito, etc.), use tipo despesa. Escolha a categoria mais proxima da lista; se nenhuma combinar bem ou for receita, use \"Outro\".\n\n"
+    +"TEXTO: "+texto;
+}
+async function parseLancChat(){
+  var inp=document.getElementById("chat-lanc-input");
+  var texto=inp.value.trim();
+  if(!texto){showToast("Descreva o lancamento","err");return;}
+  var cfg=getIAConfig();
+  if(!cfg.key){showToast("Configure sua chave de IA primeiro","err");openIAConfig();return;}
+  var btn=document.getElementById("chat-lanc-send");
+  var btnOrig=btn.textContent;
+  btn.textContent="…";btn.style.pointerEvents="none";
+  try{
+    var resp=await callIA(buildLancChatPrompt(texto));
+    var jsonStr=resp.trim().replace(/^```json/i,"").replace(/^```/,"").replace(/```$/,"").trim();
+    var data=JSON.parse(jsonStr);
+    var valor=Math.abs(parseFloat(data.valor));
+    if(!valor||isNaN(valor))throw new Error("valor invalido");
+    var tipo=data.tipo==="receita"?"receita":"despesa";
+    var catMatch=CATS.find(function(c){return c.label===data.categoria;});
+    var categoria=catMatch?catMatch.label:(autoCategoria(data.descricao||texto,tipo)||"Outro");
+    setTipo(tipo);
+    catAtual=tipo==="despesa"?categoria:"";
+    document.getElementById("f-val").value=String(valor.toFixed(2)).replace(".",",");
+    document.getElementById("f-desc").value=(data.descricao||texto).trim();
+    renderCatGrid();
+    toggleChatLanc(false);
+    showToast("✨ Preenchido! Confira e salve.");
+  }catch(err){
+    showToast("Nao entendi — tente outras palavras ou preencha manualmente","err");
+  }finally{
+    btn.textContent=btnOrig;btn.style.pointerEvents="auto";
+  }
+}
 function saveMeta(){
   const nome=document.getElementById("m-nome").value.trim();
-  const alvo=parseFloat(document.getElementById("m-alvo").value.replace(",","."));
-  const atual=parseFloat((document.getElementById("m-atual").value||"0").replace(",","."))||0;
+  const alvo=_parseBRNum(document.getElementById("m-alvo").value);
+  const atual=_parseBRNum(document.getElementById("m-atual").value||"0");
   if(!nome){showToast("Informe o nome","err");return;}
   if(!alvo||alvo<=0){showToast("Informe o valor alvo","err");return;}
-  const nm={id:Date.now(),nome,alvo,atual,emoji:emojiAtual};
-  metas.push(nm);fbSaveMetas();
-  closeModal("modal-meta");showToast("🎯 Meta criada!");renderMetas();
+  if(editandoMetaId){
+    const idx=metas.findIndex(function(x){return String(x.id)===String(editandoMetaId);});
+    if(idx>=0)metas[idx]={id:editandoMetaId,nome,alvo,atual,emoji:emojiAtual};
+    editandoMetaId=null;
+    fbSaveMetas();
+    closeModal("modal-meta");showToast("💾 Meta atualizada!");renderMetas();
+  }else{
+    const nm={id:Date.now(),nome,alvo,atual,emoji:emojiAtual};
+    metas.push(nm);fbSaveMetas();
+    closeModal("modal-meta");showToast("🎯 Meta criada!");renderMetas();
+  }
 }
 function saveOrc(){
   CATS.forEach(c=>{const el=document.getElementById("oi-"+c.label.replace(/[\s.]/g,"_"));const v=el?parseFloat(el.value):NaN;if(!isNaN(v)&&v>0)orcamentos[c.label]=v;else delete orcamentos[c.label];});
@@ -1388,6 +1497,31 @@ function saveOrc(){
 }
 function delLanc(id){if(_db)_db.ref("lancamentos/"+id).remove();lancamentos=lancamentos.filter(l=>String(l.id)!==String(id));renderAll();}
 function delMeta(id){metas=metas.filter(m=>m.id!==id);fbSaveMetas();renderMetas();}
+
+// LISTA DE COMPRAS
+function addCompra(){
+  var inp=document.getElementById("compra-novo-item");
+  var nome=inp.value.trim();
+  if(!nome){showToast("Digite um item","err");return;}
+  compras.push({id:Date.now(),nome,feito:false});
+  fbSaveCompras();
+  inp.value="";
+  renderMetas();
+  inp.focus();
+}
+function toggleCompra(id){
+  var c=compras.find(function(x){return String(x.id)===String(id);});
+  if(!c)return;
+  c.feito=!c.feito;
+  fbSaveCompras();renderMetas();
+}
+function delCompra(id){compras=compras.filter(c=>String(c.id)!==String(id));fbSaveCompras();renderMetas();}
+function limparCompradas(){
+  var restantes=compras.filter(c=>!c.feito);
+  if(restantes.length===compras.length)return;
+  compras=restantes;fbSaveCompras();renderMetas();
+  showToast("🧹 Itens concluidos removidos!");
+}
 
 // ALERTS
 function buildAlerts(lm){
@@ -1764,23 +1898,25 @@ function buildResumoMensalPrompt(){
     +"Gasto por categoria (gasto vs orcado):\n"+(catLines||"(nenhum gasto categorizado)")+"\n\n"
     +"Maiores lancamentos do mes:\n"+(top5||"(nenhum lancamento)");
 }
-async function gerarResumoMensal(){
-  const btn=document.getElementById("ia-resumo-btn");
-  const out=document.getElementById("ia-resumo-out");
+async function _iaAskRun(builderFn){
+  const out=document.getElementById("ia-ask-out");
+  const btn=document.getElementById("ia-ask-btn");
   const cfg=getIAConfig();
   if(!cfg.key){showToast("Configure sua chave de IA primeiro","err");openIAConfig();return;}
   btn.disabled=true;btn.textContent="Analisando...";
   out.style.display="none";
   try{
-    const texto=await callIA(buildResumoMensalPrompt());
+    const texto=await callIA(builderFn());
     out.textContent=texto;
     out.style.display="block";
   }catch(err){
     showToast("Erro na IA: "+(err.message||"falha desconhecida"),"err");
   }finally{
-    btn.disabled=false;btn.textContent="Analisar meu mes";
+    btn.disabled=false;btn.textContent="Perguntar";
   }
 }
+function iaAskResumoMensal(){openIAAsk();document.getElementById("ia-ask-input").value="Resumo do mes";_iaAskRun(buildResumoMensalPrompt);}
+function iaAskInsightsOrc(){openIAAsk();document.getElementById("ia-ask-input").value="Como esta meu orcamento";_iaAskRun(buildInsightsOrcamentoPrompt);}
 
 // RENDER HOME
 function renderHome(){
@@ -2120,24 +2256,6 @@ function buildInsightsOrcamentoPrompt(){
   prompt+="\nPor categoria:\n"+(catLines||"(nenhum orcamento definido)");
   return prompt;
 }
-async function gerarInsightsOrcamento(){
-  const btn=document.getElementById("ia-orc-btn");
-  const out=document.getElementById("ia-orc-out");
-  const cfg=getIAConfig();
-  if(!cfg.key){showToast("Configure sua chave de IA primeiro","err");openIAConfig();return;}
-  btn.disabled=true;btn.textContent="Analisando...";
-  out.style.display="none";
-  try{
-    const texto=await callIA(buildInsightsOrcamentoPrompt());
-    out.textContent=texto;
-    out.style.display="block";
-  }catch(err){
-    showToast("Erro na IA: "+(err.message||"falha desconhecida"),"err");
-  }finally{
-    btn.disabled=false;btn.textContent="Analisar meu orcamento";
-  }
-}
-
 // PERGUNTE SOBRE SEUS GASTOS (IA) — 1 chamada: agregado mensal completo + pre-filtro local por palavra-chave/categoria/periodo
 const _IA_STOPWORDS=["quanto","quantos","quantas","gastei","gasto","gastos","como","esse","essa","este","esta","isso","ano","anos","mes","meses","qual","quais","quando","onde","tive","teve","tinha","minha","minhas","meu","meus","que","para","pra","por","mais","menos","tudo","total","valor","dinheiro","comparado","comparar","sobre","fiquei","ficou"];
 function _normalizar(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");}
@@ -2256,7 +2374,14 @@ async function perguntarSobreGastos(){
 function renderMetas(){
   MP.forEach(m=>{checkResetMes(m);recalcMP(m);});
   const _mlbl=document.getElementById("per-metas-lbl");if(_mlbl){const _ms=getPeriodoSub();_mlbl.innerHTML=getPeriodoLabel()+(_ms?`<span class="per-sub">${_ms}</span>`:"")}
-  renderMetasChart();renderMetasFin();
+  renderMetasChart();renderMetasFin();renderCompras();
+}
+function setMetasTab(tab,el){
+  metasTab=tab;
+  document.querySelectorAll("#metas-tab-toggle .mode-btn").forEach((b,i)=>{b.classList.toggle("on",(tab==="compras"&&i===0)||(tab==="financeiras"&&i===1)||(tab==="pessoais"&&i===2));});
+  document.getElementById("metas-sec-compras").style.display=tab==="compras"?"block":"none";
+  document.getElementById("metas-sec-financeiras").style.display=tab==="financeiras"?"block":"none";
+  document.getElementById("metas-sec-pessoais").style.display=tab==="pessoais"?"block":"none";
 }
 function showMetaTip(idx,isMes){
   var m=MP[idx];
@@ -2328,6 +2453,25 @@ function renderMetasChart(){
     '<div class="mc-bars">'+rows+'</div>'+
     '</div>';
 }
+function renderCompras(){
+  var el=document.getElementById("compras-list");
+  if(!el)return;
+  var pendentes=compras.filter(c=>!c.feito),feitos=compras.filter(c=>c.feito);
+  var btnLimpar=document.getElementById("compras-limpar-btn");
+  if(btnLimpar)btnLimpar.style.display=feitos.length?"block":"none";
+  if(!compras.length){
+    el.innerHTML='<div class="empty" style="padding:20px 0"><div style="font-size:12px;color:var(--muted)">Lista vazia. Adicione um item acima.</div></div>';
+    return;
+  }
+  function row(c){
+    return '<div class="tx">'+
+      '<div class="tx-ico" style="background:'+(c.feito?"#34d39918":"var(--surface2)")+';cursor:pointer" onclick="toggleCompra('+c.id+')">'+(c.feito?"✅":"⬜")+'</div>'+
+      '<div class="tx-info" style="cursor:pointer" onclick="toggleCompra('+c.id+')"><div class="tx-name" style="'+(c.feito?"text-decoration:line-through;color:var(--muted)":"")+'">'+c.nome+'</div></div>'+
+      '<span class="tx-del" onclick="delCompra('+c.id+')">🗑</span>'+
+    '</div>';
+  }
+  el.innerHTML=pendentes.map(row).join("")+feitos.map(row).join("");
+}
 function renderMetasFin(){
   var el=document.getElementById("metas-fin-list");
   if(!metas||metas.length===0){
@@ -2346,11 +2490,13 @@ function renderMetasFin(){
         '</div>'+
         '<div style="display:flex;align-items:center;gap:8px">'+
           '<div class="meta-pct">'+pct+'%</div>'+
+          '<span class="tx-del" onclick="editMetaModal('+m.id+')">✏️</span>'+
           '<span class="tx-del" onclick="delMeta('+m.id+')">🗑</span>'+
         '</div>'+
       '</div>'+
       '<div class="prog-bg"><div class="prog-fill'+doneClass+'" style="width:'+pct+'%"></div></div>'+
       '<div class="meta-vals"><span>'+fmtH(m.atual)+' guardados</span><span>Meta: '+fmtH(m.alvo)+'</span></div>'+
+      '<button class="btn-sec" style="margin-top:10px;padding:8px;font-size:12px" onclick="aporteMeta('+m.id+')">+ Aporte</button>'+
       atingida+
     '</div>';
   }).join("");
