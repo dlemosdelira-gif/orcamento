@@ -833,6 +833,13 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
   <div class="sheet">
     <div class="handle"></div>
     <div class="sheet-title">Novo Lancamento</div>
+    <div class="fg">
+      <label class="flbl">&#10024; Ou descreva em uma frase</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input class="finp" type="text" id="chat-lanc-input" placeholder="Ex: mercado 120 no cartao em 3x, ontem..." autocomplete="off" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();parseLancChat();}">
+        <span onclick="parseLancChat()" id="chat-lanc-send" style="cursor:pointer;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0">&#10148;</span>
+      </div>
+    </div>
     <div class="tipo-tog">
       <div class="tipo-btn desp on" id="tb-desp" onclick="setTipo('despesa')">💸 Despesa</div>
       <div class="tipo-btn rec"     id="tb-rec"  onclick="setTipo('receita')">&#128176; Receita</div>
@@ -863,13 +870,6 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
       </div>
     </div>
     <div class="fg"><label class="flbl">Data</label><input class="finp" type="date" id="f-data"></div>
-    <div class="fg">
-      <label class="flbl">&#10024; Ou descreva em uma frase</label>
-      <div style="display:flex;align-items:center;gap:8px">
-        <input class="finp" type="text" id="chat-lanc-input" placeholder="Ex: mercado 120 no cartao em 3x, ontem..." autocomplete="off" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();parseLancChat();}">
-        <span onclick="parseLancChat()" id="chat-lanc-send" style="cursor:pointer;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0">&#10148;</span>
-      </div>
-    </div>
     <button class="btn-p" onclick="saveLanc()">Salvar lancamento</button>
   </div>
 </div>
