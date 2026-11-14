@@ -525,6 +525,10 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
       <input class="finp" type="text" id="compra-novo-item" placeholder="Adicionar item (ex: Leite)" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();addCompra();}" style="flex:1">
       <button class="btn-p" style="width:auto;padding:0 20px;margin:0" onclick="addCompra()">+</button>
     </div>
+    <div style="margin-bottom:10px;position:relative">
+      <input class="finp" id="compras-search" type="text" placeholder="&#128269; Buscar item..." oninput="renderMetas()" autocomplete="off" style="padding-right:34px">
+      <span id="compras-search-clear" onclick="clearComprasSearch()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--muted);font-size:18px;padding:4px">&times;</span>
+    </div>
     <div class="cat-grid" id="compras-cat-grid" style="grid-template-columns:repeat(4,1fr)"></div>
     <div class="card" id="compras-list" style="padding:6px 16px"></div>
     <button class="btn-sec" id="compras-reiniciar-btn" style="display:none" onclick="reiniciarLista()">&#128260; Reiniciar lista (preciso de tudo de novo)</button>
@@ -2498,6 +2502,15 @@ function setComprasFiltro(key){
   comprasFiltroCat=(comprasFiltroCat===key)?"":key;
   renderMetas();
 }
+function clearComprasSearch(){var i=document.getElementById("compras-search");if(i){i.value="";renderMetas();i.focus();}}
+function reclassificarCompra(id,novaCat){
+  var c=compras.find(function(x){return String(x.id)===String(id);});
+  if(!c)return;
+  c.cat=novaCat;
+  fbSaveCompras();
+  renderMetas();
+  showToast("🏷️ Categoria atualizada!");
+}
 function renderCompras(){
   var el=document.getElementById("compras-list");
   if(!el)return;
@@ -2526,6 +2539,28 @@ function renderCompras(){
       (done?'<span style="font-size:13px;color:var(--green);margin-right:4px">&#10003;</span>':"")+
       '<span class="tx-del" onclick="delCompra('+c.id+')">🗑</span>'+
     '</div>';
+  }
+  function searchRow(c){
+    var done=c.feito;
+    var opts=COMPRAS_CATS.map(function(cc){return '<option value="'+cc.key+'"'+(cc.key===c.cat?" selected":"")+'>'+cc.emoji+' '+cc.label+'</option>';}).join("");
+    return '<div class="tx" style="flex-wrap:wrap">'+
+      '<div class="tx-ico" style="background:var(--surface2);cursor:pointer;opacity:'+(done?"0.4":"1")+'" onclick="toggleCompra('+c.id+')">'+(c.emoji||"🛒")+'</div>'+
+      '<div class="tx-info" style="cursor:pointer" onclick="toggleCompra('+c.id+')"><div class="tx-name" style="'+(done?"text-decoration:line-through;color:var(--muted)":"")+'">'+c.nome+'</div></div>'+
+      (done?'<span style="font-size:13px;color:var(--green);margin-right:4px">&#10003;</span>':"")+
+      '<span class="tx-del" onclick="delCompra('+c.id+')">🗑</span>'+
+      '<select class="finp" style="width:100%;margin-top:8px;padding:8px 10px;font-size:12px" onchange="reclassificarCompra('+c.id+',this.value)">'+opts+'</select>'+
+    '</div>';
+  }
+
+  var searchInp=document.getElementById("compras-search");
+  var query=searchInp?_normalizar(searchInp.value.trim()):"";
+  var searchClear=document.getElementById("compras-search-clear");
+  if(searchClear)searchClear.style.display=query?"block":"none";
+
+  if(query){
+    var matches=compras.filter(function(c){return _normalizar(c.nome).indexOf(query)!==-1;});
+    el.innerHTML=matches.length?matches.map(searchRow).join(""):'<div class="empty" style="padding:20px 0"><div style="font-size:12px;color:var(--muted)">Nenhum item encontrado.</div></div>';
+    return;
   }
 
   if(comprasFiltroCat){
