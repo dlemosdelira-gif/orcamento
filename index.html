@@ -530,8 +530,10 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
       <span id="compras-search-clear" onclick="clearComprasSearch()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--muted);font-size:18px;padding:4px">&times;</span>
     </div>
     <div class="cat-grid" id="compras-cat-grid" style="grid-template-columns:repeat(4,1fr)"></div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <span id="compras-reiniciar-btn" onclick="reiniciarLista()" title="Reiniciar lista — preciso de tudo de novo" style="display:none;cursor:pointer;font-size:20px;padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;line-height:1">&#128260;</span>
+    </div>
     <div class="card" id="compras-list" style="padding:6px 16px"></div>
-    <button class="btn-sec" id="compras-reiniciar-btn" style="display:none" onclick="reiniciarLista()">&#128260; Reiniciar lista (preciso de tudo de novo)</button>
   </div>
 
   <div id="metas-sec-financeiras" style="display:none">
