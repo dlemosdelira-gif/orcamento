@@ -531,7 +531,7 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
     </div>
     <div class="cat-grid" id="compras-cat-grid" style="grid-template-columns:repeat(4,1fr)"></div>
     <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
-      <span id="compras-reiniciar-btn" onclick="reiniciarLista()" title="Reiniciar lista — preciso de tudo de novo" style="display:none;cursor:pointer;font-size:20px;padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;line-height:1">&#128260;</span>
+      <span id="compras-reiniciar-btn" onclick="reiniciarLista()" title="Limpar lista inteira" style="display:none;cursor:pointer;font-size:20px;padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;line-height:1">&#128260;</span>
     </div>
     <div class="card" id="compras-list" style="padding:6px 16px"></div>
   </div>
@@ -1550,7 +1550,7 @@ function addCompra(){
   var nome=inp.value.trim();
   if(!nome){showToast("Digite um item","err");return;}
   var guess=autoCategoriaCompra(nome);
-  compras.push({id:Date.now(),nome,feito:false,cat:guess.cat,emoji:guess.emoji});
+  compras.push({id:Date.now(),nome,feito:true,cat:guess.cat,emoji:guess.emoji});
   fbSaveCompras();
   inp.value="";
   renderMetas();
@@ -1567,7 +1567,7 @@ function reiniciarLista(){
   if(!compras.some(c=>c.feito))return;
   compras.forEach(c=>{c.feito=false;});
   fbSaveCompras();renderMetas();
-  showToast("🔄 Lista reiniciada — tudo marcado como a comprar de novo!");
+  showToast("🔄 Lista limpa! Toque nas categorias pra montar de novo.");
 }
 
 // ALERTS
@@ -2520,7 +2520,7 @@ function renderCompras(){
   var gridEl=document.getElementById("compras-cat-grid");
   if(gridEl){
     gridEl.innerHTML=COMPRAS_CATS.map(function(c){
-      var n=compras.filter(function(x){return x.cat===c.key&&!x.feito;}).length;
+      var n=compras.filter(function(x){return x.cat===c.key&&x.feito;}).length;
       return '<div class="cat-it '+(comprasFiltroCat===c.key?"on":"")+'" onclick="setComprasFiltro(\''+c.key+'\')"><span class="ce">'+c.emoji+'</span><span class="cl">'+c.label+'</span><span style="font-size:9px;color:var(--muted)">'+n+'</span></div>';
     }).join("");
   }
@@ -2533,22 +2533,31 @@ function renderCompras(){
     return;
   }
 
-  function row(c){
-    var done=c.feito;
-    return '<div class="tx">'+
-      '<div class="tx-ico" style="background:var(--surface2);cursor:pointer;opacity:'+(done?"0.4":"1")+'" onclick="toggleCompra('+c.id+')">'+(c.emoji||"🛒")+'</div>'+
-      '<div class="tx-info" style="cursor:pointer" onclick="toggleCompra('+c.id+')"><div class="tx-name" style="'+(done?"text-decoration:line-through;color:var(--muted)":"")+'">'+c.nome+'</div></div>'+
-      (done?'<span style="font-size:13px;color:var(--green);margin-right:4px">&#10003;</span>':"")+
-      '<span class="tx-del" onclick="delCompra('+c.id+')">🗑</span>'+
+  // "Minha lista": item ja esta na lista (feito=true) — toque tira da lista.
+  function listRow(c){
+    return '<div class="tx" style="cursor:pointer" onclick="toggleCompra('+c.id+')">'+
+      '<div class="tx-ico" style="background:var(--surface2)">'+(c.emoji||"🛒")+'</div>'+
+      '<div class="tx-info"><div class="tx-name">'+c.nome+'</div></div>'+
+      '<span style="font-size:18px;color:var(--green)">&#10003;</span>'+
     '</div>';
   }
+  // Navegar categoria / busca: mostra todo mundo, toque adiciona ou tira da lista.
+  function browseRow(c){
+    var on=c.feito;
+    return '<div class="tx" style="cursor:pointer;'+(on?"background:#7c6af718;border-radius:10px;margin:0 -8px;padding:10px 8px":"")+'" onclick="toggleCompra('+c.id+')">'+
+      '<div class="tx-ico" style="background:var(--surface2)">'+(c.emoji||"🛒")+'</div>'+
+      '<div class="tx-info"><div class="tx-name">'+c.nome+'</div></div>'+
+      (on?'<span style="font-size:12px;font-weight:700;color:var(--accent)">&#10003; Na lista</span>':'<span style="font-size:20px;color:var(--muted)">&#10133;</span>')+
+    '</div>';
+  }
+  // Busca: mesma logica de adicionar/tirar, mas com reclassificar e excluir do catalogo.
   function searchRow(c){
-    var done=c.feito;
+    var on=c.feito;
     var opts=COMPRAS_CATS.map(function(cc){return '<option value="'+cc.key+'"'+(cc.key===c.cat?" selected":"")+'>'+cc.emoji+' '+cc.label+'</option>';}).join("");
-    return '<div class="tx" style="flex-wrap:wrap">'+
-      '<div class="tx-ico" style="background:var(--surface2);cursor:pointer;opacity:'+(done?"0.4":"1")+'" onclick="toggleCompra('+c.id+')">'+(c.emoji||"🛒")+'</div>'+
-      '<div class="tx-info" style="cursor:pointer" onclick="toggleCompra('+c.id+')"><div class="tx-name" style="'+(done?"text-decoration:line-through;color:var(--muted)":"")+'">'+c.nome+'</div></div>'+
-      (done?'<span style="font-size:13px;color:var(--green);margin-right:4px">&#10003;</span>':"")+
+    return '<div class="tx" style="flex-wrap:wrap;'+(on?"background:#7c6af718;border-radius:10px;margin:0 -8px;padding:10px 8px":"")+'">'+
+      '<div class="tx-ico" style="background:var(--surface2);cursor:pointer" onclick="toggleCompra('+c.id+')">'+(c.emoji||"🛒")+'</div>'+
+      '<div class="tx-info" style="cursor:pointer" onclick="toggleCompra('+c.id+')"><div class="tx-name">'+c.nome+'</div></div>'+
+      (on?'<span style="font-size:12px;font-weight:700;color:var(--accent);margin-right:4px">&#10003; Na lista</span>':'<span style="font-size:20px;color:var(--muted);margin-right:4px;cursor:pointer" onclick="toggleCompra('+c.id+')">&#10133;</span>')+
       '<span class="tx-del" onclick="delCompra('+c.id+')">🗑</span>'+
       '<select class="finp" style="width:100%;margin-top:8px;padding:8px 10px;font-size:12px" onchange="reclassificarCompra('+c.id+',this.value)">'+opts+'</select>'+
     '</div>';
@@ -2566,17 +2575,20 @@ function renderCompras(){
   }
 
   if(comprasFiltroCat){
-    var filtrados=compras.filter(function(c){return c.cat===comprasFiltroCat;});
-    var pend=filtrados.filter(function(c){return !c.feito;}),fei=filtrados.filter(function(c){return c.feito;});
-    el.innerHTML=(pend.map(row).join("")+fei.map(row).join(""))||'<div class="empty" style="padding:20px 0"><div style="font-size:12px;color:var(--muted)">Nenhum item nessa categoria.</div></div>';
+    var itensCat=compras.filter(function(c){return c.cat===comprasFiltroCat;});
+    el.innerHTML=itensCat.length?itensCat.map(browseRow).join(""):'<div class="empty" style="padding:20px 0"><div style="font-size:12px;color:var(--muted)">Nenhum item nessa categoria.</div></div>';
   }else{
+    var minhaLista=compras.filter(function(c){return c.feito;});
+    if(!minhaLista.length){
+      el.innerHTML='<div class="empty" style="padding:20px 0"><div style="font-size:12px;color:var(--muted)">Sua lista esta vazia.<br>Toque em uma categoria abaixo pra adicionar itens.</div></div>';
+      return;
+    }
     var html="";
     COMPRAS_CATS.forEach(function(c){
-      var itens=compras.filter(function(x){return x.cat===c.key;});
+      var itens=minhaLista.filter(function(x){return x.cat===c.key;});
       if(!itens.length)return;
-      var pend=itens.filter(function(x){return !x.feito;}),fei=itens.filter(function(x){return x.feito;});
       html+='<div class="slbl" style="margin-top:14px">'+c.emoji+' '+c.label+' <span class="tag">'+itens.length+'</span></div>';
-      html+=pend.map(row).join("")+fei.map(row).join("");
+      html+=itens.map(listRow).join("");
     });
     el.innerHTML=html;
   }
