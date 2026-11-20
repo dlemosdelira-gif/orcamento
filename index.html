@@ -170,8 +170,8 @@ body{font-family:'Calibri','Trebuchet MS','Gill Sans',sans-serif;background:var(
 .tx-val.g{color:var(--green)!important;-webkit-text-fill-color:var(--green)!important}
 .tx-del{font-size:15px;cursor:pointer;color:var(--muted);padding:3px;background:none;border:none;-webkit-appearance:none;line-height:1}
 .swipe-row{position:relative;overflow:hidden}
-.swipe-bg{position:absolute;top:0;right:0;bottom:0;width:76px;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:21px;cursor:pointer}
-.swipe-fg{position:relative;background:var(--surface);touch-action:pan-y;transition:transform .2s ease}
+.swipe-bg{position:absolute;top:0;right:0;bottom:0;width:64px;background:#f8717122;color:var(--red);display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer}
+.swipe-fg{position:relative;background:var(--surface);touch-action:pan-y;transition:transform .2s ease;overflow:hidden}
 .swipe-fg.dragging{transition:none}
 .filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none}
 .filter-row::-webkit-scrollbar{display:none}
@@ -1591,7 +1591,7 @@ function swipeMove(e,id){
     _swipeState.committed=true;
     var fg0=_swipeFg(id);if(fg0)fg0.classList.add("dragging");
   }
-  dx=Math.max(-76,Math.min(0,dx));
+  dx=Math.max(-64,Math.min(0,dx));
   _swipeState.dx=dx;
   var fg=_swipeFg(id);
   if(fg)fg.style.transform="translateX("+dx+"px)";
@@ -1603,8 +1603,8 @@ function swipeEnd(id){
   if(fg)fg.classList.remove("dragging");
   if(!st.committed)return;
   _swipeJustDragged=true;
-  if(st.dx<-38){
-    if(fg)fg.style.transform="translateX(-76px)";
+  if(st.dx<-28){
+    if(fg)fg.style.transform="translateX(-64px)";
     _swipeOpenId=id;
   }else{
     if(fg)fg.style.transform="translateX(0px)";
