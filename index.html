@@ -169,6 +169,10 @@ body{font-family:'Calibri','Trebuchet MS','Gill Sans',sans-serif;background:var(
 .tx-val.r{color:var(--red)!important;-webkit-text-fill-color:var(--red)!important}
 .tx-val.g{color:var(--green)!important;-webkit-text-fill-color:var(--green)!important}
 .tx-del{font-size:15px;cursor:pointer;color:var(--muted);padding:3px;background:none;border:none;-webkit-appearance:none;line-height:1}
+.swipe-row{position:relative;overflow:hidden}
+.swipe-bg{position:absolute;top:0;right:0;bottom:0;width:76px;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:21px;cursor:pointer}
+.swipe-fg{position:relative;background:var(--surface);touch-action:pan-y;transition:transform .2s ease}
+.swipe-fg.dragging{transition:none}
 .filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none}
 .filter-row::-webkit-scrollbar{display:none}
 .chip{display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:5px 12px;font-size:11px;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .12s}
@@ -1570,6 +1574,62 @@ function reiniciarLista(){
   showToast("🔄 Lista limpa! Toque nas categorias pra montar de novo.");
 }
 
+// SWIPE PARA EXCLUIR (Compras)
+let _swipeState=null,_swipeOpenId=null,_swipeJustDragged=false;
+function _swipeFg(id){return document.querySelector('.swipe-row[data-cid="'+id+'"] .swipe-fg');}
+function swipeStart(e,id){
+  if(_swipeOpenId!==null&&String(_swipeOpenId)!==String(id))swipeClose(_swipeOpenId);
+  e.currentTarget.setPointerCapture(e.pointerId);
+  _swipeState={id:id,startX:e.clientX,startY:e.clientY,dx:0,committed:false};
+}
+function swipeMove(e,id){
+  if(!_swipeState||String(_swipeState.id)!==String(id))return;
+  var dx=e.clientX-_swipeState.startX,dy=e.clientY-_swipeState.startY;
+  if(!_swipeState.committed){
+    if(Math.abs(dx)<8&&Math.abs(dy)<8)return;
+    if(Math.abs(dy)>Math.abs(dx)){_swipeState=null;_swipeJustDragged=true;return;}
+    _swipeState.committed=true;
+    var fg0=_swipeFg(id);if(fg0)fg0.classList.add("dragging");
+  }
+  dx=Math.max(-76,Math.min(0,dx));
+  _swipeState.dx=dx;
+  var fg=_swipeFg(id);
+  if(fg)fg.style.transform="translateX("+dx+"px)";
+}
+function swipeEnd(id){
+  if(!_swipeState||String(_swipeState.id)!==String(id))return;
+  var st=_swipeState;_swipeState=null;
+  var fg=_swipeFg(id);
+  if(fg)fg.classList.remove("dragging");
+  if(!st.committed)return;
+  _swipeJustDragged=true;
+  if(st.dx<-38){
+    if(fg)fg.style.transform="translateX(-76px)";
+    _swipeOpenId=id;
+  }else{
+    if(fg)fg.style.transform="translateX(0px)";
+    if(String(_swipeOpenId)===String(id))_swipeOpenId=null;
+  }
+}
+function swipeClose(id){
+  var fg=_swipeFg(id);
+  if(fg)fg.style.transform="translateX(0px)";
+  if(String(_swipeOpenId)===String(id))_swipeOpenId=null;
+}
+function swipeTapGuard(id){
+  if(_swipeJustDragged){_swipeJustDragged=false;return true;}
+  if(String(_swipeOpenId)===String(id)){swipeClose(id);return true;}
+  return false;
+}
+function _swipeWrap(id,fgInnerHtml,fgAttrs){
+  return '<div class="swipe-row" data-cid="'+id+'">'+
+    '<div class="swipe-bg" onclick="delCompra('+id+')">&#128465;&#65039;</div>'+
+    '<div class="swipe-fg tx" '+fgAttrs+' onpointerdown="swipeStart(event,'+id+')" onpointermove="swipeMove(event,'+id+')" onpointerup="swipeEnd('+id+')" onpointercancel="swipeEnd('+id+')">'+
+      fgInnerHtml+
+    '</div>'+
+  '</div>';
+}
+
 // ALERTS
 function buildAlerts(lm){
   const g={};lm.filter(l=>l.tipo==="despesa").forEach(l=>{g[l.cat]=(g[l.cat]||0)+l.valor;});
@@ -2533,22 +2593,26 @@ function renderCompras(){
     return;
   }
 
-  // "Minha lista": item ja esta na lista (feito=true) — toque tira da lista.
+  // "Minha lista": item ja esta na lista (feito=true) — toque tira da lista,
+  // arrasta pra esquerda revela excluir do catalogo de vez.
   function listRow(c){
-    return '<div class="tx" style="cursor:pointer" onclick="toggleCompra('+c.id+')">'+
+    return _swipeWrap(c.id,
       '<div class="tx-ico" style="background:var(--surface2)">'+(c.emoji||"🛒")+'</div>'+
       '<div class="tx-info"><div class="tx-name">'+c.nome+'</div></div>'+
-      '<span style="font-size:18px;color:var(--green)">&#10003;</span>'+
-    '</div>';
+      '<span style="font-size:18px;color:var(--green)">&#10003;</span>',
+      'style="cursor:pointer" onclick="if(!swipeTapGuard('+c.id+'))toggleCompra('+c.id+')"'
+    );
   }
-  // Navegar categoria / busca: mostra todo mundo, toque adiciona ou tira da lista.
+  // Navegar categoria: mostra todo mundo, toque adiciona ou tira da lista,
+  // arrasta pra esquerda revela excluir do catalogo de vez.
   function browseRow(c){
     var on=c.feito;
-    return '<div class="tx" style="cursor:pointer;'+(on?"background:#7c6af718;border-radius:10px;margin:0 -8px;padding:10px 8px":"")+'" onclick="toggleCompra('+c.id+')">'+
+    return _swipeWrap(c.id,
       '<div class="tx-ico" style="background:var(--surface2)">'+(c.emoji||"🛒")+'</div>'+
       '<div class="tx-info"><div class="tx-name">'+c.nome+'</div></div>'+
-      (on?'<span style="font-size:12px;font-weight:700;color:var(--accent)">&#10003; Na lista</span>':'<span style="font-size:20px;color:var(--muted)">&#10133;</span>')+
-    '</div>';
+      (on?'<span style="font-size:12px;font-weight:700;color:var(--accent)">&#10003; Na lista</span>':'<span style="font-size:20px;color:var(--muted)">&#10133;</span>'),
+      'style="cursor:pointer;'+(on?"background:#7c6af718":"")+'" onclick="if(!swipeTapGuard('+c.id+'))toggleCompra('+c.id+')"'
+    );
   }
   // Busca: mesma logica de adicionar/tirar, mas com reclassificar e excluir do catalogo.
   function searchRow(c){
