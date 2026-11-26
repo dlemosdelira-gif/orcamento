@@ -169,9 +169,14 @@ body{font-family:'Calibri','Trebuchet MS','Gill Sans',sans-serif;background:var(
 .tx-val.r{color:var(--red)!important;-webkit-text-fill-color:var(--red)!important}
 .tx-val.g{color:var(--green)!important;-webkit-text-fill-color:var(--green)!important}
 .tx-del{font-size:15px;cursor:pointer;color:var(--muted);padding:3px;background:none;border:none;-webkit-appearance:none;line-height:1}
-.swipe-row{position:relative;overflow:hidden}
-.swipe-bg{position:absolute;top:0;right:0;bottom:0;width:64px;background:#f8717122;color:var(--red);display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer}
-.swipe-fg{position:relative;background:var(--surface);touch-action:pan-y;transition:transform .2s ease;overflow:hidden}
+.swipe-row{position:relative;overflow:hidden;margin:0 -16px;border-bottom:1px solid var(--border)}
+.swipe-row:last-child{border-bottom:none}
+.swipe-bg{position:absolute;top:0;right:0;bottom:0;width:64px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#e5484d;visibility:hidden}
+.swipe-row.swiping .swipe-bg{visibility:visible}
+.swipe-bg span{width:38px;height:38px;border-radius:50%;background:rgba(229,72,77,.12);display:flex;align-items:center;justify-content:center}
+.swipe-fg{position:relative;background:var(--surface);touch-action:pan-y;transition:transform .2s ease;overflow:hidden;cursor:pointer}
+.swipe-row>.swipe-fg.tx{padding:12px 16px;border-bottom:none}
+.swipe-fg.on{background:linear-gradient(#7c6af718,#7c6af718),var(--surface)}
 .swipe-fg.dragging{transition:none}
 .filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none}
 .filter-row::-webkit-scrollbar{display:none}
@@ -537,7 +542,7 @@ select.lote-inp{-webkit-appearance:none;appearance:none}
     <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
       <span id="compras-reiniciar-btn" onclick="reiniciarLista()" title="Limpar lista inteira" style="display:none;cursor:pointer;font-size:20px;padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;line-height:1">&#128260;</span>
     </div>
-    <div class="card" id="compras-list" style="padding:6px 16px"></div>
+    <div class="card" id="compras-list" style="padding:6px 16px;overflow:hidden"></div>
   </div>
 
   <div id="metas-sec-financeiras" style="display:none">
@@ -1575,57 +1580,65 @@ function reiniciarLista(){
 }
 
 // SWIPE PARA EXCLUIR (Compras)
-let _swipeState=null,_swipeOpenId=null,_swipeJustDragged=false;
-function _swipeFg(id){return document.querySelector('.swipe-row[data-cid="'+id+'"] .swipe-fg');}
+// O clique que vem logo depois de um arraste e bloqueado por tempo, nao por uma flag
+// "pendurada": no touch, nenhum clique segue um arraste/rolagem, e uma flag ficaria
+// ativa engolindo o proximo toque de verdade.
+let _swipeState=null,_swipeOpenId=null,_swipeTapBlockUntil=0;
+function _swipeRow(id){return document.querySelector('.swipe-row[data-cid="'+id+'"]');}
+function _swipeFg(id){var r=_swipeRow(id);return r?r.querySelector(".swipe-fg"):null;}
+function _swipeSetX(id,x){var fg=_swipeFg(id);if(fg)fg.style.transform=x?"translateX("+x+"px)":"";}
 function swipeStart(e,id){
-  if(_swipeOpenId!==null&&String(_swipeOpenId)!==String(id))swipeClose(_swipeOpenId);
-  e.currentTarget.setPointerCapture(e.pointerId);
-  _swipeState={id:id,startX:e.clientX,startY:e.clientY,dx:0,committed:false};
+  var fechouOutra=false;
+  if(_swipeOpenId!==null&&String(_swipeOpenId)!==String(id)){swipeClose(_swipeOpenId);fechouOutra=true;}
+  try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}
+  _swipeState={id:id,x0:e.clientX,y0:e.clientY,dx:0,modo:fechouOutra?"bloqueado":""};
 }
 function swipeMove(e,id){
-  if(!_swipeState||String(_swipeState.id)!==String(id))return;
-  var dx=e.clientX-_swipeState.startX,dy=e.clientY-_swipeState.startY;
-  if(!_swipeState.committed){
+  var st=_swipeState;
+  if(!st||String(st.id)!==String(id)||(st.modo&&st.modo!=="horizontal"))return;
+  var dx=e.clientX-st.x0,dy=e.clientY-st.y0;
+  if(!st.modo){
     if(Math.abs(dx)<8&&Math.abs(dy)<8)return;
-    if(Math.abs(dy)>Math.abs(dx)){_swipeState=null;_swipeJustDragged=true;return;}
-    _swipeState.committed=true;
+    if(Math.abs(dy)>=Math.abs(dx)){st.modo="vertical";return;}
+    st.modo="horizontal";
+    var r=_swipeRow(id);if(r)r.classList.add("swiping");
     var fg0=_swipeFg(id);if(fg0)fg0.classList.add("dragging");
   }
-  dx=Math.max(-64,Math.min(0,dx));
-  _swipeState.dx=dx;
-  var fg=_swipeFg(id);
-  if(fg)fg.style.transform="translateX("+dx+"px)";
+  var base=String(_swipeOpenId)===String(id)?-64:0;
+  st.dx=Math.max(-64,Math.min(0,base+dx));
+  _swipeSetX(id,st.dx);
 }
 function swipeEnd(id){
-  if(!_swipeState||String(_swipeState.id)!==String(id))return;
-  var st=_swipeState;_swipeState=null;
-  var fg=_swipeFg(id);
-  if(fg)fg.classList.remove("dragging");
-  if(!st.committed)return;
-  _swipeJustDragged=true;
-  if(st.dx<-28){
-    if(fg)fg.style.transform="translateX(-64px)";
-    _swipeOpenId=id;
-  }else{
-    if(fg)fg.style.transform="translateX(0px)";
-    if(String(_swipeOpenId)===String(id))_swipeOpenId=null;
-  }
+  var st=_swipeState;
+  if(!st||String(st.id)!==String(id))return;
+  _swipeState=null;
+  if(!st.modo)return;
+  _swipeTapBlockUntil=Date.now()+350;
+  if(st.modo!=="horizontal")return;
+  var fg=_swipeFg(id);if(fg)fg.classList.remove("dragging");
+  if(st.dx<-28){_swipeSetX(id,-64);_swipeOpenId=id;}
+  else swipeClose(id);
 }
 function swipeClose(id){
-  var fg=_swipeFg(id);
-  if(fg)fg.style.transform="translateX(0px)";
+  _swipeSetX(id,0);
   if(String(_swipeOpenId)===String(id))_swipeOpenId=null;
+  setTimeout(function(){
+    if(String(_swipeOpenId)===String(id))return;
+    var r=_swipeRow(id);if(r)r.classList.remove("swiping");
+  },250);
 }
 function swipeTapGuard(id){
-  if(_swipeJustDragged){_swipeJustDragged=false;return true;}
-  if(String(_swipeOpenId)===String(id)){swipeClose(id);return true;}
+  if(Date.now()<_swipeTapBlockUntil)return true;
+  if(_swipeOpenId!==null){swipeClose(_swipeOpenId);return true;}
   return false;
 }
-function _swipeWrap(id,fgInnerHtml,fgAttrs){
+function _swipeWrap(id,inner,on){
   return '<div class="swipe-row" data-cid="'+id+'">'+
-    '<div class="swipe-bg" onclick="delCompra('+id+')">&#128465;&#65039;</div>'+
-    '<div class="swipe-fg tx" '+fgAttrs+' onpointerdown="swipeStart(event,'+id+')" onpointermove="swipeMove(event,'+id+')" onpointerup="swipeEnd('+id+')" onpointercancel="swipeEnd('+id+')">'+
-      fgInnerHtml+
+    '<div class="swipe-bg" onclick="delCompra('+id+')"><span>'+
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l.9 12.2a1.5 1.5 0 0 0 1.5 1.4h6.2a1.5 1.5 0 0 0 1.5-1.4L17.5 7"/><path d="M10.2 11v5.5M13.8 11v5.5"/></svg>'+
+    '</span></div>'+
+    '<div class="swipe-fg tx'+(on?" on":"")+'" onclick="if(!swipeTapGuard('+id+'))toggleCompra('+id+')" onpointerdown="swipeStart(event,'+id+')" onpointermove="swipeMove(event,'+id+')" onpointerup="swipeEnd('+id+')" onpointercancel="swipeEnd('+id+')">'+
+      inner+
     '</div>'+
   '</div>';
 }
@@ -2576,6 +2589,7 @@ function reclassificarCompra(id,novaCat){
 function renderCompras(){
   var el=document.getElementById("compras-list");
   if(!el)return;
+  _swipeOpenId=null;_swipeState=null; // toda linha e recriada fechada
 
   var gridEl=document.getElementById("compras-cat-grid");
   if(gridEl){
@@ -2600,7 +2614,7 @@ function renderCompras(){
       '<div class="tx-ico" style="background:var(--surface2)">'+(c.emoji||"🛒")+'</div>'+
       '<div class="tx-info"><div class="tx-name">'+c.nome+'</div></div>'+
       '<span style="font-size:18px;color:var(--green)">&#10003;</span>',
-      'style="cursor:pointer" onclick="if(!swipeTapGuard('+c.id+'))toggleCompra('+c.id+')"'
+      false
     );
   }
   // Navegar categoria: mostra todo mundo, toque adiciona ou tira da lista,
@@ -2611,7 +2625,7 @@ function renderCompras(){
       '<div class="tx-ico" style="background:var(--surface2)">'+(c.emoji||"🛒")+'</div>'+
       '<div class="tx-info"><div class="tx-name">'+c.nome+'</div></div>'+
       (on?'<span style="font-size:12px;font-weight:700;color:var(--accent)">&#10003; Na lista</span>':'<span style="font-size:20px;color:var(--muted)">&#10133;</span>'),
-      'style="cursor:pointer;'+(on?"background:#7c6af718":"")+'" onclick="if(!swipeTapGuard('+c.id+'))toggleCompra('+c.id+')"'
+      on
     );
   }
   // Busca: mesma logica de adicionar/tirar, mas com reclassificar e excluir do catalogo.
